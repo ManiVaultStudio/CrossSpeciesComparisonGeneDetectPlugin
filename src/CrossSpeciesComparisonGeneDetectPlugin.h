@@ -37,7 +37,7 @@ public:
     
     /** This function is called by the core after the view plugin has been created */
     void init() override;
-
+    void modifyTableData();
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
@@ -45,10 +45,11 @@ public:
     void onDataEvent(mv::DatasetEvent* dataEvent);
 
 protected:
-    DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
-    mv::Dataset<Points>   _points;                    /** Points smart pointer */
-    QString                 _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    QTableView           *_tableView;                /** Table view for the data */
+    //DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
+    //mv::Dataset<Points>   _points;                    /** Points smart pointer */
+   // QString                 _currentDatasetName;        /** Name of the current dataset */
+    //QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
 };
 
 /**

@@ -13,105 +13,189 @@ using namespace mv;
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _dropWidget(nullptr),
-    _points(),
-    _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel())
+    _tableView()
+    //_dropWidget(nullptr),
+    //_points(),
+   // _currentDatasetName(),
+   // _currentDatasetNameLabel(new QLabel())
 {
     // This line is mandatory if drag and drop behavior is required
-    _currentDatasetNameLabel->setAcceptDrops(true);
+    //_currentDatasetNameLabel->setAcceptDrops(true);
 
     // Align text in the center
-    _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
+    //_currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::init()
 {
-    // Create layout
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addWidget(_currentDatasetNameLabel);
+    _tableView = new QTableView();
+    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    //add more formatting to the table view
+    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    _tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _tableView->setAlternatingRowColors(true);
+    _tableView->setSortingEnabled(true);
+    _tableView->setShowGrid(true);
+    _tableView->setGridStyle(Qt::SolidLine);
+    _tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _tableView->setCornerButtonEnabled(false);
+    _tableView->setWordWrap(false);
+    _tableView->setTabKeyNavigation(false);
+    _tableView->setAcceptDrops(false);
+    _tableView->setDropIndicatorShown(false);
+    _tableView->setDragEnabled(false);
+    _tableView->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _tableView->setDragDropOverwriteMode(false);
+    _tableView->setAutoScroll(false);
+    _tableView->setAutoScrollMargin(16);
+    _tableView->setAutoFillBackground(true);
+    _tableView->setFrameShape(QFrame::NoFrame);
+    _tableView->setFrameShadow(QFrame::Plain);
+    _tableView->setLineWidth(0);
+    _tableView->setMidLineWidth(0);
+    _tableView->setFocusPolicy(Qt::NoFocus);
+    _tableView->setContextMenuPolicy(Qt::NoContextMenu);
+    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _tableView->setMinimumSize(QSize(0, 0));
+    _tableView->setMaximumSize(QSize(16777215, 16777215));
+    _tableView->setBaseSize(QSize(0, 0));
 
-    // Apply the layout
+    //show a thin x and y axis scrollbar
+    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+
+
+    layout->addWidget(_tableView);
+
     getWidget().setLayout(layout);
 
-    // Instantiate new drop widget
-    _dropWidget = new DropWidget(_currentDatasetNameLabel);
+    modifyTableData();
+    //layout->addWidget(_currentDatasetNameLabel);
 
-    // Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
-    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
+    // Apply the layout
+    
 
-    // Initialize the drop regions
-    _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
-        // A drop widget can contain zero or more drop regions
-        DropWidget::DropRegions dropRegions;
+    //// Instantiate new drop widget
+    //_dropWidget = new DropWidget(_currentDatasetNameLabel);
 
-        const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
+    //// Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
+    //_dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
 
-        if (datasetsMimeData == nullptr)
-            return dropRegions;
+    //// Initialize the drop regions
+    //_dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
+    //    // A drop widget can contain zero or more drop regions
+    //    DropWidget::DropRegions dropRegions;
 
-        if (datasetsMimeData->getDatasets().count() > 1)
-            return dropRegions;
+    //    const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
 
-        // Gather information to generate appropriate drop regions
-        const auto dataset = datasetsMimeData->getDatasets().first();
-        const auto datasetGuiName = dataset->getGuiName();
-        const auto datasetId = dataset->getId();
-        const auto dataType = dataset->getDataType();
-        const auto dataTypes = DataTypes({ PointType });
+    //    if (datasetsMimeData == nullptr)
+    //        return dropRegions;
 
-        // Visually indicate if the dataset is of the wrong data type and thus cannot be dropped
-        if (!dataTypes.contains(dataType)) {
-            dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
-        }
-        else {
+    //    if (datasetsMimeData->getDatasets().count() > 1)
+    //        return dropRegions;
 
-            // Get points dataset from the core
-            auto candidateDataset = mv::data().getDataset<Points>(datasetId);
+    //    // Gather information to generate appropriate drop regions
+    //    const auto dataset = datasetsMimeData->getDatasets().first();
+    //    const auto datasetGuiName = dataset->getGuiName();
+    //    const auto datasetId = dataset->getId();
+    //    const auto dataType = dataset->getDataType();
+    //    const auto dataTypes = DataTypes({ PointType });
 
-            // Accept points datasets drag and drop
-            if (dataType == PointType) {
-                const auto description = QString("Load %1 into example view").arg(datasetGuiName);
+    //    // Visually indicate if the dataset is of the wrong data type and thus cannot be dropped
+    //    if (!dataTypes.contains(dataType)) {
+    //        dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
+    //    }
+    //    else {
 
-                if (_points == candidateDataset) {
+    //        // Get points dataset from the core
+    //        auto candidateDataset = mv::data().getDataset<Points>(datasetId);
 
-                    // Dataset cannot be dropped because it is already loaded
-                    dropRegions << new DropWidget::DropRegion(this, "Warning", "Data already loaded", "exclamation-circle", false);
-                }
-                else {
+    //        // Accept points datasets drag and drop
+    //        if (dataType == PointType) {
+    //            const auto description = QString("Load %1 into example view").arg(datasetGuiName);
 
-                    // Dataset can be dropped
-                    dropRegions << new DropWidget::DropRegion(this, "Points", description, "map-marker-alt", true, [this, candidateDataset]() {
-                        _points = candidateDataset;
-                    });
-                }
-            }
-        }
+    //            if (_points == candidateDataset) {
 
-        return dropRegions;
-    });
+    //                // Dataset cannot be dropped because it is already loaded
+    //                dropRegions << new DropWidget::DropRegion(this, "Warning", "Data already loaded", "exclamation-circle", false);
+    //            }
+    //            else {
 
-    // Respond when the name of the dataset in the dataset reference changes
-    connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
+    //                // Dataset can be dropped
+    //                dropRegions << new DropWidget::DropRegion(this, "Points", description, "map-marker-alt", true, [this, candidateDataset]() {
+    //                    _points = candidateDataset;
+    //                });
+    //            }
+    //        }
+    //    }
 
-        auto newDatasetName = _points->getGuiName();
+    //    return dropRegions;
+    //});
 
-        // Update the current dataset name label
-        _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
+    //// Respond when the name of the dataset in the dataset reference changes
+    //connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
 
-        // Only show the drop indicator when nothing is loaded in the dataset reference
-        _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
-    });
+    //    auto newDatasetName = _points->getGuiName();
 
-    // Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    _eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
+    //    // Update the current dataset name label
+    //    _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
+
+    //    // Only show the drop indicator when nothing is loaded in the dataset reference
+    //    _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
+    //});
+
+    //// Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
+    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
+    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
+    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
+    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
+    //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
+{
+    QStandardItemModel* model = new QStandardItemModel(4, 4, this);
+
+    //add header 
+    model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
+    model->setHorizontalHeaderItem(1, new QStandardItem("Mean"));
+    model->setHorizontalHeaderItem(2, new QStandardItem("Species variance"));
+    model->setHorizontalHeaderItem(3, new QStandardItem("Cluster variance"));
+
+    //add dummy data
+    model->setItem(0, 0, new QStandardItem("Gene1"));
+    model->setItem(0, 1, new QStandardItem("0.5"));
+    model->setItem(0, 2, new QStandardItem("0.1"));
+    model->setItem(0, 3, new QStandardItem("0.2"));
+
+    model->setItem(1, 0, new QStandardItem("Gene2"));
+    model->setItem(1, 1, new QStandardItem("0.6"));
+    model->setItem(1, 2, new QStandardItem("0.2"));
+    model->setItem(1, 3, new QStandardItem("0.3"));
+
+    model->setItem(2, 0, new QStandardItem("Gene3"));
+    model->setItem(2, 1, new QStandardItem("0.7"));
+    model->setItem(2, 2, new QStandardItem("0.3"));
+    model->setItem(2, 3, new QStandardItem("0.4"));
+
+    model->setItem(3, 0, new QStandardItem("Gene4"));
+    model->setItem(3, 1, new QStandardItem("0.8"));
+    model->setItem(3, 2, new QStandardItem("0.4"));
+    model->setItem(3, 3, new QStandardItem("0.5"));
+
+
+
+
+    _tableView->setModel(model);
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
@@ -199,7 +283,7 @@ mv::DataTypes CrossSpeciesComparisonGeneDetectPluginFactory::supportedDataTypes(
 mv::gui::PluginTriggerActions CrossSpeciesComparisonGeneDetectPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
 {
     PluginTriggerActions pluginTriggerActions;
-
+    /*
     const auto getPluginInstance = [this]() -> CrossSpeciesComparisonGeneDetectPlugin* {
         return dynamic_cast<CrossSpeciesComparisonGeneDetectPlugin*>(plugins().requestViewPlugin(getKind()));
     };
@@ -207,13 +291,13 @@ mv::gui::PluginTriggerActions CrossSpeciesComparisonGeneDetectPluginFactory::get
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<CrossSpeciesComparisonGeneDetectPluginFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<CrossSpeciesComparisonGeneDetectPluginFactory*>(this), this, "CrossSpeciesComparisonGeneDetect View", "View gene data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
             for (auto dataset : datasets)
                 getPluginInstance();
         });
 
         pluginTriggerActions << pluginTriggerAction;
     }
-
+    */
     return pluginTriggerActions;
 }
