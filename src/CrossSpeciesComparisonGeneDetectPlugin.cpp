@@ -80,6 +80,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
 
+    QWidget* widget = new QWidget();
+
     layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
     layout->addWidget(_tableView);
 
@@ -289,7 +291,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataE
             break;
     }
 }
+void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& variantMap)
+{
+    ViewPlugin::fromVariantMap(variantMap);
 
+    mv::util::variantMapMustContain(variantMap, "CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
+    _settingsAction.fromVariantMap(variantMap["CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings"].toMap());
+
+
+}
+
+QVariantMap CrossSpeciesComparisonGeneDetectPlugin::toVariantMap() const
+{
+    QVariantMap variantMap = ViewPlugin::toVariantMap();
+
+    _settingsAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
+}
 ViewPlugin* CrossSpeciesComparisonGeneDetectPluginFactory::produce()
 {
     return new CrossSpeciesComparisonGeneDetectPlugin(this);

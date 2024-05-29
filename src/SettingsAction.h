@@ -49,8 +49,6 @@ public:
         class Widget : public mv::gui::WidgetActionWidget {
         public:
             Widget(QWidget* parent, OptionSelectionAction* optionSelectionAction);
-
-            friend class OptionSelectionAction;
         };
 
         QWidget* getWidget(QWidget* parent, const std::int32_t& widgetFlags) override {
@@ -62,9 +60,8 @@ public:
 
     protected:
         SettingsAction& _settingsAction;
-
-        friend class SettingsAction;
     };
+
 
 
 protected:
