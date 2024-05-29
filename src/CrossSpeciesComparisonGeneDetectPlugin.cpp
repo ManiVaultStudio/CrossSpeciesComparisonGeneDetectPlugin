@@ -77,7 +77,47 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     getWidget().setLayout(layout);
 
-    modifyTableData();
+
+
+
+
+
+    QStandardItemModel* model = new QStandardItemModel(4, 4, this);
+    //QStandardItemModel* model = variant.value<QStandardItemModel*>();
+    // 
+    // 
+    ////add header 
+    //model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
+    //model->setHorizontalHeaderItem(1, new QStandardItem("Variance"));
+    //int numOfSpecies = 25;
+    //for (int i=0+2;i< numOfSpecies+2;i++)
+    //{
+    //    model->setHorizontalHeaderItem(i, new QStandardItem(QString("Mean_Species") + QString::number(i)));
+    //}
+
+    ////add dummy data
+    ////model->setItem(0, 0, new QStandardItem("Gene1"));
+    ////model->setItem(0, 1, new QStandardItem("0.5"));
+    ////model->setItem(0, 2, new QStandardItem("0.1"));
+    ////model->setItem(0, 3, new QStandardItem("0.2"));
+
+    ////model->setItem(1, 0, new QStandardItem("Gene2"));
+    ////model->setItem(1, 1, new QStandardItem("0.6"));
+    ////model->setItem(1, 2, new QStandardItem("0.2"));
+    ////model->setItem(1, 3, new QStandardItem("0.3"));
+
+    ////model->setItem(2, 0, new QStandardItem("Gene3"));
+    ////model->setItem(2, 1, new QStandardItem("0.7"));
+    ////model->setItem(2, 2, new QStandardItem("0.3"));
+    ////model->setItem(2, 3, new QStandardItem("0.4"));
+
+    ////model->setItem(3, 0, new QStandardItem("Gene4"));
+    ////model->setItem(3, 1, new QStandardItem("0.8"));
+    ////model->setItem(3, 2, new QStandardItem("0.4"));
+    ////model->setItem(3, 3, new QStandardItem("0.5"));
+
+
+    modifyTableData(model);
     //layout->addWidget(_currentDatasetNameLabel);
 
     // Apply the layout
@@ -160,46 +200,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
 }
 
-void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
+void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData(QStandardItemModel* model)
 {
-    QStandardItemModel* model = new QStandardItemModel(4, 4, this);
-
-    //add header 
-    model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
-    model->setHorizontalHeaderItem(1, new QStandardItem("Variance"));
-    int numOfSpecies = 25;
-    for (int i=0+2;i< numOfSpecies+2;i++)
-    {
-        model->setHorizontalHeaderItem(i, new QStandardItem(QString("Mean_Species") + QString::number(i)));
-    }
-    
-
-
-    //add dummy data
-    //model->setItem(0, 0, new QStandardItem("Gene1"));
-    //model->setItem(0, 1, new QStandardItem("0.5"));
-    //model->setItem(0, 2, new QStandardItem("0.1"));
-    //model->setItem(0, 3, new QStandardItem("0.2"));
-
-    //model->setItem(1, 0, new QStandardItem("Gene2"));
-    //model->setItem(1, 1, new QStandardItem("0.6"));
-    //model->setItem(1, 2, new QStandardItem("0.2"));
-    //model->setItem(1, 3, new QStandardItem("0.3"));
-
-    //model->setItem(2, 0, new QStandardItem("Gene3"));
-    //model->setItem(2, 1, new QStandardItem("0.7"));
-    //model->setItem(2, 2, new QStandardItem("0.3"));
-    //model->setItem(2, 3, new QStandardItem("0.4"));
-
-    //model->setItem(3, 0, new QStandardItem("Gene4"));
-    //model->setItem(3, 1, new QStandardItem("0.8"));
-    //model->setItem(3, 2, new QStandardItem("0.4"));
-    //model->setItem(3, 3, new QStandardItem("0.5"));
-
-
-
-
-    _tableView->setModel(model);
+        _tableView->setModel(model);
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)

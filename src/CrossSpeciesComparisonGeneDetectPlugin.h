@@ -37,7 +37,7 @@ public:
     
     /** This function is called by the core after the view plugin has been created */
     void init() override;
-    void modifyTableData();
+    void modifyTableData(QStandardItemModel* model);
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
