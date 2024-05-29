@@ -13,17 +13,10 @@ using namespace mv;
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _tableView()
-    //_dropWidget(nullptr),
-    //_points(),
-   // _currentDatasetName(),
-   // _currentDatasetNameLabel(new QLabel())
+    _tableView(),
+    _settingsAction(*this)
 {
-    // This line is mandatory if drag and drop behavior is required
-    //_currentDatasetNameLabel->setAcceptDrops(true);
 
-    // Align text in the center
-    //_currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::init()
@@ -31,10 +24,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
+    const auto updateSelectedGene = [this]() -> void
+        {
+
+
+        };
+
+    connect(&_settingsAction.getSelectedGeneAction(), &StringAction::stringChanged, this, updateSelectedGene);
+
+    const auto updateTableModel = [this]() -> void
+        {
+            modifyTableData();
+
+        };
+
+    connect(&_settingsAction.getTableModelAction(), &VariantAction::variantChanged, this, updateTableModel);
 
     _tableView = new QTableView();
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    //add more formatting to the table view
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     _tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     _tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -73,6 +80,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
 
+    layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
     layout->addWidget(_tableView);
 
     getWidget().setLayout(layout);
@@ -117,7 +125,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     ////model->setItem(3, 3, new QStandardItem("0.5"));
 
 
-    modifyTableData(model);
+   
     //layout->addWidget(_currentDatasetNameLabel);
 
     // Apply the layout
@@ -200,9 +208,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
 }
 
-void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData(QStandardItemModel* model)
+void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
+    auto variant = _settingsAction.getTableModelAction().getVariant();
+    // variant to QStandardItemModel
+    QStandardItemModel* model = variant.value<QStandardItemModel*>();
+    if (model != nullptr) {
         _tableView->setModel(model);
+    }
+    else {
+        // Handle the case where model is null
+        qDebug() << "Model is null";
+        _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+    }
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
