@@ -71,8 +71,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //show a thin x and y axis scrollbar
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-
-
+    _tableView->sortByColumn(1, Qt::DescendingOrder);
 
     layout->addWidget(_tableView);
 
@@ -167,30 +166,35 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
     //add header 
     model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
-    model->setHorizontalHeaderItem(1, new QStandardItem("Mean"));
-    model->setHorizontalHeaderItem(2, new QStandardItem("Species variance"));
-    model->setHorizontalHeaderItem(3, new QStandardItem("Cluster variance"));
+    model->setHorizontalHeaderItem(1, new QStandardItem("Variance"));
+    int numOfSpecies = 25;
+    for (int i=0+2;i< numOfSpecies+2;i++)
+    {
+        model->setHorizontalHeaderItem(i, new QStandardItem(QString("Mean_Species") + QString::number(i)));
+    }
+    
+
 
     //add dummy data
-    model->setItem(0, 0, new QStandardItem("Gene1"));
-    model->setItem(0, 1, new QStandardItem("0.5"));
-    model->setItem(0, 2, new QStandardItem("0.1"));
-    model->setItem(0, 3, new QStandardItem("0.2"));
+    //model->setItem(0, 0, new QStandardItem("Gene1"));
+    //model->setItem(0, 1, new QStandardItem("0.5"));
+    //model->setItem(0, 2, new QStandardItem("0.1"));
+    //model->setItem(0, 3, new QStandardItem("0.2"));
 
-    model->setItem(1, 0, new QStandardItem("Gene2"));
-    model->setItem(1, 1, new QStandardItem("0.6"));
-    model->setItem(1, 2, new QStandardItem("0.2"));
-    model->setItem(1, 3, new QStandardItem("0.3"));
+    //model->setItem(1, 0, new QStandardItem("Gene2"));
+    //model->setItem(1, 1, new QStandardItem("0.6"));
+    //model->setItem(1, 2, new QStandardItem("0.2"));
+    //model->setItem(1, 3, new QStandardItem("0.3"));
 
-    model->setItem(2, 0, new QStandardItem("Gene3"));
-    model->setItem(2, 1, new QStandardItem("0.7"));
-    model->setItem(2, 2, new QStandardItem("0.3"));
-    model->setItem(2, 3, new QStandardItem("0.4"));
+    //model->setItem(2, 0, new QStandardItem("Gene3"));
+    //model->setItem(2, 1, new QStandardItem("0.7"));
+    //model->setItem(2, 2, new QStandardItem("0.3"));
+    //model->setItem(2, 3, new QStandardItem("0.4"));
 
-    model->setItem(3, 0, new QStandardItem("Gene4"));
-    model->setItem(3, 1, new QStandardItem("0.8"));
-    model->setItem(3, 2, new QStandardItem("0.4"));
-    model->setItem(3, 3, new QStandardItem("0.5"));
+    //model->setItem(3, 0, new QStandardItem("Gene4"));
+    //model->setItem(3, 1, new QStandardItem("0.8"));
+    //model->setItem(3, 2, new QStandardItem("0.4"));
+    //model->setItem(3, 3, new QStandardItem("0.5"));
 
 
 
