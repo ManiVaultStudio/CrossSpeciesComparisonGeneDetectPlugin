@@ -215,14 +215,25 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     auto variant = _settingsAction.getTableModelAction().getVariant();
     // variant to QStandardItemModel
     QStandardItemModel* model = variant.value<QStandardItemModel*>();
-    if (model != nullptr) {
-        _tableView->setModel(model);
+    if (_tableView != nullptr) {
+        if (model != nullptr) {
+            _tableView->setModel(model);
+        }
+        else {
+            // Handle the case where model is null
+            qDebug() << "Model is null";
+            if (_tableView->model() != nullptr) {
+                _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+            }
+            else {
+                qDebug() << "TableView model is null";
+            }
+        }
     }
     else {
-        // Handle the case where model is null
-        qDebug() << "Model is null";
-        _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+        qDebug() << "_tableView is null";
     }
+
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
