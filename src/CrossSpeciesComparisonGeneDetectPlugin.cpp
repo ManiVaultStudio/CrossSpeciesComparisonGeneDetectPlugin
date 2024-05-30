@@ -230,6 +230,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     if (_tableView != nullptr) {
         if (model != nullptr) {
             _tableView->setModel(model);
+            //sort by current selected column in the interface
+            _tableView->sortByColumn(1, Qt::DescendingOrder);
+
         }
         else {
             // Handle the case where model is null
