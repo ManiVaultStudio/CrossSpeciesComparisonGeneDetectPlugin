@@ -3,7 +3,7 @@
 #include <event/Event.h>
 
 #include <DatasetsMimeData.h>
-
+#include <QHeaderView> /
 #include <QDebug>
 #include <QMimeData>
 
@@ -79,6 +79,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
+    //hide _tableView now headers
+    //_tableView->horizontalHeader()->hide();
+    _tableView->verticalHeader()->hide();
+
+    //add row selection color
+    _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
+    //do not highlight header
+    _tableView->horizontalHeader()->setHighlightSections(false);
+    _tableView->verticalHeader()->setHighlightSections(false);
 
     QWidget* widget = new QWidget();
 
@@ -92,7 +101,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
-    QStandardItemModel* model = new QStandardItemModel(4, 4, this);
+    //QStandardItemModel* model = new QStandardItemModel(4, 4, this);
     //QStandardItemModel* model = variant.value<QStandardItemModel*>();
     // 
     // 
