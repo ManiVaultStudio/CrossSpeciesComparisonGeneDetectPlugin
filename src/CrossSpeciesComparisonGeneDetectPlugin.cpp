@@ -85,6 +85,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     //add row selection color
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
+    //do not alternate row color
+    //_tableView->setAlternatingRowColors(false);
+
     //do not highlight header
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
