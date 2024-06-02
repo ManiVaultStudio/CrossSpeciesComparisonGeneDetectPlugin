@@ -43,6 +43,8 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 set(PLUGIN_SOURCES
     src/CrossSpeciesComparisonGeneDetectPlugin.h
     src/CrossSpeciesComparisonGeneDetectPlugin.cpp
+	src/SettingsAction.h
+    src/SettingsAction.cpp
     src/CrossSpeciesComparisonGeneDetectPlugin.json
 )
 

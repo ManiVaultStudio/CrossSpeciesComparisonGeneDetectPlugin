@@ -6,9 +6,8 @@
 #include <widgets/DropWidget.h>
 
 #include <PointData/PointData.h>
-
+#include "SettingsAction.h"
 #include <QWidget>
-
 /** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
 
@@ -37,18 +36,32 @@ public:
     
     /** This function is called by the core after the view plugin has been created */
     void init() override;
-
+    void modifyTableData();
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
      */
     void onDataEvent(mv::DatasetEvent* dataEvent);
 
+    SettingsAction& getSettingsAction() { return _settingsAction; }
+
+public: // Serialization
+
+    /**
+     * Load plugin from variant map
+     * @param Variant map representation of the plugin
+     */
+    Q_INVOKABLE void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save plugin to variant map
+     * @return Variant map representation of the plugin
+     */
+    Q_INVOKABLE QVariantMap toVariantMap() const override;
+
 protected:
-    DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
-    mv::Dataset<Points>   _points;                    /** Points smart pointer */
-    QString                 _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    QTableView           *_tableView;                /** Table view for the data */
+    SettingsAction _settingsAction;
 };
 
 /**
