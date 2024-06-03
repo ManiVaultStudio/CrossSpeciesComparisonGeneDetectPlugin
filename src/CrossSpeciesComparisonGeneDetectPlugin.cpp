@@ -236,6 +236,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     QStandardItemModel* model = variant.value<QStandardItemModel*>();
     if (_tableView != nullptr) {
         if (model != nullptr) {
+            _tableView->setModel(new QStandardItemModel());
             _tableView->setModel(model);
             //sort by current selected column in the interface
             _tableView->sortByColumn(1, Qt::DescendingOrder);
