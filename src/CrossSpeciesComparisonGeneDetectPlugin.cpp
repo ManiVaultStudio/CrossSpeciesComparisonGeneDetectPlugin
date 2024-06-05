@@ -301,14 +301,29 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _tableView->setModel(model);
             //sort by current selected column in the interface
             _tableView->sortByColumn(1, Qt::DescendingOrder);
+            //hide column number 3
+            //_tableView->hideColumn(3);
+            //create an array of numbers
+            QVector<int> columns = { 0, 1, 3,4,5,6 };
+            //only show columns that are present in columns
+            for (int i = 0; i < _tableView->model()->columnCount(); i++) {
+                if (!columns.contains(i)) {
+                    _tableView->hideColumn(i);
+                }
+            }
+            emit model->layoutChanged();
         }
         else {
             // Handle the case where model is null
             qDebug() << "Model is null";
             if (_tableView->model() != nullptr) {
                 _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+
+
+
                 _tableView->update();
-                emit model->layoutChanged();
+                           
+               // emit model->layoutChanged();
             }
             else {
                 qDebug() << "TableView model is null";
