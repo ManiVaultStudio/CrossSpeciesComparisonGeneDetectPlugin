@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QPageLayout>
 #include <QWebEngineView>
+#include <CrossSpeciesComparisonTreeData.h>
 using namespace mv;
 using namespace mv::gui;
 
@@ -27,6 +28,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
+    _treeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == CrossSpeciesComparisonTreeType;
+        });
 
 }
 

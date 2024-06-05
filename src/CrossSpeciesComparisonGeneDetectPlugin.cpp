@@ -38,7 +38,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                if (treeDataset.isValid() && _tableView && selectedRow >= 0)
                {
                    QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
-                   qDebug()<< "Tree data: " << treeData;
+                   //qDebug()<< "Tree data: " << treeData;
                    if (!treeData.isEmpty())
                    {
                        
