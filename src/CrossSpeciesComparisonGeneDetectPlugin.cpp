@@ -1,7 +1,7 @@
 #include "CrossSpeciesComparisonGeneDetectPlugin.h"
 
 #include <event/Event.h>
-
+#include <CrossSpeciesComparisonTreeData.h>
 #include <DatasetsMimeData.h>
 #include <QHeaderView> 
 #include <QDebug>
@@ -25,6 +25,37 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
+    const auto updateSelectedRowIndex = [this]() -> void
+        {
+
+            if (_settingsAction.getTreeDatasetAction().getCurrentDataset().isValid())
+            {
+                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getTreeDatasetAction().getCurrentDataset().getDatasetId());
+              
+               int selectedRow= _settingsAction.getSelectedRowIndexAction().getString().toInt();
+
+               if (treeDataset.isValid() && _tableView && selectedRow >= 0)
+               {
+                   QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
+                   qDebug()<< "Tree data: " << treeData;
+                   if (!treeData.isEmpty())
+                   {
+                       
+                       QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                       if (!valueStringReference.isEmpty())
+                       {
+                           treeDataset->setTreeData(valueStringReference);
+                           events().notifyDatasetDataChanged(treeDataset);
+                       }
+                   }
+               }
+
+
+            }
+        };
+
+    connect(&_settingsAction.getSelectedRowIndexAction(), &StringAction::stringChanged, this, updateSelectedRowIndex);
+
     const auto updateSelectedGene = [this]() -> void
         {
 
@@ -84,8 +115,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //when a row is clicked, print the value of the first column of the row
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
-        qDebug() << "Row clicked: " << index.row();
-        qDebug() << "Value: " << firstColumnIndex.data().toString();
+        auto gene = firstColumnIndex.data().toString();
+       _settingsAction.getSelectedGeneAction().setString(gene);
+       _settingsAction.getSelectedRowIndexAction().setString(QString::number(index.row()));
         //emit rowClicked(index.row());
         });
 
@@ -244,6 +276,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
 }
 
+
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
     auto variant = _settingsAction.getTableModelAction().getVariant();
@@ -341,6 +376,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataE
             break;
     }
 }
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& variantMap)
 {
     ViewPlugin::fromVariantMap(variantMap);
