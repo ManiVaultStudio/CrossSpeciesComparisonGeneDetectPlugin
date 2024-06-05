@@ -293,46 +293,36 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
     auto variant = _settingsAction.getTableModelAction().getVariant();
-    // variant to QStandardItemModel
     QStandardItemModel* model = variant.value<QStandardItemModel*>();
-    if (_tableView != nullptr) {
-        if (model != nullptr) {
-            _tableView->setModel(new QStandardItemModel());
-            _tableView->setModel(model);
-            //sort by current selected column in the interface
-            _tableView->sortByColumn(1, Qt::DescendingOrder);
-            //hide column number 3
-            //_tableView->hideColumn(3);
-            //create an array of numbers
-            QVector<int> columns = { 0, 1, 3,4,5,6 };
-            //only show columns that are present in columns
-            for (int i = 0; i < _tableView->model()->columnCount(); i++) {
-                if (!columns.contains(i)) {
-                    _tableView->hideColumn(i);
-                }
-            }
-            emit model->layoutChanged();
+
+    if (_tableView == nullptr) {
+        qDebug() << "_tableView is null";
+        return;
+    }
+
+    if (model == nullptr) {
+        qDebug() << "Model is null";
+        if (_tableView->model() != nullptr) {
+            _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+            _tableView->update();
         }
         else {
-            // Handle the case where model is null
-            qDebug() << "Model is null";
-            if (_tableView->model() != nullptr) {
-                _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+            qDebug() << "TableView model is null";
+        }
+        return;
+    }
 
+    _tableView->setModel(model);
+    _tableView->sortByColumn(1, Qt::DescendingOrder);
 
-
-                _tableView->update();
-                           
-               // emit model->layoutChanged();
-            }
-            else {
-                qDebug() << "TableView model is null";
-            }
+    QVector<int> columns = { 0, 1, 3,4,5,6 };
+    for (int i = 0; i < _tableView->model()->columnCount(); i++) {
+        if (!columns.contains(i)) {
+            _tableView->hideColumn(i);
         }
     }
-    else {
-        qDebug() << "_tableView is null";
-    }
+    emit model->layoutChanged();
+
 
 }
 
