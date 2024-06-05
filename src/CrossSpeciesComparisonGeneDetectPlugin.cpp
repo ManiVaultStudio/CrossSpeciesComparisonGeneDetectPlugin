@@ -6,6 +6,7 @@
 #include <QHeaderView> 
 #include <QDebug>
 #include <QMimeData>
+#include <QShortcut>
 
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
@@ -80,7 +81,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //the table view should also change scroll with moving up down keys
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     
+    //when a row is clicked, print the value of the first column of the row
+    connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
+        QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
+        qDebug() << "Row clicked: " << index.row();
+        qDebug() << "Value: " << firstColumnIndex.data().toString();
+        //emit rowClicked(index.row());
+        });
 
+    //not working
+    //when esc button is clicked, remove selection from the table
+    //QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), _tableView);
+    //connect(shortcut, &QShortcut::activated, [this]() {
+    //    _tableView->clearSelection();
+    //    });
+//not working
 
     //show a thin x and y axis scrollbar
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
