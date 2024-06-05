@@ -15,7 +15,8 @@ using namespace mv;
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _tableView(),
-    _settingsAction(*this)
+    _settingsAction(*this),
+    _toolbarAction(this, "Toolbar")
 {
 
 }
@@ -51,6 +52,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                }
 
 
+            }
+            else
+            {
+                qDebug() << "Tree dataset is not valid";
             }
         };
 
@@ -148,7 +153,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     QWidget* widget = new QWidget();
 
-    layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
+
+    _toolbarAction.addAction(&_settingsAction.getTreeDatasetAction(), 1);
+
+    layout->addWidget(_toolbarAction.createWidget(&getWidget()));
+
+
+    //layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
     layout->addWidget(_tableView);
 
     getWidget().setLayout(layout);
