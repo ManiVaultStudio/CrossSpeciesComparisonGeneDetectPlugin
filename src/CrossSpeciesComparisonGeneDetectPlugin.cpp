@@ -141,6 +141,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //hide _tableView now headers
     //_tableView->horizontalHeader()->hide();
     _tableView->verticalHeader()->hide();
+    //show full cell value on hover for each cell in table view
+    _tableView->setMouseTracking(true);
+    _tableView->setToolTipDuration(10000);
+    //set header to bold
+    QFont font = _tableView->horizontalHeader()->font();
+    font.setBold(true);
+    _tableView->horizontalHeader()->setFont(font);
+       
 
     //add row selection color
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
@@ -315,7 +323,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     _tableView->setModel(model);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
 
-    QVector<int> columns = { 0, 1, 3,4,5,6 };
+    QVector<int> columns = { 0, 1, 3,4,5,6,7 };
     for (int i = 0; i < _tableView->model()->columnCount(); i++) {
         if (!columns.contains(i)) {
             _tableView->hideColumn(i);
