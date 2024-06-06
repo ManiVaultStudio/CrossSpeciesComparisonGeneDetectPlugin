@@ -1,11 +1,12 @@
 #include "CrossSpeciesComparisonGeneDetectPlugin.h"
 
 #include <event/Event.h>
-
+#include <CrossSpeciesComparisonTreeData.h>
 #include <DatasetsMimeData.h>
 #include <QHeaderView> 
 #include <QDebug>
 #include <QMimeData>
+#include <QShortcut>
 
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
@@ -14,7 +15,8 @@ using namespace mv;
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _tableView(),
-    _settingsAction(*this)
+    _settingsAction(*this),
+    _toolbarAction(this, "Toolbar")
 {
 
 }
@@ -24,6 +26,41 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
+    const auto updateSelectedRowIndex = [this]() -> void
+        {
+
+            if (_settingsAction.getTreeDatasetAction().getCurrentDataset().isValid())
+            {
+                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getTreeDatasetAction().getCurrentDataset().getDatasetId());
+              
+               int selectedRow= _settingsAction.getSelectedRowIndexAction().getString().toInt();
+
+               if (treeDataset.isValid() && _tableView && selectedRow >= 0)
+               {
+                   QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
+                   //qDebug()<< "Tree data: " << treeData;
+                   if (!treeData.isEmpty())
+                   {
+                       
+                       QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                       if (!valueStringReference.isEmpty())
+                       {
+                           treeDataset->setTreeData(valueStringReference);
+                           events().notifyDatasetDataChanged(treeDataset);
+                       }
+                   }
+               }
+
+
+            }
+            else
+            {
+                qDebug() << "Tree dataset is not valid";
+            }
+        };
+
+    connect(&_settingsAction.getSelectedRowIndexAction(), &StringAction::stringChanged, this, updateSelectedRowIndex);
+
     const auto updateSelectedGene = [this]() -> void
         {
 
@@ -80,7 +117,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //the table view should also change scroll with moving up down keys
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     
+    //when a row is clicked, print the value of the first column of the row
+    connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
+        QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
+        auto gene = firstColumnIndex.data().toString();
+       _settingsAction.getSelectedGeneAction().setString(gene);
+       _settingsAction.getSelectedRowIndexAction().setString(QString::number(index.row()));
+        //emit rowClicked(index.row());
+        });
 
+    //not working
+    //when esc button is clicked, remove selection from the table
+    //QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), _tableView);
+    //connect(shortcut, &QShortcut::activated, [this]() {
+    //    _tableView->clearSelection();
+    //    });
+//not working
 
     //show a thin x and y axis scrollbar
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -101,7 +153,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     QWidget* widget = new QWidget();
 
-    layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
+
+    _toolbarAction.addAction(&_settingsAction.getTreeDatasetAction(), 1);
+
+    layout->addWidget(_toolbarAction.createWidget(&getWidget()));
+
+
+    //layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
     layout->addWidget(_tableView);
 
     getWidget().setLayout(layout);
@@ -229,34 +287,42 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
 }
 
+
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
     auto variant = _settingsAction.getTableModelAction().getVariant();
-    // variant to QStandardItemModel
     QStandardItemModel* model = variant.value<QStandardItemModel*>();
-    if (_tableView != nullptr) {
-        if (model != nullptr) {
-            _tableView->setModel(new QStandardItemModel());
-            _tableView->setModel(model);
-            //sort by current selected column in the interface
-            _tableView->sortByColumn(1, Qt::DescendingOrder);
+
+    if (_tableView == nullptr) {
+        qDebug() << "_tableView is null";
+        return;
+    }
+
+    if (model == nullptr) {
+        qDebug() << "Model is null";
+        if (_tableView->model() != nullptr) {
+            _tableView->model()->removeRows(0, _tableView->model()->rowCount());
+            _tableView->update();
         }
         else {
-            // Handle the case where model is null
-            qDebug() << "Model is null";
-            if (_tableView->model() != nullptr) {
-                _tableView->model()->removeRows(0, _tableView->model()->rowCount());
-                _tableView->update();
-                emit model->layoutChanged();
-            }
-            else {
-                qDebug() << "TableView model is null";
-            }
+            qDebug() << "TableView model is null";
+        }
+        return;
+    }
+
+    _tableView->setModel(model);
+    _tableView->sortByColumn(1, Qt::DescendingOrder);
+
+    QVector<int> columns = { 0, 1, 3,4,5,6 };
+    for (int i = 0; i < _tableView->model()->columnCount(); i++) {
+        if (!columns.contains(i)) {
+            _tableView->hideColumn(i);
         }
     }
-    else {
-        qDebug() << "_tableView is null";
-    }
+    emit model->layoutChanged();
+
 
 }
 
@@ -326,6 +392,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataE
             break;
     }
 }
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& variantMap)
 {
     ViewPlugin::fromVariantMap(variantMap);

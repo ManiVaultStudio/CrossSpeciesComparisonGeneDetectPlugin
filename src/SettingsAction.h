@@ -82,7 +82,10 @@ public: // Action getters
 
     VariantAction& getTableModelAction() { return _tableModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
+    StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
+    DatasetPickerAction& getTreeDatasetAction() { return _treeDataset; }
     OptionSelectionAction& getOptionSelectionAction() { return _optionSelectionAction; }
+
 
 public: // Serialization
 
@@ -102,5 +105,8 @@ protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
     VariantAction                 _tableModel;
     StringAction                  _selectedGene;
+    DatasetPickerAction          _treeDataset;
+    StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
+    
 };

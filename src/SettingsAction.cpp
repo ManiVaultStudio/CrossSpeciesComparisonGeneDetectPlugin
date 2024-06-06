@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QPageLayout>
 #include <QWebEngineView>
+#include <CrossSpeciesComparisonTreeData.h>
 using namespace mv;
 using namespace mv::gui;
 
@@ -12,6 +13,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _crossSpeciesComparisonGeneDetectPlugin(CrossSpeciesComparisonGeneDetectPlugin),
     _tableModel(this, "Table Model"),
     _selectedGene(this, "Selected Gene"),
+    _treeDataset(this, "Tree Dataset"),
+    _selectedRowIndex(this, "Selected Row Index"),
     _optionSelectionAction(*this)
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -20,6 +23,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
+
+    _treeDataset.setSerializationName("CSCGDV:Tree Dataset");
+    _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
+    _selectedRowIndex.setDisabled(true);
+    _selectedRowIndex.setString("");
+    _treeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == CrossSpeciesComparisonTreeType;
+        });
 
 }
 
@@ -40,6 +51,7 @@ inline SettingsAction::OptionSelectionAction::OptionSelectionAction(SettingsActi
     setIcon(Application::getIconFont("FontAwesome").getIcon("wrench"));
     addAction(&_settingsAction.getTableModelAction());
     addAction(&_settingsAction.getSelectedGeneAction());
+    addAction(&_settingsAction.getTreeDatasetAction());
 }
 
 
@@ -49,6 +61,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 
     _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
+    _treeDataset.fromParentVariantMap(variantMap);
+    _selectedRowIndex.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -57,6 +71,8 @@ QVariantMap SettingsAction::toVariantMap() const
 
     _tableModel.insertIntoVariantMap(variantMap);
     _selectedGene.insertIntoVariantMap(variantMap);
+    _treeDataset.insertIntoVariantMap(variantMap);
+    _selectedRowIndex.insertIntoVariantMap(variantMap);
 
     return variantMap;
 }
