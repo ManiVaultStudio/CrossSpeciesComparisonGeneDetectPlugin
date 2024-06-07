@@ -93,6 +93,14 @@ public: // Action getters
     DatasetPickerAction& getHierarchyBottomClusterDataset() { return _hierarchyBottomClusterDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
     VariantAction& getSelectedClusterNames() { return _selectedClusterNamesVariant; }
+    VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
+    IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
+    double* condensedDistanceMatrix(std::vector<float>& items);
+    std::string mergeToNewick(int* merge, int numOfLeaves);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames);
+private:
+    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
 
 public: // Serialization
 
@@ -126,5 +134,6 @@ protected:
 
     std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _selectedClusterNamesVariant;
-    
+    VariantAction           _filteredGeneNamesVariant;
+    IntegralAction          _topNGenesFilter;
 };

@@ -47,18 +47,31 @@ set(PLUGIN_SOURCES
     src/SettingsAction.cpp
     src/CrossSpeciesComparisonGeneDetectPlugin.json
 )
+set(LIBS
+    src/lib/Clustering/fastcluster.cpp
+	src/lib/Clustering/fastcluster.h
+	src/lib/Clustering/fastcluster_dm.h
+	src/lib/Clustering/fastcluster_R_dm.h
+	src/lib/JSONnlohmann/json.hpp
+	src/lib/JSONnlohmann/json_fwd.hpp
+	src/lib/Distance/annoylib.h
+	src/lib/Distance/kissrandom.h
+	src/lib/Distance/mman.h
+	src/lib/NewickComparator/newick_comparator.h
+)
 
 set(PLUGIN_MOC_HEADERS
     src/CrossSpeciesComparisonGeneDetectPlugin.h
 )
 
 source_group( Plugin FILES ${PLUGIN_SOURCES})
+source_group( LibFiles FILES ${LIBS})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS})
 
 # -----------------------------------------------------------------------------
 # Target include directories
