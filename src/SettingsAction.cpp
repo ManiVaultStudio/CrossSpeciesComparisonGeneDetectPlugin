@@ -237,6 +237,41 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
        
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
 
+    const auto updateMainPointsDataset = [this]() -> void {
+
+        if (_mainPointsDataset.getCurrentDataset().isValid())
+        {
+            auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+            auto dimensions = fullDataset->getNumDimensions();
+            if (dimensions>0)
+            {
+                _topNGenesFilter.setMinimum(0);
+                _topNGenesFilter.setMaximum(dimensions);
+
+                _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
+
+            }
+            else
+
+            {
+                _topNGenesFilter.setMinimum(0);
+                _topNGenesFilter.setMaximum(0);
+                _topNGenesFilter.setValue(0);
+            }
+
+        }
+        else
+        {
+            _topNGenesFilter.setMinimum(0);
+            _topNGenesFilter.setMaximum(0);
+            _topNGenesFilter.setValue(0);
+            
+        }
+
+ };
+
+    connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
+
 
 }
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
@@ -881,7 +916,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedRowIndex.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
-
+    _topNGenesFilter.fromVariantMap(variantMap);
 
 }
 
@@ -897,7 +932,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _referenceTreeDataset.insertIntoVariantMap(variantMap);
     _mainPointsDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
-
+    _topNGenesFilter.insertIntoVariantMap(variantMap);
 
     return variantMap;
 }
