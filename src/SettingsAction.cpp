@@ -13,7 +13,8 @@
 #include "lib/JSONnlohmann/json.hpp"
 #include "lib/Clustering/fastcluster.h"
 #include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
-
+#include <sstream>
+#include <stack>
 using namespace mv;
 using namespace mv::gui;
 
@@ -44,6 +45,27 @@ Statistics calculateStatistics(const std::vector<float>& numbers) {
 
     return { mean, variance, stdDeviation };
 }
+std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>& species) {
+    std::string newick;
+    if (node.contains("children")) {
+        newick += "(";
+        for (const auto& child : node["children"]) {
+            newick += jsonToNewick(child, species) + ",";
+        }
+        newick = newick.substr(0, newick.size() - 1);  // Remove trailing comma
+        newick += ")";
+    }
+    if (node.contains("name")) {
+        std::string nodeName = node["name"].get<std::string>();
+        auto it = std::find_if(species.begin(), species.end(), [&nodeName](const QString& str) {
+            return str.compare(QString::fromStdString(nodeName)) == 0;
+            });
+        if (it != species.end()) {
+            newick += std::to_string(std::distance(species.begin(), it) + 1);  // Indices start from 1
+        }
+    }
+    return newick;
+}
 bool areSameIgnoreOrder(const QStringList& list1, const QStringList& list2) {
     if (list1.size() != list2.size()) {
         return false;
@@ -69,11 +91,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _startComputationTriggerAction(this, "Compute"),
     _referenceTreeDataset(this, "Reference Tree Dataset"),
     _mainPointsDataset(this, "Main Points Dataset"),
-    _hierarchyBottomClusterDataset(this, "Hierarchy Bottom Cluster Dataset"),
-    _hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
-    _hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
+    //_hierarchyBottomClusterDataset(this, "Hierarchy Bottom Cluster Dataset"),
+    //_hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
+    //_hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
     _speciesNamesDataset(this, "Species Names Dataset"),
-    _selectedClusterNamesVariant(this, "Selected Cluster Names"),
+    //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N Genes Filter", 10)
 {
@@ -81,17 +103,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tableModel.setSerializationName("CSCGDV:Table Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
-    _hierarchyTopClusterDataset.setSerializationName("CSCGDV:Hierarchy Top Cluster Dataset");
-    _hierarchyMiddleClusterDataset.setSerializationName("CSCGDV:Hierarchy Middle Cluster Dataset");
-    _hierarchyBottomClusterDataset.setSerializationName("CSCGDV:Hierarchy Bottom Cluster Dataset");
     _speciesNamesDataset.setSerializationName("CSCGDV:Species Names Dataset");
-    _selectedClusterNamesVariant.setSerializationName("CSCGDV:Selected Cluster Names");
     _filteredGeneNamesVariant.setSerializationName("CSCGDV:Filtered Gene Names");
     _topNGenesFilter.setSerializationName("CSCGDV:Top N Genes Filter");
     _filteringTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
     _referenceTreeDataset.setSerializationName("CSCGDV:Reference Tree Dataset");
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
-
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -107,149 +124,113 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _mainPointsDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
-    _hierarchyTopClusterDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
-        return dataset->getDataType() == ClusterType;
-        });
-    _hierarchyMiddleClusterDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
-        return dataset->getDataType() == ClusterType;
-        });
-    _hierarchyBottomClusterDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
-        return dataset->getDataType() == ClusterType;
-        });
     _speciesNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
    
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
-            auto clusterDataset = _hierarchyBottomClusterDataset.getCurrentDataset();
+
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             auto filteringTreeDataset = _filteringTreeDataset.getCurrentDataset();
             bool isValid = false;
             QString datasetId = "";
-            if (referenceTreeDataset.isValid())
-            {
-                datasetId = referenceTreeDataset->getId();
-            }
             _clusterNameToGeneNameToExpressionValue.clear();
             //std::vector<QString> leafnames;
-            if (clusterDataset.isValid() && pointsDataset.isValid() && speciesDataset.isValid())
+            if (pointsDataset.isValid() && speciesDataset.isValid() && referenceTreeDataset.isValid() && filteringTreeDataset.isValid())
             {
-                isValid = clusterDataset->getParent().getDatasetId() == pointsDataset->getId() && speciesDataset->getParent().getDatasetId() == pointsDataset->getId();
+                datasetId = referenceTreeDataset->getId();
+                isValid = speciesDataset->getParent().getDatasetId() == pointsDataset->getId();
 
-                if (isValid)
+                auto allSelectedIndices = pointsDataset->getSelectionIndices();
+                auto rawPointdata = mv::data().getDataset<Points>(pointsDataset->getId());
+                auto allgeneList = rawPointdata->getDimensionNames();
+                if (allSelectedIndices.size() > 0 && allgeneList.size())
                 {
-                    QVariant variant = _selectedClusterNamesVariant.getVariant();
-                    QStringList clusterList = variant.toStringList();
 
-                    QStringList speciesList;
-                    auto speciesData = mv::data().getDataset<Clusters>(speciesDataset->getId());
-                    auto species = speciesData->getClusters();
-                    if (!species.empty())
+
+                    if (isValid)
                     {
-                        for (auto& specie : species)
+                        auto speciesData = mv::data().getDataset<Clusters>(speciesDataset->getId());
+                        auto speciesAll = speciesData->getClusters();
+
+                        if (!speciesAll.empty())
                         {
-                            speciesList.push_back(specie.getName());
-                        }
-                    }
-                    QStringList fullTreeNames;
-                    if (datasetId != "")
-                    {
-                        auto fullTreeData = mv::data().getDataset<CrossSpeciesComparisonTree>(datasetId);
-                        if (fullTreeData.isValid())
-                        {
-                            fullTreeNames = fullTreeData->getTreeLeafNames();
-                        }
-
-                    }
-
-                    mv::Datasets filteredDatasets;
-
-                    if (!speciesList.empty())
-                    {
-
-                        //if(areSameIgnoreOrder(fullTreeNames, speciesList))
-                        {
-                            auto allDatasets = mv::data().getAllDatasets({ PointType });
-                            for (const auto& dataset : allDatasets)
+                            for (auto& species : speciesAll)
                             {
-                                if (speciesList.contains(dataset->getGuiName()) && dataset->getDataType() == PointType)
-                                {
-                                    filteredDatasets.push_back(dataset);
-                                }
-                            }
-                        }
-                    }
-                    if (!filteredDatasets.empty())
-                    {
+                                auto speciesIndices = species.getIndices();
+                                auto speciesName = species.getName();
+                                //indices overlap between  speciesIndices and allSelectedIndices
+                                std::vector<int> commonSelectedIndices;
 
-                        for (const auto& dataset : filteredDatasets)
-                        {
-                            //qDebug() << dataset->getGuiName();
-                            //leafnames.push_back(dataset->getGuiName());
-                            auto rawData = mv::data().getDataset < Points>(dataset.getDatasetId());
-                            auto dimensionNames = rawData->getDimensionNames();
-                            auto children = rawData->getChildren();
-                            for (auto& child : children)
-                            {
-                                if (child->getGuiName() + "_mainData" == _hierarchyBottomClusterDataset.getCurrentDataset()->getGuiName())
+                                std::set_intersection(allSelectedIndices.begin(), allSelectedIndices.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+
+                                for (int i = 0; i < allgeneList.size(); i++)
                                 {
-                                    auto clustersData = mv::data().getDataset<Clusters>(child->getId());
-                                    auto clusters = clustersData->getClusters();
-                                    if (!clusters.empty())
+                                    auto geneName = allgeneList[i];
+                                    auto geneIndex = { i };
+                                    float meanValue = 0.0;
+                                    if(commonSelectedIndices.size()>0){
+
+                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
+                                    std::vector<float> resultContainerFull(allSelectedIndices.size());
+
+                                    rawPointdata->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
+                                    rawPointdata->populateDataForDimensions(resultContainerFull, geneIndex, allSelectedIndices);
+                                    float shortMean = calculateMean(resultContainerShort);
+                                    float fullMean = calculateMean(resultContainerFull);
+                                    if (fullMean != 0.0)
                                     {
-                                        std::vector<int> clusterIndicesSelected;
-                                        std::vector<int> clusterIndicesFull(rawData->getNumPoints()); //fill it with rawData->getNumPoints()
-                                        std::iota(clusterIndicesFull.begin(), clusterIndicesFull.end(), 0); // Fill the vector with increasing values
-                                        for (auto& cluster : clusters)
-                                        {
-                                            if (clusterList.contains(cluster.getName()))
-                                            {
-                                                auto clusterIndices = cluster.getIndices();
-                                                std::copy(clusterIndices.begin(), clusterIndices.end(), std::back_inserter(clusterIndicesSelected));
-                                            }
-                                        }
-                                        if (!clusterIndicesSelected.empty())
-                                        {
-                                            for (int i = 0; i < dimensionNames.size(); i++)
-                                            {
-                                                std::vector<float> resultContainerShort(clusterIndicesSelected.size());
-                                                std::vector<float> resultContainerFull(clusterIndicesFull.size());
-                                                std::vector<int> dimensionIndex = { i };
-                                                rawData->populateDataForDimensions(resultContainerShort, dimensionIndex, clusterIndicesSelected);
-                                                rawData->populateDataForDimensions(resultContainerFull, dimensionIndex, clusterIndicesFull);
-                                                float shortMean = calculateMean(resultContainerShort);
-                                                float fullMean = calculateMean(resultContainerFull);
-                                                float meanValue = 0.0;
-                                                if (fullMean != 0.0)
-                                                {
-                                                    meanValue = shortMean / fullMean;
-                                                }
-                                                _clusterNameToGeneNameToExpressionValue[dataset->getGuiName()][dimensionNames[i]] = meanValue;
-                                            }
-                                        }
+                                        meanValue = shortMean / fullMean;
                                     }
                                 }
+
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName]=meanValue;
+                                }
+
+
+
+
                             }
+
+
+
+                            QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), datasetId, 1.0);
+
+                            if (!geneListTable.isNull())
+                            {
+                                //_filteredGeneNamesVariant.setVariant(geneListTable);
+                                _tableModel.setVariant(geneListTable);
+                            }
+                            else
+                            {
+                                qDebug() << "QVariant empty";
+                            }
+
+
+
                         }
                     }
+
+                    else
+                    {
+                        qDebug() << "Invalid child datasets";
+                    }
+
+
+                }
+                else
+                {
+                    qDebug() << "No points selected or no dimensions present";
                 }
             }
 
-            QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), datasetId, 1.0);
-
-            if (!geneListTable.isNull())
-            {
-                _filteredGeneNamesVariant.setVariant(geneListTable);
-            }
             else
             {
-                qDebug() << "No data found";
+                qDebug() << "Invalid datasets";
             }
-
-
 
 
         };
@@ -742,6 +723,119 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     return QVariant::fromValue(model);
 
 }
+QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames)
+{
+    int i = 0;
+    std::string jsonString = "";
+    std::stringstream jsonStream;
+    std::string newick = tree.toStdString();
+    while (i < newick.size()) {
+        if (newick[i] == '(') {
+            jsonStream << "{\n\"children\": [";
+            i++;
+        }
+        else if (newick[i] == ',') {
+            jsonStream << ",";
+            i++;
+        }
+        else if (newick[i] == ')') {
+            jsonStream << "],\n\"id\": 1,\n\"score\": 1,\n\"width\": 1\n}";
+            i++;
+        }
+        else if (newick[i] == ';') {
+            break;
+        }
+        else {
+            if (isdigit(newick[i])) {
+                int skip = 1;
+                std::string num = "";
+                for (int j = i; j < newick.size(); j++) {
+                    if (isdigit(newick[j])) {
+                        continue;
+                    }
+                    else {
+                        num = newick.substr(i, j - i);
+
+                        skip = j - i;
+                        break;
+                    }
+                }
+                std::string species = leafnames[(std::stoi(num) - 1)].toStdString();
+                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"name\": \"" << species << "\"\n}";
+                i += skip;
+            }
+        }
+    }
+
+    jsonString = jsonStream.str();
+
+    nlohmann::json json = nlohmann::json::parse(jsonString);
+    std::string jsonStr = json.dump(4);
+    //qDebug()<< "CrossSpeciesComparisonClusterRankPlugin::createJsonTree: jsonStr: " << QString::fromStdString(jsonStr);
+    QString formattedTree = QString::fromStdString(jsonStr);
+
+
+    return  formattedTree;
+}
+
+std::string SettingsAction::mergeToNewick(int* merge, int numOfLeaves) {
+    std::vector<std::string> labels(numOfLeaves);
+    for (int i = 0; i < numOfLeaves; ++i) {
+        labels[i] = std::to_string(i + 1);
+    }
+
+    std::stack<std::string> stack;
+
+    for (int i = 0; i < 2 * (numOfLeaves - 1); i += 2) {
+        int left = merge[i];
+        int right = merge[i + 1];
+
+        std::string leftStr;
+        if (left < 0) {
+            leftStr = labels[-left - 1];
+        }
+        else {
+            leftStr = stack.top();
+            stack.pop();
+        }
+
+        std::string rightStr;
+        if (right < 0) {
+            rightStr = labels[-right - 1];
+        }
+        else {
+            rightStr = stack.top();
+            stack.pop();
+        }
+
+        std::string merged = "(" + leftStr + "," + rightStr + ")";
+        stack.push(merged);
+    }
+
+    return stack.top() + ";";
+}
+
+double* SettingsAction::condensedDistanceMatrix(std::vector<float>& items) {
+    int n = items.size();
+    double* distmat = new double[(n * (n - 1)) / 2];
+    int k = 0;
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            distmat[k] = std::abs(items[i] - items[j]);
+            ++k;
+        }
+    }
+
+    /*std::cout << "Distance matrix: " << std::endl;
+    int index = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            std::cout << "Distance " << i << " value: " << items[i] << " and " << j << " value: " << items[j] << ": " << distmat[index++] << std::endl;
+        }
+    }*/
+    return distmat;
+}
 
 SettingsAction::Widget::Widget(QWidget* parent, SettingsAction* SettingsAction) :
     WidgetActionWidget(parent, SettingsAction)
@@ -783,17 +877,10 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedGene.fromParentVariantMap(variantMap);
    _startComputationTriggerAction.fromParentVariantMap(variantMap);
    _filteringTreeDataset.fromParentVariantMap(variantMap);
-   _filteringTreeDataset.fromParentVariantMap(variantMap);
    _referenceTreeDataset.fromParentVariantMap(variantMap);
     _selectedRowIndex.fromParentVariantMap(variantMap);
-    _startComputationTriggerAction.fromParentVariantMap(variantMap);
-    _referenceTreeDataset.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
-    _hierarchyTopClusterDataset.fromParentVariantMap(variantMap);
-    _hierarchyMiddleClusterDataset.fromParentVariantMap(variantMap);
-    _hierarchyBottomClusterDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
-    _selectedClusterNamesVariant.fromParentVariantMap(variantMap);
 
 
 }
@@ -806,16 +893,10 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedGene.insertIntoVariantMap(variantMap);
     _startComputationTriggerAction.insertIntoVariantMap(variantMap);
     _filteringTreeDataset.insertIntoVariantMap(variantMap);
-    _referenceTreeDataset.insertIntoVariantMap(variantMap);
     _selectedRowIndex.insertIntoVariantMap(variantMap);
-    _startComputationTriggerAction.insertIntoVariantMap(variantMap);
     _referenceTreeDataset.insertIntoVariantMap(variantMap);
     _mainPointsDataset.insertIntoVariantMap(variantMap);
-    _hierarchyTopClusterDataset.insertIntoVariantMap(variantMap);
-    _hierarchyMiddleClusterDataset.insertIntoVariantMap(variantMap);
-    _hierarchyBottomClusterDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
-    _selectedClusterNamesVariant.insertIntoVariantMap(variantMap);
 
 
     return variantMap;

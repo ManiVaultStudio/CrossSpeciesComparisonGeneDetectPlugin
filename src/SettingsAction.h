@@ -88,11 +88,7 @@ public: // Action getters
     TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
     DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
     DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
-    DatasetPickerAction& getHierarchyTopClusterDataset() { return _hierarchyTopClusterDataset; }
-    DatasetPickerAction& getHierarchyMiddleClusterDataset() { return _hierarchyMiddleClusterDataset; }
-    DatasetPickerAction& getHierarchyBottomClusterDataset() { return _hierarchyBottomClusterDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
-    VariantAction& getSelectedClusterNames() { return _selectedClusterNamesVariant; }
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
     double* condensedDistanceMatrix(std::vector<float>& items);
@@ -127,13 +123,9 @@ protected:
     DatasetPickerAction    _referenceTreeDataset;
 
     DatasetPickerAction    _mainPointsDataset;
-    DatasetPickerAction    _hierarchyTopClusterDataset;
-    DatasetPickerAction    _hierarchyMiddleClusterDataset;
-    DatasetPickerAction    _hierarchyBottomClusterDataset;
     DatasetPickerAction    _speciesNamesDataset;
 
     std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
-    VariantAction           _selectedClusterNamesVariant;
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;
 };
