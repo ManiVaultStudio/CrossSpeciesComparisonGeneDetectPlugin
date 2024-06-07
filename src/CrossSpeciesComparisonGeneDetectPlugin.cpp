@@ -149,7 +149,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
     extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
-    extraOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
     
 
     
@@ -158,6 +157,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsGroup = new HorizontalGroupAction(this, "Trigger");
     mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
     mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
+    mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
 
     mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
