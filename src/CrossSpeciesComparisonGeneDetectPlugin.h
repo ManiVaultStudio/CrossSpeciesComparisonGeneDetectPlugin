@@ -9,6 +9,8 @@
 #include "SettingsAction.h"
 #include <QWidget>
 #include <actions/HorizontalToolbarAction.h>
+#include <actions/VerticalToolbarAction.h>
+#include <actions/ToolbarAction.h>
 /** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
 
@@ -64,7 +66,8 @@ public: // Serialization
 protected:
     QTableView           *_tableView;                /** Table view for the data */
     SettingsAction _settingsAction;
-    HorizontalToolbarAction     _toolbarAction;    // Toolbar action that is shown in the main window
+    //HorizontalToolbarAction     _toolbarAction;    // Toolbar action that is shown in the main window
+    //VerticalToolbarAction         _verticalGroupAction; // Vertical group action that is shown in the main window
 };
 
 /**

@@ -83,9 +83,16 @@ public: // Action getters
     VariantAction& getTableModelAction() { return _tableModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
-    DatasetPickerAction& getTreeDatasetAction() { return _treeDataset; }
+    DatasetPickerAction& getFilteringTreeDatasetAction() { return _filteringTreeDataset; }
     OptionSelectionAction& getOptionSelectionAction() { return _optionSelectionAction; }
-
+    TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
+    DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
+    DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
+    DatasetPickerAction& getHierarchyTopClusterDataset() { return _hierarchyTopClusterDataset; }
+    DatasetPickerAction& getHierarchyMiddleClusterDataset() { return _hierarchyMiddleClusterDataset; }
+    DatasetPickerAction& getHierarchyBottomClusterDataset() { return _hierarchyBottomClusterDataset; }
+    DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
+    VariantAction& getSelectedClusterNames() { return _selectedClusterNamesVariant; }
 
 public: // Serialization
 
@@ -105,8 +112,19 @@ protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
     VariantAction                 _tableModel;
     StringAction                  _selectedGene;
-    DatasetPickerAction          _treeDataset;
+    DatasetPickerAction          _filteringTreeDataset;
     StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
+    TriggerAction              _startComputationTriggerAction;
+    DatasetPickerAction    _referenceTreeDataset;
+
+    DatasetPickerAction    _mainPointsDataset;
+    DatasetPickerAction    _hierarchyTopClusterDataset;
+    DatasetPickerAction    _hierarchyMiddleClusterDataset;
+    DatasetPickerAction    _hierarchyBottomClusterDataset;
+    DatasetPickerAction    _speciesNamesDataset;
+
+    std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
+    VariantAction           _selectedClusterNamesVariant;
     
 };

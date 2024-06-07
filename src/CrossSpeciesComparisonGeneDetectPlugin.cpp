@@ -15,23 +15,20 @@ using namespace mv;
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _tableView(),
-    _settingsAction(*this),
-    _toolbarAction(this, "Toolbar")
+    _settingsAction(*this)
 {
 
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::init()
 {
-    auto layout = new QVBoxLayout();
 
-    layout->setContentsMargins(0, 0, 0, 0);
     const auto updateSelectedRowIndex = [this]() -> void
         {
 
-            if (_settingsAction.getTreeDatasetAction().getCurrentDataset().isValid())
+            if (_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().isValid())
             {
-                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getTreeDatasetAction().getCurrentDataset().getDatasetId());
+                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
               
                int selectedRow= _settingsAction.getSelectedRowIndexAction().getString().toInt();
 
@@ -111,188 +108,69 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setMinimumSize(QSize(0, 0));
     _tableView->setMaximumSize(QSize(16777215, 16777215));
     _tableView->setBaseSize(QSize(0, 0));
-
-    //u8se keybrard arrows for changing rows
     _tableView->setFocusPolicy(Qt::StrongFocus);
-    //the table view should also change scroll with moving up down keys
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     
-    //when a row is clicked, print the value of the first column of the row
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
        _settingsAction.getSelectedGeneAction().setString(gene);
        _settingsAction.getSelectedRowIndexAction().setString(QString::number(index.row()));
-        //emit rowClicked(index.row());
         });
-
-    //not working
-    //when esc button is clicked, remove selection from the table
-    //QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), _tableView);
-    //connect(shortcut, &QShortcut::activated, [this]() {
-    //    _tableView->clearSelection();
-    //    });
-//not working
-
-    //show a thin x and y axis scrollbar
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
-    //hide _tableView now headers
-    //_tableView->horizontalHeader()->hide();
     _tableView->verticalHeader()->hide();
-    //show full cell value on hover for each cell in table view
     _tableView->setMouseTracking(true);
     _tableView->setToolTipDuration(10000);
-    //set header to bold
     QFont font = _tableView->horizontalHeader()->font();
     font.setBold(true);
     _tableView->horizontalHeader()->setFont(font);
-       
-
-    //add row selection color
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
-    //do not alternate row color
-    //_tableView->setAlternatingRowColors(false);
-
-    //do not highlight header
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
 
-    QWidget* widget = new QWidget();
+    auto mainLayout = new QVBoxLayout();
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
 
+    auto mainOptionsLayout = new QHBoxLayout();
 
-    _toolbarAction.addAction(&_settingsAction.getTreeDatasetAction(), 1);
+    auto extraOptionsGroup= new VerticalGroupAction(this,"Settings");
 
-    layout->addWidget(_toolbarAction.createWidget(&getWidget()));
-
-
-    //layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
-    layout->addWidget(_tableView);
-
-    getWidget().setLayout(layout);
-
-
-
-
-
-
-    //QStandardItemModel* model = new QStandardItemModel(4, 4, this);
-    //QStandardItemModel* model = variant.value<QStandardItemModel*>();
-    // 
-    // 
-    ////add header 
-    //model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
-    //model->setHorizontalHeaderItem(1, new QStandardItem("Variance"));
-    //int numOfSpecies = 25;
-    //for (int i=0+2;i< numOfSpecies+2;i++)
-    //{
-    //    model->setHorizontalHeaderItem(i, new QStandardItem(QString("Mean_Species") + QString::number(i)));
-    //}
-
-    ////add dummy data
-    ////model->setItem(0, 0, new QStandardItem("Gene1"));
-    ////model->setItem(0, 1, new QStandardItem("0.5"));
-    ////model->setItem(0, 2, new QStandardItem("0.1"));
-    ////model->setItem(0, 3, new QStandardItem("0.2"));
-
-    ////model->setItem(1, 0, new QStandardItem("Gene2"));
-    ////model->setItem(1, 1, new QStandardItem("0.6"));
-    ////model->setItem(1, 2, new QStandardItem("0.2"));
-    ////model->setItem(1, 3, new QStandardItem("0.3"));
-
-    ////model->setItem(2, 0, new QStandardItem("Gene3"));
-    ////model->setItem(2, 1, new QStandardItem("0.7"));
-    ////model->setItem(2, 2, new QStandardItem("0.3"));
-    ////model->setItem(2, 3, new QStandardItem("0.4"));
-
-    ////model->setItem(3, 0, new QStandardItem("Gene4"));
-    ////model->setItem(3, 1, new QStandardItem("0.8"));
-    ////model->setItem(3, 2, new QStandardItem("0.4"));
-    ////model->setItem(3, 3, new QStandardItem("0.5"));
-
-
-   
-    //layout->addWidget(_currentDatasetNameLabel);
-
-    // Apply the layout
+    extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
+    extraOptionsGroup->addAction(&_settingsAction.getTableModelAction());
+    extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
+    extraOptionsGroup->addAction(&_settingsAction.getSelectedRowIndexAction());
+    extraOptionsGroup->addAction(&_settingsAction.getFilteringTreeDatasetAction());
+    extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
+    extraOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
+    extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getHierarchyTopClusterDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getHierarchyMiddleClusterDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getHierarchyBottomClusterDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getSelectedClusterNames());
     
 
-    //// Instantiate new drop widget
-    //_dropWidget = new DropWidget(_currentDatasetNameLabel);
+    
 
-    //// Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
-    //_dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
 
-    //// Initialize the drop regions
-    //_dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
-    //    // A drop widget can contain zero or more drop regions
-    //    DropWidget::DropRegions dropRegions;
+    auto tempLayout = new QHBoxLayout();
+    auto widget = _settingsAction.getStartComputationTriggerAction().createWidget(&getWidget());
+    widget->setMaximumWidth(120);
+    tempLayout->addWidget(widget);
+    
+    mainOptionsLayout->addLayout(tempLayout);
+    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()));
+    
+    mainLayout->addLayout(mainOptionsLayout);
+    mainLayout->addWidget(_tableView);
 
-    //    const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
+    getWidget().setLayout(mainLayout);
 
-    //    if (datasetsMimeData == nullptr)
-    //        return dropRegions;
 
-    //    if (datasetsMimeData->getDatasets().count() > 1)
-    //        return dropRegions;
 
-    //    // Gather information to generate appropriate drop regions
-    //    const auto dataset = datasetsMimeData->getDatasets().first();
-    //    const auto datasetGuiName = dataset->getGuiName();
-    //    const auto datasetId = dataset->getId();
-    //    const auto dataType = dataset->getDataType();
-    //    const auto dataTypes = DataTypes({ PointType });
-
-    //    // Visually indicate if the dataset is of the wrong data type and thus cannot be dropped
-    //    if (!dataTypes.contains(dataType)) {
-    //        dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
-    //    }
-    //    else {
-
-    //        // Get points dataset from the core
-    //        auto candidateDataset = mv::data().getDataset<Points>(datasetId);
-
-    //        // Accept points datasets drag and drop
-    //        if (dataType == PointType) {
-    //            const auto description = QString("Load %1 into example view").arg(datasetGuiName);
-
-    //            if (_points == candidateDataset) {
-
-    //                // Dataset cannot be dropped because it is already loaded
-    //                dropRegions << new DropWidget::DropRegion(this, "Warning", "Data already loaded", "exclamation-circle", false);
-    //            }
-    //            else {
-
-    //                // Dataset can be dropped
-    //                dropRegions << new DropWidget::DropRegion(this, "Points", description, "map-marker-alt", true, [this, candidateDataset]() {
-    //                    _points = candidateDataset;
-    //                });
-    //            }
-    //        }
-    //    }
-
-    //    return dropRegions;
-    //});
-
-    //// Respond when the name of the dataset in the dataset reference changes
-    //connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
-
-    //    auto newDatasetName = _points->getGuiName();
-
-    //    // Update the current dataset name label
-    //    _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
-
-    //    // Only show the drop indicator when nothing is loaded in the dataset reference
-    //    _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
-    //});
-
-    //// Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
 }
 
 
