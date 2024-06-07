@@ -135,7 +135,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainLayout->setSpacing(0);
 
     auto mainOptionsLayout = new QHBoxLayout();
-
+    mainOptionsLayout->setSpacing(0);
+    mainOptionsLayout->setContentsMargins(0, 0, 0, 0);
     auto extraOptionsGroup= new VerticalGroupAction(this,"Settings");
 
     extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
@@ -156,13 +157,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
 
 
-    auto tempLayout = new QHBoxLayout();
-    auto widget = _settingsAction.getStartComputationTriggerAction().createWidget(&getWidget());
-    widget->setMaximumWidth(120);
-    tempLayout->addWidget(widget);
-    
-    mainOptionsLayout->addLayout(tempLayout);
-    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()));
+    auto mainOptionsGroup = new HorizontalGroupAction(this, "Trigger");
+    mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
+
+    mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
+    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
     
     mainLayout->addLayout(mainOptionsLayout);
     mainLayout->addWidget(_tableView);
