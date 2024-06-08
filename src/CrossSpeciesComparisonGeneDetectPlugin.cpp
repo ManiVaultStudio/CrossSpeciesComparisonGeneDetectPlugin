@@ -57,6 +57,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                         }
                     }
                 }
+                if (selectedRows.size() > 1)
+                {
+                    _settingsAction.getCreateRowMultiSelectTree().setEnabled(true);
+                }
+                else
+                {
+                    _settingsAction.getCreateRowMultiSelectTree().setDisabled(true);
+                }
                 QStringList firstColumnValues;
                 for (int row : selectedRows) {
                     firstColumnValues << _tableView->model()->index(row, 0).data().toString();
@@ -198,6 +206,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
     mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
 
     mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);

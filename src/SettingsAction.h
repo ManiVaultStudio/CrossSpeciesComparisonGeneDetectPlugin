@@ -92,6 +92,7 @@ public: // Action getters
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
     StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
+    TriggerAction& getCreateRowMultiSelectTree() { return _createRowMultiSelectTree; }
     double* condensedDistanceMatrix(std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames);
@@ -130,4 +131,5 @@ protected:
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;
     StringAction           _geneNamesConnection;
+    TriggerAction         _createRowMultiSelectTree;
 };

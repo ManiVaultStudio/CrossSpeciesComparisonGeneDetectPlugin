@@ -88,7 +88,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _filteringTreeDataset(this, "Filtering Tree Dataset"),
     _selectedRowIndex(this, "Selected Row Index"),
     _optionSelectionAction(*this),
-    _startComputationTriggerAction(this, "Compute"),
+    _startComputationTriggerAction(this, "Compute table"),
     _referenceTreeDataset(this, "Reference Tree Dataset"),
     _mainPointsDataset(this, "Main Points Dataset"),
     //_hierarchyBottomClusterDataset(this, "Hierarchy Bottom Cluster Dataset"),
@@ -98,7 +98,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N Genes Filter", 10),
-    _geneNamesConnection(this, "Gene Names Connection")
+    _geneNamesConnection(this, "Gene Names Connection"),
+    _createRowMultiSelectTree(this, "Create Row MultiSelect Tree")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -114,7 +115,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
-
+    _createRowMultiSelectTree.setSerializationName("CSCGDV:Create Row MultiSelect Tree");
+    _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _filteringTreeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
@@ -238,6 +240,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
        
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
+    const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
+        
+        
+        };
+
+    connect(&_createRowMultiSelectTree, &TriggerAction::triggered, this, updateCreateRowMultiSelectTreeTrigger);
 
     const auto updateMainPointsDataset = [this]() -> void {
 
@@ -913,6 +921,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
    _startComputationTriggerAction.fromParentVariantMap(variantMap);
+   _createRowMultiSelectTree.fromParentVariantMap(variantMap);
    _filteringTreeDataset.fromParentVariantMap(variantMap);
    _referenceTreeDataset.fromParentVariantMap(variantMap);
     _selectedRowIndex.fromParentVariantMap(variantMap);
@@ -930,6 +939,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _tableModel.insertIntoVariantMap(variantMap);
     _selectedGene.insertIntoVariantMap(variantMap);
     _startComputationTriggerAction.insertIntoVariantMap(variantMap);
+    _createRowMultiSelectTree.insertIntoVariantMap(variantMap);
     _filteringTreeDataset.insertIntoVariantMap(variantMap);
     _selectedRowIndex.insertIntoVariantMap(variantMap);
     _referenceTreeDataset.insertIntoVariantMap(variantMap);
