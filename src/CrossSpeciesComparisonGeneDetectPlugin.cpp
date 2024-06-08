@@ -30,25 +30,37 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             {
                 auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
               
-               int selectedRow= _settingsAction.getSelectedRowIndexAction().getString().toInt();
+                QStringList selectedRowsStrList = _settingsAction.getSelectedRowIndexAction().getString().split(",");
+                QList<int> selectedRows;
+                for (const QString& str : selectedRowsStrList) {
+                    selectedRows << str.toInt();
+                }
 
-               if (treeDataset.isValid() && _tableView && selectedRow >= 0)
-               {
-                   QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
-                   //qDebug()<< "Tree data: " << treeData;
-                   if (!treeData.isEmpty())
-                   {
-                       
-                       QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
-                       if (!valueStringReference.isEmpty())
-                       {
-                           treeDataset->setTreeData(valueStringReference);
-                           events().notifyDatasetDataChanged(treeDataset);
-                           QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
-                           _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
-                       }
-                   }
-               }
+                if (selectedRows.size()==1)
+                {
+                    int selectedRow = selectedRows[0];
+                    if (treeDataset.isValid() && _tableView && selectedRow >= 0)
+                    {
+                        QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
+                        //qDebug()<< "Tree data: " << treeData;
+                        if (!treeData.isEmpty())
+                        {
+
+                            QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                            if (!valueStringReference.isEmpty())
+                            {
+                                treeDataset->setTreeData(valueStringReference);
+                                events().notifyDatasetDataChanged(treeDataset);
+                                QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
+                                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+
+                }
 
 
             }
@@ -112,13 +124,36 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setBaseSize(QSize(0, 0));
     _tableView->setFocusPolicy(Qt::StrongFocus);
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    
+    _tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
-       _settingsAction.getSelectedGeneAction().setString(gene);
-       _settingsAction.getSelectedRowIndexAction().setString(QString::number(index.row()));
+        _settingsAction.getSelectedGeneAction().setString(gene);
+
+        if (QApplication::keyboardModifiers() & Qt::ShiftModifier) {
+            // If Shift is pressed, add the row to the selection
+            _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        }
+        else {
+            // If Shift is not pressed, select only this row
+            _tableView->selectionModel()->clearSelection();
+            _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        }
+
+        // Get the selected rows and convert them to a string list
+        QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();
+        QStringList selectedRowsStrList;
+        for (const QModelIndex& selectedIndex : selectedRows) {
+            selectedRowsStrList << QString::number(selectedIndex.row());
+        }
+
+        // Join the string list into a single string with comma separation
+        QString selectedRowsStr = selectedRowsStrList.join(",");
+        _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
         });
+
+
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(1, Qt::DescendingOrder);
@@ -131,6 +166,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
+
 
     auto mainLayout = new QVBoxLayout();
     mainLayout->setContentsMargins(0, 0, 0, 0);
