@@ -51,16 +51,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                             {
                                 treeDataset->setTreeData(valueStringReference);
                                 events().notifyDatasetDataChanged(treeDataset);
-                                QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
-                                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
+                                //QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
+                               // _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
                             }
                         }
                     }
                 }
-                else
-                {
-
+                QStringList firstColumnValues;
+                for (int row : selectedRows) {
+                    firstColumnValues << _tableView->model()->index(row, 0).data().toString();
                 }
+                QString firstColumnValue = firstColumnValues.join("$@*@$");
+                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
 
 
             }
