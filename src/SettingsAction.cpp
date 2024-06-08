@@ -97,7 +97,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesNamesDataset(this, "Species Names Dataset"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
-    _topNGenesFilter(this, "Top N Genes Filter", 10)
+    _topNGenesFilter(this, "Top N Genes Filter", 10),
+    _geneNamesConnection(this, "Gene Names Connection")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -109,6 +110,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _filteringTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
     _referenceTreeDataset.setSerializationName("CSCGDV:Reference Tree Dataset");
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
+    _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -917,6 +919,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
     _topNGenesFilter.fromVariantMap(variantMap);
+    _geneNamesConnection.fromParentVariantMap(variantMap);
 
 }
 
@@ -933,6 +936,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _mainPointsDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);
-
+    _geneNamesConnection.insertIntoVariantMap(variantMap);
     return variantMap;
 }

@@ -44,6 +44,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                        {
                            treeDataset->setTreeData(valueStringReference);
                            events().notifyDatasetDataChanged(treeDataset);
+                           QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
+                           _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
                        }
                    }
                }
@@ -149,7 +151,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
     extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
-    
+    extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
 
     
 
