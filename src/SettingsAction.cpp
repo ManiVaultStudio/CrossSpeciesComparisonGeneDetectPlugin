@@ -141,6 +141,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto filteringTreeDataset = _filteringTreeDataset.getCurrentDataset();
             bool isValid = false;
             QString datasetId = "";
+            _geneNamesConnection.setString("");
+
             _clusterNameToGeneNameToExpressionValue.clear();
             //std::vector<QString> leafnames;
             if (pointsDataset.isValid() && speciesDataset.isValid() && referenceTreeDataset.isValid() && filteringTreeDataset.isValid())
