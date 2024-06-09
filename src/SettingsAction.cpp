@@ -246,7 +246,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_filteringTreeDataset.getCurrentDataset().getDatasetId());
 
-            QStringList selectedRowsStrList = _geneNamesConnection.getString().split("$@*@$");
+            QStringList selectedRowsStrList = _geneNamesConnection.getString().split("*%$@*@$%*");
 
 
             if (treeDataset.isValid() && selectedRowsStrList.size() > 0)
