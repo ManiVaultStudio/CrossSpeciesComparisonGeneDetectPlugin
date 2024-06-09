@@ -242,7 +242,38 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
     const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
         
-        
+        if (_filteringTreeDataset.getCurrentDataset().isValid())
+        {
+            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_filteringTreeDataset.getCurrentDataset().getDatasetId());
+
+            QStringList selectedRowsStrList = _geneNamesConnection.getString().split("$@*@$");
+
+
+            if (treeDataset.isValid() && selectedRowsStrList.size() > 0)
+            {
+                //if (speciesSelectedIndicesCounter.size() > 0)
+                {
+                    //QJsonObject valueStringReference = createJsonTree(speciesSelectedIndicesCounter);
+                    //if (!valueStringReference.isEmpty())
+                    {
+                        //treeDataset->setTreeData(valueStringReference);
+                        //events().notifyDatasetDataChanged(treeDataset);
+                        //TODO:: add the tree to the tree dataset
+                    }
+                }
+
+
+            }
+
+
+
+
+        }
+        else
+        {
+            qDebug() << "Tree dataset is not valid";
+        }
+
         };
 
     connect(&_createRowMultiSelectTree, &TriggerAction::triggered, this, updateCreateRowMultiSelectTreeTrigger);
