@@ -949,17 +949,20 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 {
     WidgetAction::fromVariantMap(variantMap);
 
+    _geneNamesConnection.fromParentVariantMap(variantMap);
+    _startComputationTriggerAction.fromParentVariantMap(variantMap);
+    _createRowMultiSelectTree.fromParentVariantMap(variantMap);
     _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
-   _startComputationTriggerAction.fromParentVariantMap(variantMap);
-   _createRowMultiSelectTree.fromParentVariantMap(variantMap);
-   _filteringTreeDataset.fromParentVariantMap(variantMap);
-   _referenceTreeDataset.fromParentVariantMap(variantMap);
-    _selectedRowIndex.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
-    _topNGenesFilter.fromVariantMap(variantMap);
-    _geneNamesConnection.fromParentVariantMap(variantMap);
+    _filteredGeneNamesVariant.fromParentVariantMap(variantMap);
+    _topNGenesFilter.fromParentVariantMap(variantMap);
+    _filteringTreeDataset.fromParentVariantMap(variantMap);
+    _referenceTreeDataset.fromParentVariantMap(variantMap);
+    _selectedRowIndex.fromParentVariantMap(variantMap);
+    
+
 
 }
 
@@ -967,16 +970,20 @@ QVariantMap SettingsAction::toVariantMap() const
 {
     QVariantMap variantMap = WidgetAction::toVariantMap();
 
-    _tableModel.insertIntoVariantMap(variantMap);
-    _selectedGene.insertIntoVariantMap(variantMap);
+    _geneNamesConnection.insertIntoVariantMap(variantMap);
     _startComputationTriggerAction.insertIntoVariantMap(variantMap);
     _createRowMultiSelectTree.insertIntoVariantMap(variantMap);
-    _filteringTreeDataset.insertIntoVariantMap(variantMap);
-    _selectedRowIndex.insertIntoVariantMap(variantMap);
-    _referenceTreeDataset.insertIntoVariantMap(variantMap);
+    _tableModel.insertIntoVariantMap(variantMap);
+    _selectedGene.insertIntoVariantMap(variantMap);
     _mainPointsDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
+    _filteredGeneNamesVariant.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);
-    _geneNamesConnection.insertIntoVariantMap(variantMap);
+    _filteringTreeDataset.insertIntoVariantMap(variantMap);
+    _referenceTreeDataset.insertIntoVariantMap(variantMap);
+    _selectedRowIndex.insertIntoVariantMap(variantMap);
+    
+
+
     return variantMap;
 }
