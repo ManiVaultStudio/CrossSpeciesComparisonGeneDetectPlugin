@@ -359,6 +359,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             // Generate a random color for each cluster
             QColor color(QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256));
             cluster.setColor(color);
+            //cluster.setColor(QColor(Qt::gray));
+
 
             _clusterDataset->getClusters().append(cluster);
         }
