@@ -408,12 +408,23 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
         if (_lowDimTSNEDataset.isValid())
         {
-            auto runningAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running");
+            auto runningAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
+
             if (runningAction)
             {
+                auto perplexityAction= dynamic_cast<IntegralAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/Perplexity"));
+                if (perplexityAction)
+                {
+                    qDebug()<< "Perplexity: Found" ;
+                    perplexityAction->setValue(15);
+                }
+                else
+                {
+                    qDebug() << "Perplexity: Not Found";
+                }
                 if (runningAction->isChecked())
                 {
-                    auto stopAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop");
+                    auto stopAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
                     if (stopAction)
                     {
                         stopAction->trigger();
@@ -459,7 +470,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 }
             }
 
-            auto startAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start");
+            auto startAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
             if (startAction) {
 
                 startAction->trigger();
