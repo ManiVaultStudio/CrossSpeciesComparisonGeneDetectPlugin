@@ -375,6 +375,29 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
         if (_settingsAction.getPerformGeneTableTsneAction().isChecked() && canPerformTSNE)
         {
+            if (model->columnCount()>10)
+            {
+                std::vector<float> allitems;
+
+                allitems.reserve((model->columnCount() - 8)* model->rowCount()); // Reserve space for items
+
+                for (int i = 0; i < model->rowCount(); i++)
+                {
+                    for (int j = 8; j < (model->columnCount() - 8); j++)
+                    {
+                        auto index = model->index(i, j);
+                        float item = index.data().toFloat();
+                        allitems.push_back(item);
+                    }
+                }
+
+
+
+                _pointsDataset->setData(allitems.data(), items.size() / 2, 2);
+                _pointsDataset->setDimensionNames(dimensionNames);
+
+                events().notifyDatasetDataChanged(_pointsDataset);
+            }
 
         
         auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _pointsDataset });
