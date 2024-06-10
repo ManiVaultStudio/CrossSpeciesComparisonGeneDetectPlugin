@@ -367,26 +367,73 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
         events().notifyDatasetDataChanged(_clusterDataset);
 
-        auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-        mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-        mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-        if(scatterplotViewFactory){
-        for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-            if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
-                pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                if (pointDatasetPickerAction) {
-                    pointDatasetPickerAction->setCurrentText("");
-                    pointDatasetPickerAction->setCurrentDataset(_pointsDataset);
-                    colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                    if (colorDatasetPickerAction)
+        
+        auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _pointsDataset });
+        if (!analysisPlugin) {
+            qDebug() << "Could not find create TSNE Analysis";
+            return;
+        }
+
+        if (_lowDimTSNEDataset.isValid())
+        {
+            auto runningAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running");
+            if (runningAction)
+            {
+                if (runningAction->isChecked())
+                {
+                    auto stopAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop");
+                    if (stopAction)
                     {
-                        colorDatasetPickerAction->setCurrentText("");
-                        colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                        stopAction->trigger();
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                    }
+                }
+
+            }
+        }
+
+        if (_lowDimTSNEDataset.isValid())
+        {
+            auto datasetIDLowRem = _lowDimTSNEDataset.getDatasetId();
+            mv::events().notifyDatasetAboutToBeRemoved(_lowDimTSNEDataset);
+            mv::data().removeDataset(_lowDimTSNEDataset);
+            mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
+        }
+        _lowDimTSNEDataset = analysisPlugin->getOutputDataset();
+        if (_lowDimTSNEDataset.isValid())
+        {
+
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+                            pointDatasetPickerAction->setCurrentDataset(_lowDimTSNEDataset);
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                            }
+                        }
                     }
                 }
             }
+
+            auto startAction = _lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start");
+            if (startAction) {
+
+                startAction->trigger();
+
+                analysisPlugin->getOutputDataset()->setSelectionIndices({});
+            }
+
         }
-    }
     }
     else
     {

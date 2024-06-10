@@ -171,7 +171,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 //indices overlap between  speciesIndices and allSelectedIndices
                                 std::vector<int> commonSelectedIndices;
 
+                                std::sort(allSelectedIndices.begin(), allSelectedIndices.end());
+                                std::sort(speciesIndices.begin(), speciesIndices.end());
                                 std::set_intersection(allSelectedIndices.begin(), allSelectedIndices.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+
 
                                 for (int i = 0; i < allgeneList.size(); i++)
                                 {

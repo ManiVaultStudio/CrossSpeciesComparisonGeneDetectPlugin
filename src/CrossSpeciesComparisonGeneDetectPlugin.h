@@ -70,6 +70,7 @@ protected:
     //VerticalToolbarAction         _verticalGroupAction; // Vertical group action that is shown in the main window
     Dataset<Points> _pointsDataset;
     Dataset<Clusters> _clusterDataset;
+    Dataset<Points> _lowDimTSNEDataset;
 };
 
 /**
