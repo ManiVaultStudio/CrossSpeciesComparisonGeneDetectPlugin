@@ -163,6 +163,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         QString selectedRowsStr = selectedRowsStrList.join(",");
         _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
         });
+    //add a lambda function 
 
 
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -307,7 +308,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     for (int i = 0; i < model->rowCount(); i++) {
         auto index1 = model->index(i, 1);
         auto index4 = model->index(i, 4);
-        auto index2 = model->index(i, 2);
+        auto index2 = model->index(i, 3);
 
         if (index1.isValid() && index4.isValid()) {
             bool ok1, ok4;
@@ -333,7 +334,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _pointsDataset = mv::data().createDataset("Points", "GeneSimilarityDataset");
         _pointsDataset->setGroupIndex(8);
         mv::events().notifyDatasetAdded(_pointsDataset);
-        _clusterDataset = mv::data().createDataset("Cluster", "GeneSimilarityClusterDataset");
+        _clusterDataset = mv::data().createDataset("Cluster", "GeneSimilarityClusterDataset", _pointsDataset);
         _clusterDataset->setGroupIndex(8);
         mv::events().notifyDatasetAdded(_clusterDataset);
 
