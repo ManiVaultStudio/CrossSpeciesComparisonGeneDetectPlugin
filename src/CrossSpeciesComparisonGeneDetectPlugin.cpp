@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QMimeData>
 #include <QShortcut>
-
+#include <QSplitter>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -212,9 +212,48 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
     
     mainLayout->addLayout(mainOptionsLayout);
-    mainLayout->addWidget(_tableView);
 
+
+
+    //
+    if (0)
+    {
+        // Create a new QSplitter
+        QSplitter* splitter = new QSplitter();
+
+        // Add _tableView to the splitter
+        splitter->addWidget(_tableView);
+
+        // Create another view
+        QWidget* anotherView = new QWidget();
+        splitter->addWidget(anotherView);
+
+        // Get the total available width
+        int totalWidth = splitter->width();
+
+        // Calculate the width for each widget
+        int widgetWidth = totalWidth / 2; // divide by the number of widgets
+
+        // Set the sizes of the child widgets
+        QList<int> sizes;
+        sizes << widgetWidth << widgetWidth; // adjust these values as needed
+        splitter->setSizes(sizes);
+
+        // Set the splitter as the main widget in your layout
+        mainLayout->addWidget(splitter);
+    }
+    else
+    {
+        mainLayout->addWidget(_tableView);
+    }
+
+
+
+
+    // Set the layout for the widget
     getWidget().setLayout(mainLayout);
+
+
 
 
 

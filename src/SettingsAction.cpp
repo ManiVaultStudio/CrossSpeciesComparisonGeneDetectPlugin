@@ -261,6 +261,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         //treeDataset->setTreeData(valueStringReference);
                         //events().notifyDatasetDataChanged(treeDataset);
                         //TODO:: add the tree to the tree dataset
+/*
+                        QString treeData = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames);
+                        if (!treeData.isEmpty())
+                        {
+
+                            QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                            if (!valueStringReference.isEmpty())
+                            {
+                                treeDataset->setTreeData(valueStringReference);
+                                events().notifyDatasetDataChanged(treeDataset);
+                            }
+                        }
+                        */
+
                     }
                 }
 
