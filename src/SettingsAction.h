@@ -94,6 +94,7 @@ public: // Action getters
     StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
     TriggerAction& getCreateRowMultiSelectTree() { return _createRowMultiSelectTree; }
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
+    IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
 
 
 
@@ -138,4 +139,5 @@ protected:
     StringAction           _geneNamesConnection;
     TriggerAction         _createRowMultiSelectTree;
     ToggleAction            _performGeneTableTsneAction;
+    IntegralAction         _tsnePerplexity;
 };

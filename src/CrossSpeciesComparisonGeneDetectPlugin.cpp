@@ -200,6 +200,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
+    extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
 
 
     
@@ -350,7 +351,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _pointsDataset->setData(items.data(), items.size() / 2, 2);
         _pointsDataset->setDimensionNames(dimensionNames);
         bool canPerformTSNE = false;
-        if ((items.size() / 2)>30)
+        auto perplexityValue = _settingsAction.getTsnePerplexity().getValue();
+        if ((items.size() / 2)> perplexityValue && perplexityValue>0)
         {
             canPerformTSNE = true;
         }
@@ -416,7 +418,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 if (perplexityAction)
                 {
                     qDebug()<< "Perplexity: Found" ;
-                    perplexityAction->setValue(15);
+                    perplexityAction->setValue(perplexityValue);
                 }
                 else
                 {
