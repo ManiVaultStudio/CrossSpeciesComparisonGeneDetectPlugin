@@ -8,6 +8,7 @@
 #include <QMimeData>
 #include <QShortcut>
 #include <QSplitter>
+#include <QRandomGenerator>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -299,6 +300,96 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
     emit model->layoutChanged();
 
+    std::vector<float> items;
+    std::map<QString, std::vector<std::seed_seq::result_type>> clusterMap;
+    items.reserve(2 * model->rowCount()); // Reserve space for items
+
+    for (int i = 0; i < model->rowCount(); i++) {
+        auto index1 = model->index(i, 1);
+        auto index4 = model->index(i, 4);
+        auto index2 = model->index(i, 2);
+
+        if (index1.isValid() && index4.isValid()) {
+            bool ok1, ok4;
+            float item1 = index1.data().toFloat(&ok1);
+            float item4 = index4.data().toFloat(&ok4);
+            if (ok1 && ok4) {
+                items.push_back(item1);
+                items.push_back(item4);
+            }
+        }
+
+        if (index2.isValid()) {
+            QString gene = index2.data().toString();
+            if (!gene.isEmpty()) {
+                clusterMap[gene].push_back(i);
+            }
+        }
+    }
+    std::vector<QString> dimensionNames = { "Variance","Similarity" };
+    if (!_pointsDataset.isValid() || !_clusterDataset.isValid())
+    {
+        
+        _pointsDataset = mv::data().createDataset("Points", "GeneSimilarityDataset");
+        _pointsDataset->setGroupIndex(8);
+        mv::events().notifyDatasetAdded(_pointsDataset);
+        _clusterDataset = mv::data().createDataset("Cluster", "GeneSimilarityClusterDataset");
+        _clusterDataset->setGroupIndex(8);
+        mv::events().notifyDatasetAdded(_clusterDataset);
+
+   }
+
+    
+
+    if (_pointsDataset.isValid() && _clusterDataset.isValid())
+    {
+
+        _pointsDataset->setData(items.data(), items.size() / 2, 2);
+        _pointsDataset->setDimensionNames(dimensionNames);
+
+        events().notifyDatasetDataChanged(_pointsDataset);
+
+        _clusterDataset->getClusters() = QVector<Cluster>();
+        events().notifyDatasetDataChanged(_clusterDataset);
+        for (const auto& [gene, indices] : clusterMap) {
+            Cluster cluster;
+            cluster.setIndices(indices);
+            cluster.setName(gene);
+
+            // Generate a random color for each cluster
+            QColor color(QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256));
+            cluster.setColor(color);
+
+            _clusterDataset->getClusters().append(cluster);
+        }
+        events().notifyDatasetDataChanged(_clusterDataset);
+
+        auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+        mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+        mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+        if(scatterplotViewFactory){
+        for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+            if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                if (pointDatasetPickerAction) {
+                    pointDatasetPickerAction->setCurrentText("");
+                    pointDatasetPickerAction->setCurrentDataset(_pointsDataset);
+                    colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                    if (colorDatasetPickerAction)
+                    {
+                        colorDatasetPickerAction->setCurrentText("");
+                        colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                    }
+                }
+            }
+        }
+    }
+    }
+    else
+    {
+        qDebug() << "Low dimensional dataset is not valid";
+
+    }
 
 }
 
