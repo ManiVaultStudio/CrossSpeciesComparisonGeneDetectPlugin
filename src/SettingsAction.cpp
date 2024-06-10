@@ -99,7 +99,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N Genes Filter", 10),
     _geneNamesConnection(this, "Gene Names Connection"),
-    _createRowMultiSelectTree(this, "Create Row MultiSelect Tree")
+    _createRowMultiSelectTree(this, "Create Row MultiSelect Tree"),
+    _performGeneTableTsneAction(this, "Perform Gene Table TSNE")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -116,6 +117,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
     _createRowMultiSelectTree.setSerializationName("CSCGDV:Create Row MultiSelect Tree");
+    _performGeneTableTsneAction.setSerializationName("CSCGDV:Perform Gene Table TSNE");
+    _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
@@ -980,7 +983,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _filteringTreeDataset.fromParentVariantMap(variantMap);
     _referenceTreeDataset.fromParentVariantMap(variantMap);
     _selectedRowIndex.fromParentVariantMap(variantMap);
-    
+    _performGeneTableTsneAction.fromParentVariantMap(variantMap);
 
 
 }
@@ -1001,7 +1004,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _filteringTreeDataset.insertIntoVariantMap(variantMap);
     _referenceTreeDataset.insertIntoVariantMap(variantMap);
     _selectedRowIndex.insertIntoVariantMap(variantMap);
-    
+    _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
 
 
     return variantMap;

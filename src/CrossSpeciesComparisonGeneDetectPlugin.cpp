@@ -201,6 +201,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
 
+
     
 
 
@@ -209,6 +210,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
     mainOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
+    mainOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
 
     mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
@@ -347,7 +349,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
         _pointsDataset->setData(items.data(), items.size() / 2, 2);
         _pointsDataset->setDimensionNames(dimensionNames);
-
+        bool canPerformTSNE = false;
+        if ((items.size() / 2)>30)
+        {
+            canPerformTSNE = true;
+        }
         events().notifyDatasetDataChanged(_pointsDataset);
 
         _clusterDataset->getClusters() = QVector<Cluster>();
@@ -366,6 +372,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _clusterDataset->getClusters().append(cluster);
         }
         events().notifyDatasetDataChanged(_clusterDataset);
+
+        if (_settingsAction.getPerformGeneTableTsneAction().isChecked() && canPerformTSNE)
+        {
 
         
         auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _pointsDataset });
@@ -413,7 +422,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
+
                             pointDatasetPickerAction->setCurrentDataset(_lowDimTSNEDataset);
+
                             colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
                             if (colorDatasetPickerAction)
                             {
@@ -434,6 +445,35 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             }
 
         }
+
+    }
+        else
+        {
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_pointsDataset);
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
     }
     else
     {
