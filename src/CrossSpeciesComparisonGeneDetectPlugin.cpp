@@ -9,6 +9,7 @@
 #include <QShortcut>
 #include <QSplitter>
 #include <QRandomGenerator>
+#include <QColor>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -270,6 +271,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
+QColor getColorFromValue(int value, int min, int max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    int range = max - min;
+    if (range == 0) return QColor(Qt::gray);
+
+    int blue = 255 * (value - min) / range;
+
+    return QColor(255 - blue, 255 - blue, 255);
+}
+
+
 
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
@@ -330,6 +344,17 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             }
         }
     }
+    //iterate clustermap and get the min and max values
+    int minVal = INT_MAX;
+    int maxVal = INT_MIN;
+    for (const auto& [gene, indices] : clusterMap) {
+        int numberVal = gene.split("/")[0].toInt();
+        if (numberVal) {
+            if (numberVal < minVal) minVal = numberVal;
+            if (numberVal > maxVal) maxVal = numberVal;
+        }
+    }
+
     std::vector<QString> dimensionNames = { "Variance","Similarity" };
     if (!_pointsDataset.isValid() || !_clusterDataset.isValid())
     {
@@ -364,11 +389,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             Cluster cluster;
             cluster.setIndices(indices);
             cluster.setName(gene);
+            int numberVal = gene.split("/")[0].toInt();
+            QColor color;
 
-            // Generate a random color for each cluster
-            QColor color(QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256), QRandomGenerator::global()->bounded(256));
+            if (numberVal) {
+                color = getColorFromValue(numberVal, minVal, maxVal);
+            }
+            else {
+                color = QColor(Qt::gray);
+            }
+
             cluster.setColor(color);
-            //cluster.setColor(QColor(Qt::gray));
+
+ 
+            
 
 
             _clusterDataset->getClusters().append(cluster);
