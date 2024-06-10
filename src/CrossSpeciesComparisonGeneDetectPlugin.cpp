@@ -228,6 +228,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         QWidget* anotherView = new QWidget();
         splitter->addWidget(anotherView);
 
+        // Set stretch factors for the widgets
+        splitter->setStretchFactor(0, 1); // _tableView
+        splitter->setStretchFactor(1, 1); // anotherView
+
         // Get the total available width
         int totalWidth = splitter->width();
 
