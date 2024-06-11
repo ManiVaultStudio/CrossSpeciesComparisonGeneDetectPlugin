@@ -323,9 +323,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateMainPointsDataset = [this]() -> void {
 
+        _clusterGeneMeanExpressionMap.clear();
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
-            _clusterGeneMeanExpressionMap.clear();
+            
             auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
             if (dimensions>0)
