@@ -204,7 +204,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-
+    extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
+    extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
 
     
 
@@ -213,8 +214,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
     mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
-    mainOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+
 
     mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
