@@ -137,6 +137,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setFocusPolicy(Qt::StrongFocus);
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     _tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    //only highlight multiple rows if shiuft is pressed
+    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
@@ -331,9 +333,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             bool ok1, ok4;
             float item1 = index1.data().toFloat(&ok1);
             float item4 = index4.data().toFloat(&ok4);
+            item4= item4 * 100;// change this to a percentage
             if (ok1 && ok4) {
                 items.push_back(item1);
                 items.push_back(item4);
+                //qDebug() << "Item1: " << item1 << " Item4: " << item4;
             }
         }
 
