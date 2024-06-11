@@ -183,6 +183,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 std::sort(speciesIndices.begin(), speciesIndices.end());
                                 std::set_intersection(allSelectedIndices.begin(), allSelectedIndices.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
+                                
+
 
                                 for (int i = 0; i < allgeneList.size(); i++)
                                 {
@@ -192,10 +194,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     if(commonSelectedIndices.size()>0){
 
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
-                                    std::vector<float> resultContainerFull(allSelectedIndices.size());
+                                    std::vector<float> resultContainerFull(speciesIndices.size());
 
                                     rawPointdata->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    rawPointdata->populateDataForDimensions(resultContainerFull, geneIndex, allSelectedIndices);
+                                    rawPointdata->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                                     float shortMean = calculateMean(resultContainerShort);
                                     float fullMean = calculateMean(resultContainerFull);
                                     if (fullMean != 0.0)
