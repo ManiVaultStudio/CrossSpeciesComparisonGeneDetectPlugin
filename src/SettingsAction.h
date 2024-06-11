@@ -129,7 +129,7 @@ protected:
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;
     DatasetPickerAction    _referenceTreeDataset;
-
+    std::map<QString, std::map<QString, float>> _clusterGeneMeanExpressionMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
 

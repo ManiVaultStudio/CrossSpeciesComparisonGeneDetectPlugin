@@ -169,6 +169,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     {
                         auto speciesData = mv::data().getDataset<Clusters>(speciesDataset->getId());
                         auto speciesAll = speciesData->getClusters();
+                        
 
                         if (!speciesAll.empty())
                         {
@@ -191,19 +192,32 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     auto geneName = allgeneList[i];
                                     auto geneIndex = { i };
                                     float meanValue = 0.0;
-                                    if(commonSelectedIndices.size()>0){
+                                    if (commonSelectedIndices.size() > 0) {
 
-                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
-                                    std::vector<float> resultContainerFull(speciesIndices.size());
-
-                                    rawPointdata->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    rawPointdata->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                    float shortMean = calculateMean(resultContainerShort);
-                                    float fullMean = calculateMean(resultContainerFull);
+                                        std::vector<float> resultContainerShort(commonSelectedIndices.size());
+                                        rawPointdata->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
+                                        float shortMean = calculateMean(resultContainerShort);
+                                        float fullMean = 0.0;
+                                        if (_clusterGeneMeanExpressionMap[speciesName].find(geneName) == _clusterGeneMeanExpressionMap[speciesName].end())
+                                        {
+                                            std::vector<float> resultContainerFull(speciesIndices.size());
+                                            rawPointdata->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
+                                            fullMean = calculateMean(resultContainerFull);
+                                            _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                                        }
+                                        else
+                                        {
+                                            fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                        }
+                                    
                                     if (fullMean != 0.0)
                                     {
                                         meanValue = shortMean / fullMean;
                                     }
+                                    //else
+                                    //{
+                                    //    meanValue = 0.0;
+                                    //}
                                 }
 
                                     _clusterNameToGeneNameToExpressionValue[speciesName][geneName]=meanValue;
@@ -311,6 +325,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
+            _clusterGeneMeanExpressionMap.clear();
             auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
             if (dimensions>0)
