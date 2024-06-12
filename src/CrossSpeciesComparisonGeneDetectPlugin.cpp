@@ -169,7 +169,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_make the headers two three lines so that they are fully visible
     _tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     _tableView->horizontalHeader()->setStretchLastSection(true);
-    _tableView->horizontalHeader()->setMinimumSectionSize(60);
+    _tableView->horizontalHeader()->setMinimumSectionSize(50);
     _tableView->horizontalHeader()->setMaximumSectionSize(600);
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->horizontalHeader()->setSortIndicatorShown(true);
