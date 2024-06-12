@@ -166,6 +166,34 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //only highlight multiple rows if shiuft is pressed
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    //_make the headers two three lines so that they are fully visible
+    _tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    _tableView->horizontalHeader()->setStretchLastSection(true);
+    _tableView->horizontalHeader()->setMinimumSectionSize(60);
+    _tableView->horizontalHeader()->setMaximumSectionSize(600);
+    _tableView->horizontalHeader()->setHighlightSections(false);
+    _tableView->horizontalHeader()->setSortIndicatorShown(true);
+    //change height of headers
+
+    
+
+    //make long strings in the cells visible and not ...shortened
+    //_tableView->setTextElideMode(Qt::ElideNone);
+    //_tableView->setWordWrap(true);
+    //_tableView->setAlternatingRowColors(true);
+    //_tableView->setSortingEnabled(true);
+
+    //on hovering a cell, show the full text available in a tooltip
+    connect(_tableView, &QTableView::entered, [this](const QModelIndex& index) {
+        if (index.isValid()) {
+            QString text = index.data().toString();
+            if (!text.isEmpty()) {
+                _tableView->setToolTip(text);
+            }
+        }
+        });
+
+
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
