@@ -570,19 +570,20 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
         QString key = gene;
         //qDebug() << "\n**Trying to find key:" << gene << "\n";
+        int count = -1;
         auto it = geneCounter.find(key);
         if (it != geneCounter.end()) {
             //qDebug()<< "Species counter"<< key << "found.\n";
             //qDebug()<< "it->second"<< it->second << "found.\n";
             //qDebug()<< "(it->second).size()"<< (it->second).size() << "found.\n";
-            int count = (it->second).size();
+            count = (it->second).size();
             //row.push_back(new QStandardItem(QString::number(count)));
             row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         }
         else {
             qDebug() << "Key " << gene << "not found.\n";
             //row.push_back(new QStandardItem(QString::number(-1)));
-            row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
+            row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         }
 
         //row.push_back(new QStandardItem(QString::number(stats.stdDeviation)));
@@ -595,7 +596,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             speciesGeneAppearancesComb += str;
         }
 
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb));
+        //row.push_back(new QStandardItem(speciesGeneAppearancesComb));
+        row.push_back(new QStandardItem()), row.back()->setData(speciesGeneAppearancesComb, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         for (auto numb : numbers)
         {
             //row.push_back(new QStandardItem(QString::number(numb)));

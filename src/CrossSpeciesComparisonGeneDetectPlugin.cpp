@@ -226,6 +226,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->sortByColumn(3, Qt::DescendingOrder);
+
     _tableView->verticalHeader()->hide();
     _tableView->setMouseTracking(true);
     _tableView->setToolTipDuration(10000);
@@ -375,6 +376,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _tableView->hideColumn(i);
         }
     } 
+    model->sort(3,Qt::DescendingOrder);
     emit model->layoutChanged();
     /*
     std::vector<float> items;
