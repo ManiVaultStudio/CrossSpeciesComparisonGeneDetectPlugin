@@ -100,6 +100,32 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     connect(&_settingsAction.getTableModelAction(), &VariantAction::variantChanged, this, updateTableModel);
 
+
+
+    const auto updateHideShowColumns = [this]() -> void {
+
+        auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
+
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_tableView->model());
+
+        if (model) {
+            for (int i = 0; i < model->columnCount(); i++) {
+                if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
+                    _tableView->hideColumn(i);
+                }
+                else
+                {
+                    _tableView->showColumn(i);
+
+                }
+            }
+            emit model->layoutChanged();
+        }
+        };
+    connect(&_settingsAction.getHiddenShowncolumns(), &OptionsAction::selectedOptionsChanged, this, updateHideShowColumns);
+
+
+
     _tableView = new QTableView();
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -207,7 +233,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
-
+    extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     
 
 
@@ -313,9 +339,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     _tableView->setModel(model);
     _tableView->sortByColumn(3, Qt::DescendingOrder);
 
-    QVector<int> columns = { 0,2, 3,4 };
+    //QVector<int> columns = { 0,2, 3,4 };
+    auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
+
     for (int i = 0; i < _tableView->model()->columnCount(); i++) {
-        if (!columns.contains(i)) {
+        if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
             _tableView->hideColumn(i);
         }
     } 

@@ -96,6 +96,7 @@ public: // Action getters
     TriggerAction& getCreateRowMultiSelectTree() { return _createRowMultiSelectTree; }
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
+    OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
 
 
 
@@ -141,4 +142,5 @@ protected:
     TriggerAction         _createRowMultiSelectTree;
     ToggleAction            _performGeneTableTsneAction;
     IntegralAction         _tsnePerplexity;
+    OptionsAction          _hiddenShowncolumns;
 };

@@ -102,7 +102,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneNamesConnection(this, "Gene Names Connection"),
     _createRowMultiSelectTree(this, "Create Row MultiSelect Tree"),
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
-    _tsnePerplexity(this, "TSNE Perplexity")
+    _tsnePerplexity(this, "TSNE Perplexity"),
+    _hiddenShowncolumns(this, "Hidden Shown Columns")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -125,6 +126,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
     _tsnePerplexity.setValue(30);
+    _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
@@ -367,7 +369,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         };
-    connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);
+    connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);  
+    
+    
+
 }
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
 
@@ -444,7 +449,14 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         headerTitle = QString("Mean ") + headerTitle;
         model->setHorizontalHeaderItem(i, new QStandardItem(headerTitle));
     }
+    QStringList headers;
+    for (int i = 0; i < model->columnCount(); ++i) {
+        headers.push_back(model->horizontalHeaderItem(i)->text());
+    }
+    _hiddenShowncolumns.setOptions(headers);
 
+    QStringList selectedHeaders= { headers[0], headers[2], headers[3], headers[4] };
+    _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
     std::map<QString, QString> newickTrees;
     for (auto gene : returnGeneList)
@@ -1019,7 +1031,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedRowIndex.fromParentVariantMap(variantMap);
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
-
+    _hiddenShowncolumns.fromParentVariantMap(variantMap);
 
 }
 
@@ -1042,6 +1054,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedRowIndex.insertIntoVariantMap(variantMap);
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
+    _hiddenShowncolumns.insertIntoVariantMap(variantMap);
 
     return variantMap;
 }
