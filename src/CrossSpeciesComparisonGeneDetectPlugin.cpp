@@ -236,9 +236,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
 
-    //sort table column by the qt user role
-    _tableView->horizontalHeader()->setSortIndicator(1, Qt::DescendingOrder);
-
 
     auto mainLayout = new QVBoxLayout();
     mainLayout->setContentsMargins(0, 0, 0, 0);
