@@ -91,6 +91,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _startComputationTriggerAction(this, "Compute table"),
     _referenceTreeDataset(this, "Reference Tree Dataset"),
     _mainPointsDataset(this, "Main Points Dataset"),
+    _embeddingDataset(this, "Embedding Dataset"),
     //_hierarchyBottomClusterDataset(this, "Hierarchy Bottom Cluster Dataset"),
     //_hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
     //_hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
@@ -107,6 +108,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tableModel.setSerializationName("CSCGDV:Table Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
+    _embeddingDataset.setSerializationName("CSCGDV:Embedding Dataset");
     _speciesNamesDataset.setSerializationName("CSCGDV:Species Names Dataset");
     _filteredGeneNamesVariant.setSerializationName("CSCGDV:Filtered Gene Names");
     _topNGenesFilter.setSerializationName("CSCGDV:Top N Genes Filter");
@@ -139,11 +141,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
-   
+    _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == PointType;
+        });
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
 
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
+            auto embeddingDataset= _embeddingDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             auto filteringTreeDataset = _filteringTreeDataset.getCurrentDataset();
@@ -358,7 +363,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
 
+    const auto updateEmbeddingDataset = [this]() -> void {
 
+
+        };
+    connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);
 }
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
 
@@ -1000,6 +1009,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
+    _embeddingDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
     _filteredGeneNamesVariant.fromParentVariantMap(variantMap);
     _topNGenesFilter.fromParentVariantMap(variantMap);
@@ -1022,6 +1032,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _tableModel.insertIntoVariantMap(variantMap);
     _selectedGene.insertIntoVariantMap(variantMap);
     _mainPointsDataset.insertIntoVariantMap(variantMap);
+    _embeddingDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
     _filteredGeneNamesVariant.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);

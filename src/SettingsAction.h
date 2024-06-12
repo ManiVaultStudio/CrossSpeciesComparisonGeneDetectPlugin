@@ -88,6 +88,7 @@ public: // Action getters
     TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
     DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
     DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
+    DatasetPickerAction& getEmbeddingDataset() { return _embeddingDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
@@ -132,7 +133,7 @@ protected:
     std::map<QString, std::map<QString, float>> _clusterGeneMeanExpressionMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
-
+    DatasetPickerAction    _embeddingDataset;
     std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;

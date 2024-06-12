@@ -200,6 +200,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
     extraOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
     extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
     extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
