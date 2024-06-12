@@ -27,24 +27,24 @@ float calculateMean(const std::vector<float>& v) {
 
     return mean;
 }
-struct Statistics {
-    float mean;
-    float variance;
-    float stdDeviation;
-};
-Statistics calculateStatistics(const std::vector<float>& numbers) {
-    if (numbers.empty()) {
-        return { 0.0, 0.0, 0.0 };
-    }
-
-    float sum = std::accumulate(numbers.begin(), numbers.end(), 0.0);
-    float mean = sum / numbers.size();
-    float sq_sum = std::inner_product(numbers.begin(), numbers.end(), numbers.begin(), 0.0);
-    float variance = sq_sum / numbers.size() - mean * mean;
-    float stdDeviation = std::sqrt(variance);
-
-    return { mean, variance, stdDeviation };
-}
+//struct Statistics {
+//    float mean;
+//    float variance;
+//    float stdDeviation;
+//};
+//Statistics calculateStatistics(const std::vector<float>& numbers) {
+//    if (numbers.empty()) {
+//        return { 0.0, 0.0, 0.0 };
+//    }
+//
+//    float sum = std::accumulate(numbers.begin(), numbers.end(), 0.0);
+//    float mean = sum / numbers.size();
+//    float sq_sum = std::inner_product(numbers.begin(), numbers.end(), numbers.begin(), 0.0);
+//    float variance = sq_sum / numbers.size() - mean * mean;
+//    float stdDeviation = std::sqrt(variance);
+//
+//    return { mean, variance, stdDeviation };
+//}
 std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>& species) {
     std::string newick;
     if (node.contains("children")) {
@@ -433,9 +433,10 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     }
 
     QStandardItemModel* model = new QStandardItemModel();
-    QStringList initColumnNames = { "ID",  "Variance", "Newick tree","Top " + QString::number(n) + " Appearances","Tree Similarity with Reference Tree", "Standard Deviation","Grand Mean","Gene Apearance Species" };
-    model->setHorizontalHeaderLabels(initColumnNames);
     int numOfSpecies = map.size();
+    QStringList initColumnNames = { "ID", "Newick tree","Tree Similarity with Reference Tree", "Top " + QString::number(n) + " Gene Appearances"+ "/" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
+    model->setHorizontalHeaderLabels(initColumnNames);
+    
     std::map<QString, std::map<QString, float>>::const_iterator it = map.begin();
     for (int i = 0 + initColumnNames.size(); i < numOfSpecies + initColumnNames.size(); i++, it++) {
         QString headerTitle = it->first;
@@ -548,29 +549,29 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         delete[] merge;
         delete[] height;
 
-        Statistics stats = calculateStatistics(numbers);
+        //Statistics stats = calculateStatistics(numbers);
 
         row.push_back(new QStandardItem(gene));
-        row.push_back(new QStandardItem(QString::number(stats.variance)));
+        //row.push_back(new QStandardItem(QString::number(stats.variance)));
         row.push_back(new QStandardItem(""));
+        row.push_back(new QStandardItem(QString::number(-1)));
         QString key = gene;
         //qDebug() << "\n**Trying to find key:" << gene << "\n";
         auto it = geneCounter.find(key);
         if (it != geneCounter.end()) {
-            QString value = QString::number((it->second).size()) + "/" + QString::number(numOfSpecies) + " Species";
-            //qDebug() << "Key found. Value:" << value << "\n";
-            row.push_back(new QStandardItem(value));
+            //qDebug()<< "Species counter"<< key << "found.\n";
+            //qDebug()<< "it->second"<< it->second << "found.\n";
+            //qDebug()<< "(it->second).size()"<< (it->second).size() << "found.\n";
+            int count = (it->second).size();
+            row.push_back(new QStandardItem(QString::number(count)));
         }
         else {
             qDebug() << "Key " << gene << "not found.\n";
-            row.push_back(new QStandardItem("N/A"));
+            row.push_back(new QStandardItem(QString::number(-1)));
         }
 
-
-        row.push_back(new QStandardItem(QString::number(-1)));
-
-        row.push_back(new QStandardItem(QString::number(stats.stdDeviation)));
-        row.push_back(new QStandardItem(QString::number(stats.mean)));
+        //row.push_back(new QStandardItem(QString::number(stats.stdDeviation)));
+        //row.push_back(new QStandardItem(QString::number(stats.mean)));
         QString speciesGeneAppearancesComb;
         for (const auto& str : it->second) {
             if (!speciesGeneAppearancesComb.isEmpty()) {
@@ -843,8 +844,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
         if (it != treeSimilarities.end()) {
 
-            model->item(i, 2)->setText(newick);
-            model->item(i, 4)->setText(QString::number(similarity));
+            model->item(i, 1)->setText(newick);
+            model->item(i, 2)->setText(QString::number(similarity));
         }
     }
 

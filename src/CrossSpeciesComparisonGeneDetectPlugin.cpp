@@ -311,16 +311,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
 
     _tableView->setModel(model);
-    _tableView->sortByColumn(1, Qt::DescendingOrder);
+    _tableView->sortByColumn(3, Qt::DescendingOrder);
 
-    QVector<int> columns = { 0, 1, 3,4,5,6,7 };
+    QVector<int> columns = { 0,2, 3,4 };
     for (int i = 0; i < _tableView->model()->columnCount(); i++) {
         if (!columns.contains(i)) {
             _tableView->hideColumn(i);
         }
-    }
+    } 
     emit model->layoutChanged();
-
+    /*
     std::vector<float> items;
     std::map<QString, std::vector<std::seed_seq::result_type>> clusterMap;
     items.reserve(2 * model->rowCount()); // Reserve space for items
@@ -555,7 +555,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         qDebug() << "Low dimensional dataset is not valid";
 
     }
-
+    */
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
