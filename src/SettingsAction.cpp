@@ -566,7 +566,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         row.push_back(new QStandardItem(gene));
         //row.push_back(new QStandardItem(QString::number(stats.variance)));
         row.push_back(new QStandardItem(""));
-        row.push_back(new QStandardItem(QString::number(-1)));
+        //row.push_back(new QStandardItem(QString::number(-1)));
+        row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
         QString key = gene;
         //qDebug() << "\n**Trying to find key:" << gene << "\n";
         auto it = geneCounter.find(key);
@@ -575,11 +576,13 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             //qDebug()<< "it->second"<< it->second << "found.\n";
             //qDebug()<< "(it->second).size()"<< (it->second).size() << "found.\n";
             int count = (it->second).size();
-            row.push_back(new QStandardItem(QString::number(count)));
+            //row.push_back(new QStandardItem(QString::number(count)));
+            row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         }
         else {
             qDebug() << "Key " << gene << "not found.\n";
-            row.push_back(new QStandardItem(QString::number(-1)));
+            //row.push_back(new QStandardItem(QString::number(-1)));
+            row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
         }
 
         //row.push_back(new QStandardItem(QString::number(stats.stdDeviation)));
@@ -595,7 +598,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         row.push_back(new QStandardItem(speciesGeneAppearancesComb));
         for (auto numb : numbers)
         {
-            row.push_back(new QStandardItem(QString::number(numb)));
+            //row.push_back(new QStandardItem(QString::number(numb)));
+            row.push_back(new QStandardItem()), row.back()->setData(numb, Qt::DisplayRole), row.back()->setData(numb, Qt::UserRole);
         }
 
         // Create a new item for the vertical header
@@ -857,7 +861,12 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         if (it != treeSimilarities.end()) {
 
             model->item(i, 1)->setText(newick);
-            model->item(i, 2)->setText(QString::number(similarity));
+            //model->item(i, 2)->setText(QString::number(similarity));
+
+            model->item(i, 2)->setData(similarity, Qt::DisplayRole);
+            model->item(i, 2)->setData(similarity, Qt::UserRole);
+
+
         }
     }
 

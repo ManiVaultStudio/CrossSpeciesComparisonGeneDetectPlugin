@@ -225,7 +225,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->sortByColumn(1, Qt::DescendingOrder);
+    _tableView->sortByColumn(3, Qt::DescendingOrder);
     _tableView->verticalHeader()->hide();
     _tableView->setMouseTracking(true);
     _tableView->setToolTipDuration(10000);
@@ -235,6 +235,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
+
+    //sort table column by the qt user role
+    _tableView->horizontalHeader()->setSortIndicator(1, Qt::DescendingOrder);
 
 
     auto mainLayout = new QVBoxLayout();
@@ -365,7 +368,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
 
     _tableView->setModel(model);
-    _tableView->sortByColumn(3, Qt::DescendingOrder);
+
 
     //QVector<int> columns = { 0,2, 3,4 };
     auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
