@@ -220,29 +220,29 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                         if (!speciesAll.empty() && !clustersAll.empty())
                         {
-                            if (!_selectedPointsDataset.isValid())
+                            if (!_selectedPointsEmbeddingDataset.isValid())
                             {
-                                _selectedPointsDataset = mv::data().createDataset("Points", "TSNEDataset");
-                                _selectedPointsDataset->setGroupIndex(10);
-                                mv::events().notifyDatasetAdded(_selectedPointsDataset);
+                                _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset");
+                                _selectedPointsEmbeddingDataset->setGroupIndex(10);
+                                mv::events().notifyDatasetAdded(_selectedPointsEmbeddingDataset);
 
                             }
 
                             if (!_tsneDatasetSpeciesColors.isValid())
                             {
-                                _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsDataset);
+                                _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsEmbeddingDataset);
                                 _tsneDatasetSpeciesColors->setGroupIndex(10);
                                 mv::events().notifyDatasetAdded(_tsneDatasetSpeciesColors);
                             }
 
                             if (!_tsneDatasetClusterColors.isValid())
                             {
-                                _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsDataset);
+                                _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsEmbeddingDataset);
                                 _tsneDatasetClusterColors->setGroupIndex(10);
                                 mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                             }
 
-                            if (_selectedPointsDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
+                            if (_selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                             {
                                 _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
                                 events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
@@ -254,7 +254,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 std::vector<float> resultContainerForSelectedPoints(allSelectedIndices.size()* embeddingGeneIndices.size());
                                 rawEmbeddingDataset->populateDataForDimensions(resultContainerForSelectedPoints, embeddingGeneIndices, allSelectedIndices);
 
-                                QString datasetId = _selectedPointsDataset->getId();
+                                QString datasetId = _selectedPointsEmbeddingDataset->getId();
                                 int sizeofdataset = allSelectedIndices.size();
                                 int dimofDataset = embeddingGeneIndices.size();
                                 populatePointData(datasetId, resultContainerForSelectedPoints, sizeofdataset, dimofDataset, embeddingDimList);
@@ -265,7 +265,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 //_selectedPointsDataset->setDimensionNames(allgeneList);
                                 //events().notifyDatasetDataChanged(_selectedPointsDataset);
 
-                                auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsDataset });
+                                auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
                                 if (!analysisPlugin) {
                                     qDebug() << "Could not find create TSNE Analysis";
                                     return;
@@ -281,13 +281,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     _tsnePerplexity.setValue(perplexity);
                                 }
 
-                                if (_tsneDataset.isValid())
+                                if (_selectedPointsTSNEDataset.isValid())
                                 {
-                                    auto runningAction = dynamic_cast<TriggerAction*>(_tsneDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
+                                    auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
 
                                     if (runningAction)
                                     {
-                                        auto perplexityAction = dynamic_cast<IntegralAction*>(_tsneDataset->findChildByPath("TSNE/Perplexity"));
+                                        auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
                                         if (perplexityAction)
                                         {
                                             qDebug() << "Perplexity: Found";
@@ -299,7 +299,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                         }
                                         if (runningAction->isChecked())
                                         {
-                                            auto stopAction = dynamic_cast<TriggerAction*>(_tsneDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                                            auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
                                             if (stopAction)
                                             {
                                                 stopAction->trigger();
@@ -310,15 +310,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     }
                                 }
 
-                                if (_tsneDataset.isValid())
+                                if (_selectedPointsTSNEDataset.isValid())
                                 {
-                                    auto datasetIDLowRem = _tsneDataset.getDatasetId();
-                                    mv::events().notifyDatasetAboutToBeRemoved(_tsneDataset);
-                                    mv::data().removeDataset(_tsneDataset);
+                                    auto datasetIDLowRem = _selectedPointsTSNEDataset.getDatasetId();
+                                    mv::events().notifyDatasetAboutToBeRemoved(_selectedPointsTSNEDataset);
+                                    mv::data().removeDataset(_selectedPointsTSNEDataset);
                                     mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                                 }
-                                _tsneDataset = analysisPlugin->getOutputDataset();
-                                if (_tsneDataset.isValid())
+                                _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
+                                if (_selectedPointsTSNEDataset.isValid())
                                 {
 
 
@@ -332,21 +332,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 if (pointDatasetPickerAction) {
                                                     pointDatasetPickerAction->setCurrentText("");
 
-                                                    pointDatasetPickerAction->setCurrentDataset(_tsneDataset);
+                                                    pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
 
                                                     colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
                                                     if (colorDatasetPickerAction)
                                                     {
                                                         colorDatasetPickerAction->setCurrentText("");
-                                                        colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
-                                                        _scatterplotColorOption.setCurrentText("Species");
+                                                        colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
+                                                        _scatterplotColorOption.setCurrentText("Cluster");
                                                     }
                                                 }
                                             }
                                         }
                                     }
 
-                                    auto startAction = dynamic_cast<TriggerAction*>(_tsneDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
+                                    auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
                                     if (startAction) {
 
                                         startAction->trigger();
