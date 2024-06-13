@@ -198,7 +198,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 auto allgeneList = rawPointdata->getDimensionNames();
                 auto embeddingDimList = rawEmbeddingDataset->getDimensionNames();
                 std::vector<int> embeddingGeneIndices;
-              
+                std::vector<int> allGeneIndices;
+                for (int i = 0; i < allgeneList.size(); i++)
+                {
+                    allGeneIndices.push_back(i);
+                }
 
                 for (int i = 0; i < embeddingDimList.size(); i++)
                 {
@@ -220,9 +224,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                         if (!speciesAll.empty() && !clustersAll.empty())
                         {
+                            
+                            
+                            
+                            if (!_selectedPointsDataset.isValid())
+                            {
+                                _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
+                                _selectedPointsDataset->setGroupIndex(10);
+                                mv::events().notifyDatasetAdded(_selectedPointsDataset);
+
+                            }
+
                             if (!_selectedPointsEmbeddingDataset.isValid())
                             {
-                                _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset");
+                                _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);
                                 _selectedPointsEmbeddingDataset->setGroupIndex(10);
                                 mv::events().notifyDatasetAdded(_selectedPointsEmbeddingDataset);
 
@@ -230,19 +245,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                             if (!_tsneDatasetSpeciesColors.isValid())
                             {
-                                _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsEmbeddingDataset);
+                                _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsDataset);
                                 _tsneDatasetSpeciesColors->setGroupIndex(10);
                                 mv::events().notifyDatasetAdded(_tsneDatasetSpeciesColors);
                             }
 
                             if (!_tsneDatasetClusterColors.isValid())
                             {
-                                _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsEmbeddingDataset);
+                                _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsDataset);
                                 _tsneDatasetClusterColors->setGroupIndex(10);
                                 mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                             }
 
-                            if (_selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
+                            if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                             {
                                 _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
                                 events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
@@ -251,13 +266,24 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
                                 
-                                std::vector<float> resultContainerForSelectedPoints(allSelectedIndices.size()* embeddingGeneIndices.size());
-                                rawEmbeddingDataset->populateDataForDimensions(resultContainerForSelectedPoints, embeddingGeneIndices, allSelectedIndices);
+                                std::vector<float> resultContainerForSelectedPoints(allSelectedIndices.size()* allGeneIndices.size());
+                                rawPointdata->populateDataForDimensions(resultContainerForSelectedPoints, allGeneIndices, allSelectedIndices);
+
+                                QString datasetIdEmb = _selectedPointsDataset->getId();
+                                int sizeofdatasetEmb = allSelectedIndices.size();
+                                int dimofDatasetEmb = allGeneIndices.size();
+                                populatePointData(datasetIdEmb, resultContainerForSelectedPoints, sizeofdatasetEmb, dimofDatasetEmb, allgeneList);
+
+
+
+
+                                std::vector<float> resultContainerForSelectedEmbeddingPoints(allSelectedIndices.size()* embeddingGeneIndices.size());
+                                rawEmbeddingDataset->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingGeneIndices, allSelectedIndices);
 
                                 QString datasetId = _selectedPointsEmbeddingDataset->getId();
                                 int sizeofdataset = allSelectedIndices.size();
                                 int dimofDataset = embeddingGeneIndices.size();
-                                populatePointData(datasetId, resultContainerForSelectedPoints, sizeofdataset, dimofDataset, embeddingDimList);
+                                populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, sizeofdataset, dimofDataset, embeddingDimList);
                                 
                                 
                                 

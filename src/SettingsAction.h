@@ -148,7 +148,7 @@ protected:
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
     Dataset<Points>        _selectedPointsTSNEDataset;
-    //Dataset<Points>        _selectedPointsDataset;
+    Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
