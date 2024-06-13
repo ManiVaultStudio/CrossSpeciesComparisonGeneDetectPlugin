@@ -162,7 +162,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setBaseSize(QSize(0, 0));
     _tableView->setFocusPolicy(Qt::StrongFocus);
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
     //only highlight multiple rows if shiuft is pressed
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
@@ -194,6 +194,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         });
 
 
+    /*
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
@@ -207,12 +208,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         //}
         //else {
             // If Shift is not pressed, select only this row
-            _tableView->selectionModel()->clearSelection();
-            _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+            //_tableView->selectionModel()->clearSelection();
+           // _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
        // }
 
         // Get the selected rows and convert them to a string list
-        QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();
+        //QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();
         QStringList selectedRowsStrList;
         for (const QModelIndex& selectedIndex : selectedRows) {
             selectedRowsStrList << QString::number(selectedIndex.row());
@@ -222,7 +223,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         QString selectedRowsStr = selectedRowsStrList.join(",");
         _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
         });
-    //add a lambda function 
+   */
 
 
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -381,6 +382,46 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
     } 
     model->sort(3,Qt::DescendingOrder);
+
+
+    //if (_tableView->selectionModel()) {
+    //    qDebug() << "Selection model is set";
+    //}
+    //else {
+    //    qDebug() << "Selection model is not set";
+    //}
+
+    //if (_tableView->hasFocus()) {
+    //    qDebug() << "_tableView has focus";
+    //}
+    //else {
+    //    qDebug() << "_tableView does not have focus";
+    //}
+
+    connect(_tableView->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
+
+        if (current.isValid()) {
+            QString gene = current.sibling(current.row(), 0).data().toString();
+            _settingsAction.getSelectedGeneAction().setString(gene);
+            QStringList selectedRowsStrList;
+            selectedRowsStrList << QString::number(current.row());
+            QString selectedRowsStr = selectedRowsStrList.join(",");
+            _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
+
+            for (int i = 5; i < current.model()->columnCount(); i++) {
+                QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
+                qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+            }
+
+            
+            
+        }
+
+        });
+
+
+
+
     emit model->layoutChanged();
 
 

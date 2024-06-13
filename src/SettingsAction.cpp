@@ -815,8 +815,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     std::map<QString, std::map<QString, float>>::const_iterator it = map.begin();
     for (int i = 0 + initColumnNames.size(); i < numOfSpecies + initColumnNames.size(); i++, it++) {
         QString headerTitle = it->first;
-        headerTitle.replace("_", " ");
-        headerTitle = QString("Mean ") + headerTitle;
+        //headerTitle.replace("_", " ");
+        //headerTitle = QString("Mean ") + headerTitle;
         model->setHorizontalHeaderItem(i, new QStandardItem(headerTitle));
     }
     QStringList headers;
