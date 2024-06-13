@@ -257,6 +257,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
     extraOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
     extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
@@ -270,6 +271,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
     mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup->addAction(&_settingsAction.getScatterplotColorOption());
 
 
     mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
@@ -378,6 +380,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     } 
     model->sort(3,Qt::DescendingOrder);
     emit model->layoutChanged();
+
+
+
+
+
     /*
     std::vector<float> items;
     std::map<QString, std::vector<std::seed_seq::result_type>> clusterMap;

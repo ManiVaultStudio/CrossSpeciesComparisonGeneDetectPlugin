@@ -90,6 +90,7 @@ public: // Action getters
     DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
     DatasetPickerAction& getEmbeddingDataset() { return _embeddingDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
+    DatasetPickerAction& getClusterNamesDataset() { return _clusterNamesDataset; }
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
     StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
@@ -97,9 +98,11 @@ public: // Action getters
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
+    OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
 
 
-
+    void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
+    void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
 
     double* condensedDistanceMatrix(std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
@@ -134,6 +137,7 @@ protected:
     std::map<QString, std::map<QString, float>> _clusterGeneMeanExpressionMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
+    DatasetPickerAction    _clusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
     std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
@@ -143,4 +147,9 @@ protected:
     ToggleAction            _performGeneTableTsneAction;
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
+    Dataset<Points>        _tsneDataset;
+    Dataset<Points>        _selectedPointsDataset;
+    Dataset<Clusters>        _tsneDatasetSpeciesColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;
+    OptionAction           _scatterplotColorOption;
 };
