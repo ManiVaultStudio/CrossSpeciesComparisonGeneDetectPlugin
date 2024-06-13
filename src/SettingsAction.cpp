@@ -364,8 +364,42 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                     if (colorDatasetPickerAction)
                                                     {
                                                         colorDatasetPickerAction->setCurrentText("");
-                                                        colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
-                                                        _scatterplotColorOption.setCurrentText("Cluster");
+                                                        
+
+
+                                                        auto selectedColorType = _scatterplotColorOption.getCurrentText();
+                                                        if (selectedColorType != "")
+                                                        {
+                                                            if (selectedColorType == "Cluster")
+                                                            {
+                                                                if (_tsneDatasetClusterColors.isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
+                                                                }
+                                                            }
+                                                            else if (selectedColorType == "Species")
+                                                            {
+                                                                if (_tsneDatasetSpeciesColors.isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
+                                                                }
+                                                            }
+                                                            else if (selectedColorType == "Expression")
+                                                            {
+                                                                if (_selectedPointsDataset.isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_selectedPointsDataset);
+                                                                }
+                                                            }
+
+
+
+                                                        }
+
+
+
+
+                                                        
                                                     }
                                                 }
                                             }
@@ -612,6 +646,78 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
 
+    const auto updateScatterplotColor = [this]() -> void {
+        auto selectedColorType= _scatterplotColorOption.getCurrentText();
+        if (selectedColorType != "")
+        {
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+
+
+                            if(pointDatasetPickerAction->getCurrentDataset() == _selectedPointsTSNEDataset){
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                
+
+
+
+                                auto selectedColorType = _scatterplotColorOption.getCurrentText();
+                                if (selectedColorType != "")
+                                {
+                                    if (selectedColorType == "Cluster")
+                                    {
+                                        if (_tsneDatasetClusterColors.isValid())
+                                        {
+                                            colorDatasetPickerAction->setCurrentText("");
+                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
+                                        }
+                                    }
+                                    else if (selectedColorType == "Species")
+                                    {
+                                        if (_tsneDatasetSpeciesColors.isValid())
+                                        {
+                                            colorDatasetPickerAction->setCurrentText("");
+                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
+                                        }
+                                    }
+                                    else if (selectedColorType == "Expression")
+                                    {
+                                        if (_selectedPointsDataset.isValid())
+                                        {
+                                            colorDatasetPickerAction->setCurrentText("");
+                                            colorDatasetPickerAction->setCurrentDataset(_selectedPointsDataset);
+                                        }
+                                    }
+
+
+
+                                }
+
+
+
+
+
+                            }
+                        }
+                        }
+                    }
+                }
+            }
+
+        }
+        
+        };
+    connect(&_scatterplotColorOption, &OptionAction::currentIndexChanged, this, updateScatterplotColor);
+    
+    
     const auto updateEmbeddingDataset = [this]() -> void {
 
 
