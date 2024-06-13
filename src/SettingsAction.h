@@ -101,6 +101,34 @@ public: // Action getters
     OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
 
 
+
+    //tsne relatedDatasets
+    /*
+        Dataset<Points>        _selectedPointsTSNEDataset;
+    Dataset<Points>        _selectedPointsDataset;
+    Dataset<Points>        _selectedPointsEmbeddingDataset;
+
+    Dataset<Clusters>        _tsneDatasetSpeciesColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Points>        _tsneDatasetExpressionColors;
+    */
+
+    Dataset<Points>& getSelectedPointsTSNEDataset() { return _selectedPointsTSNEDataset; }
+    Dataset<Points>& getSelectedPointsDataset() { return _selectedPointsDataset; }
+    Dataset<Points>& getSelectedPointsEmbeddingDataset() { return _selectedPointsEmbeddingDataset; }
+
+    Dataset<Clusters>& getTsneDatasetSpeciesColors() { return _tsneDatasetSpeciesColors; }
+    Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
+    Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
+
+
+
+
+
+
+
+
+
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
 
@@ -147,6 +175,7 @@ protected:
     ToggleAction            _performGeneTableTsneAction;
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
+    
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
@@ -154,5 +183,6 @@ protected:
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
+
     OptionAction           _scatterplotColorOption;
 };

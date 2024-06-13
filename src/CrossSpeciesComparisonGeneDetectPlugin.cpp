@@ -407,13 +407,49 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             selectedRowsStrList << QString::number(current.row());
             QString selectedRowsStr = selectedRowsStrList.join(",");
             _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
+            if (_settingsAction.getScatterplotColorOption().getCurrentText() == "Expression")
+            {
+                auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
+                auto expressionColorPointDataset = _settingsAction.getTsneDatasetExpressionColors();
+            
+            if (speciesColorClusterDataset.isValid() && expressionColorPointDataset.isValid())
+            {
+               
 
-            for (int i = 5; i < current.model()->columnCount(); i++) {
-                QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
-                qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+
+                int rowSize = expressionColorPointDataset->getNumPoints();
+                int columnSize = 1;// expressionColorPointDataset->getNumDimensions();
+                std::vector<QString> dimenName = { gene };
+                std::map<QString, float> speciesExpressionMap;
+                std::vector<float> resultContainerColorPoints(rowSize * 1);
+                QString datasetIdEmb = expressionColorPointDataset->getId();
+                for (int i = 5; i < current.model()->columnCount(); i++) {
+                    QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
+                    speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
+                    qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+                }
+                std::fill(resultContainerColorPoints.begin(), resultContainerColorPoints.end(), -1.0);
+                for (auto& species : speciesColorClusterDataset->getClusters())
+                {
+                    auto speciesName = species.getName();
+                    //auto speciesColor = species.getColor();
+                    auto speciesIndices = species.getIndices();
+                    float speciesValue = speciesExpressionMap[speciesName];
+                    for (auto& index : speciesIndices)
+                    {
+                        resultContainerColorPoints[index] = speciesValue;
+                    }
+
+
+                }
+
+                _settingsAction.populatePointData(datasetIdEmb, resultContainerColorPoints, rowSize, columnSize, dimenName);
+
+
+
             }
 
-            
+        }
             
         }
 
