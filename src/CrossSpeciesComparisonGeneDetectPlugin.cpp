@@ -199,15 +199,17 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         auto gene = firstColumnIndex.data().toString();
         _settingsAction.getSelectedGeneAction().setString(gene);
 
-        if (QApplication::keyboardModifiers() & Qt::ShiftModifier) {
+        //if (QApplication::keyboardModifiers() & Qt::ShiftModifier) 
+        
+        //{
             // If Shift is pressed, add the row to the selection
-            _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        }
-        else {
+          //  _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        //}
+        //else {
             // If Shift is not pressed, select only this row
             _tableView->selectionModel()->clearSelection();
             _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        }
+       // }
 
         // Get the selected rows and convert them to a string list
         QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();

@@ -235,6 +235,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                             }
 
+                            if (!_tsneDatasetExpressionColors.isValid())
+                            {
+                                _tsneDatasetExpressionColors = mv::data().createDataset("Points", "TSNEDatasetExpressionColors", _selectedPointsDataset);
+                                _tsneDatasetExpressionColors->setGroupIndex(10);
+                                mv::events().notifyDatasetAdded(_tsneDatasetExpressionColors);
+
+                            }                            
+                            
                             if (!_selectedPointsEmbeddingDataset.isValid())
                             {
                                 _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);
@@ -286,6 +294,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, sizeofdataset, dimofDataset, embeddingDimList);
                                 
                                 
+                                std::vector<float> resultContainerColorPoints(allSelectedIndices.size() * 1);
+                                std::fill(resultContainerColorPoints.begin(), resultContainerColorPoints.end(), -1.0);
+
+                                QString datasetIdExp = _tsneDatasetExpressionColors->getId();
+                                int sizeofdatasetExp = allSelectedIndices.size();
+                                int dimofDatasetExp = 1;
+                                std::vector<QString> dimensionNamesExp = { "Expression" };
+
+                                populatePointData(datasetIdExp, resultContainerColorPoints, sizeofdatasetExp, dimofDatasetExp, dimensionNamesExp);
                                 
                                 //_selectedPointsDataset->setData(resultContainerForSelectedPoints.data(), allSelectedIndices.size(), allGeneIndices.size());
                                 //_selectedPointsDataset->setDimensionNames(allgeneList);
@@ -386,9 +403,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                             }
                                                             else if (selectedColorType == "Expression")
                                                             {
-                                                                if (_selectedPointsDataset.isValid())
+                                                                if (_tsneDatasetExpressionColors.isValid())
                                                                 {
-                                                                    colorDatasetPickerAction->setCurrentDataset(_selectedPointsDataset);
+                                                                    colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
                                                                 }
                                                             }
 
@@ -690,10 +707,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     }
                                     else if (selectedColorType == "Expression")
                                     {
-                                        if (_selectedPointsDataset.isValid())
+                                        if (_tsneDatasetExpressionColors.isValid())
                                         {
                                             colorDatasetPickerAction->setCurrentText("");
-                                            colorDatasetPickerAction->setCurrentDataset(_selectedPointsDataset);
+                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
                                         }
                                     }
 
@@ -792,7 +809,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
-    QStringList initColumnNames = { "ID", "Newick tree","Tree Similarity with Reference Tree", "Top Gene Appearances/" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
+    QStringList initColumnNames = { "ID", "Newick tree","Tree Similarity with Reference Tree", "Total Mean","Top Gene Appearances/" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
     model->setHorizontalHeaderLabels(initColumnNames);
     
     std::map<QString, std::map<QString, float>>::const_iterator it = map.begin();
@@ -808,7 +825,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     }
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders= { headers[0], headers[2], headers[3], headers[4] };
+    QStringList selectedHeaders= { headers[0], headers[2], headers[3], headers[4], headers[5]};
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
     std::map<QString, QString> newickTrees;
@@ -921,6 +938,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         row.push_back(new QStandardItem(""));
         //row.push_back(new QStandardItem(QString::number(-1)));
         row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
+        float meanV= calculateMean(numbers);
+        row.push_back(new QStandardItem()), row.back()->setData(meanV, Qt::DisplayRole), row.back()->setData(meanV, Qt::UserRole);
         QString key = gene;
         //qDebug() << "\n**Trying to find key:" << gene << "\n";
         int count = -1;

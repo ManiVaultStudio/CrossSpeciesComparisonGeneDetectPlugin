@@ -153,5 +153,6 @@ protected:
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Points>        _tsneDatasetExpressionColors;
     OptionAction           _scatterplotColorOption;
 };
