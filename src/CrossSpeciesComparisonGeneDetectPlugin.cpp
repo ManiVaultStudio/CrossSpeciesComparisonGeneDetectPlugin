@@ -7,7 +7,9 @@
 #include <QDebug>
 #include <QMimeData>
 #include <QShortcut>
-
+#include <QSplitter>
+#include <QRandomGenerator>
+#include <QColor>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -15,41 +17,62 @@ using namespace mv;
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _tableView(),
-    _settingsAction(*this),
-    _toolbarAction(this, "Toolbar")
+    _settingsAction(*this)
 {
 
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::init()
 {
-    auto layout = new QVBoxLayout();
 
-    layout->setContentsMargins(0, 0, 0, 0);
     const auto updateSelectedRowIndex = [this]() -> void
         {
 
-            if (_settingsAction.getTreeDatasetAction().getCurrentDataset().isValid())
+            if (_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().isValid())
             {
-                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getTreeDatasetAction().getCurrentDataset().getDatasetId());
+                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
               
-               int selectedRow= _settingsAction.getSelectedRowIndexAction().getString().toInt();
+                QStringList selectedRowsStrList = _settingsAction.getSelectedRowIndexAction().getString().split(",");
+                QList<int> selectedRows;
+                for (const QString& str : selectedRowsStrList) {
+                    selectedRows << str.toInt();
+                }
 
-               if (treeDataset.isValid() && _tableView && selectedRow >= 0)
-               {
-                   QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
-                   //qDebug()<< "Tree data: " << treeData;
-                   if (!treeData.isEmpty())
-                   {
-                       
-                       QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
-                       if (!valueStringReference.isEmpty())
-                       {
-                           treeDataset->setTreeData(valueStringReference);
-                           events().notifyDatasetDataChanged(treeDataset);
-                       }
-                   }
-               }
+                if (selectedRows.size()==1)
+                {
+                    int selectedRow = selectedRows[0];
+                    if (treeDataset.isValid() && _tableView && selectedRow >= 0)
+                    {
+                        QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
+                        //qDebug()<< "Tree data: " << treeData;
+                        if (!treeData.isEmpty())
+                        {
+
+                            QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                            if (!valueStringReference.isEmpty())
+                            {
+                                treeDataset->setTreeData(valueStringReference);
+                                events().notifyDatasetDataChanged(treeDataset);
+                                //QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
+                               // _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
+                            }
+                        }
+                    }
+                }
+                if (selectedRows.size() > 1)
+                {
+                    _settingsAction.getCreateRowMultiSelectTree().setEnabled(true);
+                }
+                else
+                {
+                    _settingsAction.getCreateRowMultiSelectTree().setDisabled(true);
+                }
+                QStringList firstColumnValues;
+                for (int row : selectedRows) {
+                    firstColumnValues << _tableView->model()->index(row, 0).data().toString();
+                }
+                QString firstColumnValue = firstColumnValues.join("*%$@*@$%*");
+                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
 
 
             }
@@ -76,6 +99,32 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         };
 
     connect(&_settingsAction.getTableModelAction(), &VariantAction::variantChanged, this, updateTableModel);
+
+
+
+    const auto updateHideShowColumns = [this]() -> void {
+
+        auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
+
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_tableView->model());
+
+        if (model) {
+            for (int i = 0; i < model->columnCount(); i++) {
+                if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
+                    _tableView->hideColumn(i);
+                }
+                else
+                {
+                    _tableView->showColumn(i);
+
+                }
+            }
+            emit model->layoutChanged();
+        }
+        };
+    connect(&_settingsAction.getHiddenShowncolumns(), &OptionsAction::selectedOptionsChanged, this, updateHideShowColumns);
+
+
 
     _tableView = new QTableView();
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -111,182 +160,191 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _tableView->setMinimumSize(QSize(0, 0));
     _tableView->setMaximumSize(QSize(16777215, 16777215));
     _tableView->setBaseSize(QSize(0, 0));
-
-    //u8se keybrard arrows for changing rows
     _tableView->setFocusPolicy(Qt::StrongFocus);
-    //the table view should also change scroll with moving up down keys
     _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    //only highlight multiple rows if shiuft is pressed
+    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    //_make the headers two three lines so that they are fully visible
+    _tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    _tableView->horizontalHeader()->setStretchLastSection(true);
+    _tableView->horizontalHeader()->setMinimumSectionSize(50);
+    _tableView->horizontalHeader()->setMaximumSectionSize(600);
+    _tableView->horizontalHeader()->setHighlightSections(false);
+    _tableView->horizontalHeader()->setSortIndicatorShown(true);
+    //change height of headers
+
     
-    //when a row is clicked, print the value of the first column of the row
+
+    //make long strings in the cells visible and not ...shortened
+    //_tableView->setTextElideMode(Qt::ElideNone);
+    //_tableView->setWordWrap(true);
+    //_tableView->setAlternatingRowColors(true);
+    //_tableView->setSortingEnabled(true);
+
+    //on hovering a cell, show the full text available in a tooltip
+    connect(_tableView, &QTableView::entered, [this](const QModelIndex& index) {
+        if (index.isValid()) {
+            QString text = index.data().toString();
+            if (!text.isEmpty()) {
+                _tableView->setToolTip(text);
+            }
+        }
+        });
+
+
+    /*
     connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
-       _settingsAction.getSelectedGeneAction().setString(gene);
-       _settingsAction.getSelectedRowIndexAction().setString(QString::number(index.row()));
-        //emit rowClicked(index.row());
+        _settingsAction.getSelectedGeneAction().setString(gene);
+
+        //if (QApplication::keyboardModifiers() & Qt::ShiftModifier) 
+        
+        //{
+            // If Shift is pressed, add the row to the selection
+          //  _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        //}
+        //else {
+            // If Shift is not pressed, select only this row
+            //_tableView->selectionModel()->clearSelection();
+           // _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+       // }
+
+        // Get the selected rows and convert them to a string list
+        //QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();
+        QStringList selectedRowsStrList;
+        for (const QModelIndex& selectedIndex : selectedRows) {
+            selectedRowsStrList << QString::number(selectedIndex.row());
+        }
+
+        // Join the string list into a single string with comma separation
+        QString selectedRowsStr = selectedRowsStrList.join(",");
+        _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
         });
+   */
 
-    //not working
-    //when esc button is clicked, remove selection from the table
-    //QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_Escape), _tableView);
-    //connect(shortcut, &QShortcut::activated, [this]() {
-    //    _tableView->clearSelection();
-    //    });
-//not working
 
-    //show a thin x and y axis scrollbar
     _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->sortByColumn(1, Qt::DescendingOrder);
-    //hide _tableView now headers
-    //_tableView->horizontalHeader()->hide();
+    _tableView->sortByColumn(3, Qt::DescendingOrder);
+
     _tableView->verticalHeader()->hide();
-
-    //add row selection color
+    _tableView->setMouseTracking(true);
+    _tableView->setToolTipDuration(10000);
+    QFont font = _tableView->horizontalHeader()->font();
+    font.setBold(true);
+    _tableView->horizontalHeader()->setFont(font);
     _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
-    //do not alternate row color
-    //_tableView->setAlternatingRowColors(false);
-
-    //do not highlight header
     _tableView->horizontalHeader()->setHighlightSections(false);
     _tableView->verticalHeader()->setHighlightSections(false);
 
-    QWidget* widget = new QWidget();
 
+    auto mainLayout = new QVBoxLayout();
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
 
-    _toolbarAction.addAction(&_settingsAction.getTreeDatasetAction(), 1);
+    auto mainOptionsLayout = new QHBoxLayout();
+    mainOptionsLayout->setSpacing(0);
+    mainOptionsLayout->setContentsMargins(0, 0, 0, 0);
+    auto extraOptionsGroup= new VerticalGroupAction(this,"Settings");
 
-    layout->addWidget(_toolbarAction.createWidget(&getWidget()));
-
-
-    //layout->addWidget(_settingsAction.getOptionSelectionAction().createWidget(&getWidget()));
-    layout->addWidget(_tableView);
-
-    getWidget().setLayout(layout);
-
-
-
-
-
-
-    //QStandardItemModel* model = new QStandardItemModel(4, 4, this);
-    //QStandardItemModel* model = variant.value<QStandardItemModel*>();
-    // 
-    // 
-    ////add header 
-    //model->setHorizontalHeaderItem(0, new QStandardItem("Gene"));
-    //model->setHorizontalHeaderItem(1, new QStandardItem("Variance"));
-    //int numOfSpecies = 25;
-    //for (int i=0+2;i< numOfSpecies+2;i++)
-    //{
-    //    model->setHorizontalHeaderItem(i, new QStandardItem(QString("Mean_Species") + QString::number(i)));
-    //}
-
-    ////add dummy data
-    ////model->setItem(0, 0, new QStandardItem("Gene1"));
-    ////model->setItem(0, 1, new QStandardItem("0.5"));
-    ////model->setItem(0, 2, new QStandardItem("0.1"));
-    ////model->setItem(0, 3, new QStandardItem("0.2"));
-
-    ////model->setItem(1, 0, new QStandardItem("Gene2"));
-    ////model->setItem(1, 1, new QStandardItem("0.6"));
-    ////model->setItem(1, 2, new QStandardItem("0.2"));
-    ////model->setItem(1, 3, new QStandardItem("0.3"));
-
-    ////model->setItem(2, 0, new QStandardItem("Gene3"));
-    ////model->setItem(2, 1, new QStandardItem("0.7"));
-    ////model->setItem(2, 2, new QStandardItem("0.3"));
-    ////model->setItem(2, 3, new QStandardItem("0.4"));
-
-    ////model->setItem(3, 0, new QStandardItem("Gene4"));
-    ////model->setItem(3, 1, new QStandardItem("0.8"));
-    ////model->setItem(3, 2, new QStandardItem("0.4"));
-    ////model->setItem(3, 3, new QStandardItem("0.5"));
-
-
-   
-    //layout->addWidget(_currentDatasetNameLabel);
-
-    // Apply the layout
+    extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
+    extraOptionsGroup->addAction(&_settingsAction.getTableModelAction());
+    extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
+    extraOptionsGroup->addAction(&_settingsAction.getSelectedRowIndexAction());
+    extraOptionsGroup->addAction(&_settingsAction.getFilteringTreeDatasetAction());
+    extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
+    extraOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
+    extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
+    extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
+    extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
+    extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
+    extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+    extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     
 
-    //// Instantiate new drop widget
-    //_dropWidget = new DropWidget(_currentDatasetNameLabel);
 
-    //// Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
-    //_dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
+    auto mainOptionsGroup = new HorizontalGroupAction(this, "Trigger");
+    mainOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    mainOptionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
+    mainOptionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup->addAction(&_settingsAction.getScatterplotColorOption());
 
-    //// Initialize the drop regions
-    //_dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
-    //    // A drop widget can contain zero or more drop regions
-    //    DropWidget::DropRegions dropRegions;
 
-    //    const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
+    mainOptionsLayout->addWidget(mainOptionsGroup->createWidget(&getWidget()),2);
+    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
+    
+    mainLayout->addLayout(mainOptionsLayout);
 
-    //    if (datasetsMimeData == nullptr)
-    //        return dropRegions;
 
-    //    if (datasetsMimeData->getDatasets().count() > 1)
-    //        return dropRegions;
 
-    //    // Gather information to generate appropriate drop regions
-    //    const auto dataset = datasetsMimeData->getDatasets().first();
-    //    const auto datasetGuiName = dataset->getGuiName();
-    //    const auto datasetId = dataset->getId();
-    //    const auto dataType = dataset->getDataType();
-    //    const auto dataTypes = DataTypes({ PointType });
+    //
+    if (0)
+    {
+        // Create a new QSplitter
+        QSplitter* splitter = new QSplitter();
 
-    //    // Visually indicate if the dataset is of the wrong data type and thus cannot be dropped
-    //    if (!dataTypes.contains(dataType)) {
-    //        dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
-    //    }
-    //    else {
+        // Add _tableView to the splitter
+        splitter->addWidget(_tableView);
 
-    //        // Get points dataset from the core
-    //        auto candidateDataset = mv::data().getDataset<Points>(datasetId);
+        // Create another view
+        QWidget* anotherView = new QWidget();
+        splitter->addWidget(anotherView);
 
-    //        // Accept points datasets drag and drop
-    //        if (dataType == PointType) {
-    //            const auto description = QString("Load %1 into example view").arg(datasetGuiName);
+        // Set stretch factors for the widgets
+        splitter->setStretchFactor(0, 1); // _tableView
+        splitter->setStretchFactor(1, 1); // anotherView
 
-    //            if (_points == candidateDataset) {
+        // Get the total available width
+        int totalWidth = splitter->width();
 
-    //                // Dataset cannot be dropped because it is already loaded
-    //                dropRegions << new DropWidget::DropRegion(this, "Warning", "Data already loaded", "exclamation-circle", false);
-    //            }
-    //            else {
+        // Calculate the width for each widget
+        int widgetWidth = totalWidth / 2; // divide by the number of widgets
 
-    //                // Dataset can be dropped
-    //                dropRegions << new DropWidget::DropRegion(this, "Points", description, "map-marker-alt", true, [this, candidateDataset]() {
-    //                    _points = candidateDataset;
-    //                });
-    //            }
-    //        }
-    //    }
+        // Set the sizes of the child widgets
+        QList<int> sizes;
+        sizes << widgetWidth << widgetWidth; // adjust these values as needed
+        splitter->setSizes(sizes);
 
-    //    return dropRegions;
-    //});
+        // Set the splitter as the main widget in your layout
+        mainLayout->addWidget(splitter);
+    }
+    else
+    {
+        mainLayout->addWidget(_tableView);
+    }
 
-    //// Respond when the name of the dataset in the dataset reference changes
-    //connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
 
-    //    auto newDatasetName = _points->getGuiName();
 
-    //    // Update the current dataset name label
-    //    _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
 
-    //    // Only show the drop indicator when nothing is loaded in the dataset reference
-    //    _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
-    //});
+    // Set the layout for the widget
+    getWidget().setLayout(mainLayout);
 
-    //// Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    //_eventListener.registerDataEventByType(PointType, std::bind(&CrossSpeciesComparisonGeneDetectPlugin::onDataEvent, this, std::placeholders::_1));
+
+
+
+
 }
 
+
+
+QColor getColorFromValue(int value, int min, int max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    int range = max - min;
+    if (range == 0) return QColor(Qt::gray);
+
+    int blue = 255 * (value - min) / range;
+
+    return QColor(255 - blue, 255 - blue, 255);
+}
 
 
 
@@ -313,17 +371,335 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
 
     _tableView->setModel(model);
-    _tableView->sortByColumn(1, Qt::DescendingOrder);
 
-    QVector<int> columns = { 0, 1, 3,4,5,6 };
+
+    //QVector<int> columns = { 0,2, 3,4 };
+    auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
+
     for (int i = 0; i < _tableView->model()->columnCount(); i++) {
-        if (!columns.contains(i)) {
+        if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
             _tableView->hideColumn(i);
         }
-    }
+    } 
+    model->sort(3,Qt::DescendingOrder);
+
+
+    //if (_tableView->selectionModel()) {
+    //    qDebug() << "Selection model is set";
+    //}
+    //else {
+    //    qDebug() << "Selection model is not set";
+    //}
+
+    //if (_tableView->hasFocus()) {
+    //    qDebug() << "_tableView has focus";
+    //}
+    //else {
+    //    qDebug() << "_tableView does not have focus";
+    //}
+
+    connect(_tableView->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
+
+        if (current.isValid()) {
+            QString gene = current.sibling(current.row(), 0).data().toString();
+            _settingsAction.getSelectedGeneAction().setString(gene);
+            QStringList selectedRowsStrList;
+            selectedRowsStrList << QString::number(current.row());
+            QString selectedRowsStr = selectedRowsStrList.join(",");
+            _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
+            if (_settingsAction.getScatterplotColorOption().getCurrentText() == "Expression")
+            {
+                auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
+                auto expressionColorPointDataset = _settingsAction.getTsneDatasetExpressionColors();
+            
+            if (speciesColorClusterDataset.isValid() && expressionColorPointDataset.isValid())
+            {
+               
+
+
+                int rowSize = expressionColorPointDataset->getNumPoints();
+                int columnSize = 1;// expressionColorPointDataset->getNumDimensions();
+                std::vector<QString> dimenName = { gene };
+                std::map<QString, float> speciesExpressionMap;
+                std::vector<float> resultContainerColorPoints(rowSize * 1);
+                QString datasetIdEmb = expressionColorPointDataset->getId();
+                for (int i = 5; i < current.model()->columnCount(); i++) {
+                    QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
+                    speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
+                    qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+                }
+                std::fill(resultContainerColorPoints.begin(), resultContainerColorPoints.end(), -1.0);
+                for (auto& species : speciesColorClusterDataset->getClusters())
+                {
+                    auto speciesName = species.getName();
+                    //auto speciesColor = species.getColor();
+                    auto speciesIndices = species.getIndices();
+                    float speciesValue = speciesExpressionMap[speciesName];
+                    for (auto& index : speciesIndices)
+                    {
+                        resultContainerColorPoints[index] = speciesValue;
+                    }
+
+
+                }
+
+                _settingsAction.populatePointData(datasetIdEmb, resultContainerColorPoints, rowSize, columnSize, dimenName);
+
+
+
+            }
+
+        }
+            
+        }
+
+        });
+
+
+
+
     emit model->layoutChanged();
 
 
+
+
+
+    /*
+    std::vector<float> items;
+    std::map<QString, std::vector<std::seed_seq::result_type>> clusterMap;
+    items.reserve(2 * model->rowCount()); // Reserve space for items
+
+    for (int i = 0; i < model->rowCount(); i++) {
+        auto index1 = model->index(i, 1);
+        auto index4 = model->index(i, 4);
+        auto index2 = model->index(i, 3);
+
+        if (index1.isValid() && index4.isValid()) {
+            bool ok1, ok4;
+            float item1 = index1.data().toFloat(&ok1);
+            float item4 = index4.data().toFloat(&ok4);
+            item4= item4 * 100;// change this to a percentage
+            if (ok1 && ok4) {
+                items.push_back(item1);
+                items.push_back(item4);
+                //qDebug() << "Item1: " << item1 << " Item4: " << item4;
+            }
+        }
+
+        if (index2.isValid()) {
+            QString gene = index2.data().toString();
+            if (!gene.isEmpty()) {
+                clusterMap[gene].push_back(i);
+            }
+        }
+    }
+    //iterate clustermap and get the min and max values
+    int minVal = INT_MAX;
+    int maxVal = INT_MIN;
+    for (const auto& [gene, indices] : clusterMap) {
+        int numberVal = gene.split("/")[0].toInt();
+        if (numberVal) {
+            if (numberVal < minVal) minVal = numberVal;
+            if (numberVal > maxVal) maxVal = numberVal;
+        }
+    }
+
+    std::vector<QString> dimensionNames = { "Variance","Similarity" };
+    if (!_pointsDataset.isValid() || !_clusterDataset.isValid())
+    {
+        
+        _pointsDataset = mv::data().createDataset("Points", "GeneSimilarityDataset");
+        _pointsDataset->setGroupIndex(8);
+        mv::events().notifyDatasetAdded(_pointsDataset);
+        _clusterDataset = mv::data().createDataset("Cluster", "GeneSimilarityClusterDataset", _pointsDataset);
+        _clusterDataset->setGroupIndex(8);
+        mv::events().notifyDatasetAdded(_clusterDataset);
+
+   }
+
+    
+
+    if (_pointsDataset.isValid() && _clusterDataset.isValid())
+    {
+
+        _pointsDataset->setData(items.data(), items.size() / 2, 2);
+        _pointsDataset->setDimensionNames(dimensionNames);
+        bool canPerformTSNE = false;
+        auto perplexityValue = _settingsAction.getTsnePerplexity().getValue();
+        if ((items.size() / 2)> perplexityValue && perplexityValue>0)
+        {
+            canPerformTSNE = true;
+        }
+        events().notifyDatasetDataChanged(_pointsDataset);
+
+        _clusterDataset->getClusters() = QVector<Cluster>();
+        events().notifyDatasetDataChanged(_clusterDataset);
+        for (const auto& [gene, indices] : clusterMap) {
+            Cluster cluster;
+            cluster.setIndices(indices);
+            cluster.setName(gene);
+            int numberVal = gene.split("/")[0].toInt();
+            QColor color;
+
+            if (numberVal) {
+                color = getColorFromValue(numberVal, minVal, maxVal);
+            }
+            else {
+                color = QColor(Qt::gray);
+            }
+
+            cluster.setColor(color);
+
+ 
+            
+
+
+            _clusterDataset->getClusters().append(cluster);
+        }
+        events().notifyDatasetDataChanged(_clusterDataset);
+
+        if (_settingsAction.getPerformGeneTableTsneAction().isChecked() && canPerformTSNE)
+        {
+            if (model->columnCount()>10)
+            {
+                std::vector<float> allitems;
+
+                allitems.reserve((model->columnCount() - 8)* model->rowCount()); // Reserve space for items
+
+                for (int i = 0; i < model->rowCount(); i++)
+                {
+                    for (int j = 8; j < (model->columnCount() - 8); j++)
+                    {
+                        auto index = model->index(i, j);
+                        float item = index.data().toFloat();
+                        allitems.push_back(item);
+                    }
+                }
+
+
+
+                _pointsDataset->setData(allitems.data(), items.size() / 2, 2);
+                _pointsDataset->setDimensionNames(dimensionNames);
+
+                events().notifyDatasetDataChanged(_pointsDataset);
+            }
+
+        
+        auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _pointsDataset });
+        if (!analysisPlugin) {
+            qDebug() << "Could not find create TSNE Analysis";
+            return;
+        }
+
+        if (_lowDimTSNEDataset.isValid())
+        {
+            auto runningAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
+
+            if (runningAction)
+            {
+                auto perplexityAction= dynamic_cast<IntegralAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/Perplexity"));
+                if (perplexityAction)
+                {
+                    qDebug()<< "Perplexity: Found" ;
+                    perplexityAction->setValue(perplexityValue);
+                }
+                else
+                {
+                    qDebug() << "Perplexity: Not Found";
+                }
+                if (runningAction->isChecked())
+                {
+                    auto stopAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                    if (stopAction)
+                    {
+                        stopAction->trigger();
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                    }
+                }
+
+            }
+        }
+
+        if (_lowDimTSNEDataset.isValid())
+        {
+            auto datasetIDLowRem = _lowDimTSNEDataset.getDatasetId();
+            mv::events().notifyDatasetAboutToBeRemoved(_lowDimTSNEDataset);
+            mv::data().removeDataset(_lowDimTSNEDataset);
+            mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
+        }
+        _lowDimTSNEDataset = analysisPlugin->getOutputDataset();
+        if (_lowDimTSNEDataset.isValid())
+        {
+
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_lowDimTSNEDataset);
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                            }
+                        }
+                    }
+                }
+            }
+
+            auto startAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
+            if (startAction) {
+
+                startAction->trigger();
+
+                analysisPlugin->getOutputDataset()->setSelectionIndices({});
+            }
+
+        }
+
+    }
+        else
+        {
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_pointsDataset);
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+    }
+    else
+    {
+        qDebug() << "Low dimensional dataset is not valid";
+
+    }
+    */
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)

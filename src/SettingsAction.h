@@ -83,9 +83,61 @@ public: // Action getters
     VariantAction& getTableModelAction() { return _tableModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
-    DatasetPickerAction& getTreeDatasetAction() { return _treeDataset; }
+    DatasetPickerAction& getFilteringTreeDatasetAction() { return _filteringTreeDataset; }
     OptionSelectionAction& getOptionSelectionAction() { return _optionSelectionAction; }
+    TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
+    DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
+    DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
+    DatasetPickerAction& getEmbeddingDataset() { return _embeddingDataset; }
+    DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
+    DatasetPickerAction& getClusterNamesDataset() { return _clusterNamesDataset; }
+    VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
+    IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
+    StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
+    TriggerAction& getCreateRowMultiSelectTree() { return _createRowMultiSelectTree; }
+    ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
+    IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
+    OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
+    OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
 
+
+
+    //tsne relatedDatasets
+    /*
+        Dataset<Points>        _selectedPointsTSNEDataset;
+    Dataset<Points>        _selectedPointsDataset;
+    Dataset<Points>        _selectedPointsEmbeddingDataset;
+
+    Dataset<Clusters>        _tsneDatasetSpeciesColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Points>        _tsneDatasetExpressionColors;
+    */
+
+    Dataset<Points>& getSelectedPointsTSNEDataset() { return _selectedPointsTSNEDataset; }
+    Dataset<Points>& getSelectedPointsDataset() { return _selectedPointsDataset; }
+    Dataset<Points>& getSelectedPointsEmbeddingDataset() { return _selectedPointsEmbeddingDataset; }
+
+    Dataset<Clusters>& getTsneDatasetSpeciesColors() { return _tsneDatasetSpeciesColors; }
+    Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
+    Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
+
+
+
+
+
+
+
+
+
+    void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
+    void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
+
+    double* condensedDistanceMatrix(std::vector<float>& items);
+    std::string mergeToNewick(int* merge, int numOfLeaves);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames);
+private:
+    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
 
 public: // Serialization
 
@@ -105,8 +157,32 @@ protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
     VariantAction                 _tableModel;
     StringAction                  _selectedGene;
-    DatasetPickerAction          _treeDataset;
+    DatasetPickerAction          _filteringTreeDataset;
     StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
+    TriggerAction              _startComputationTriggerAction;
+    DatasetPickerAction    _referenceTreeDataset;
+    std::map<QString, std::map<QString, float>> _clusterGeneMeanExpressionMap;
+    DatasetPickerAction    _mainPointsDataset;
+    DatasetPickerAction    _speciesNamesDataset;
+    DatasetPickerAction    _clusterNamesDataset;
+    DatasetPickerAction    _embeddingDataset;
+    std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
+    VariantAction           _filteredGeneNamesVariant;
+    IntegralAction          _topNGenesFilter;
+    StringAction           _geneNamesConnection;
+    TriggerAction         _createRowMultiSelectTree;
+    ToggleAction            _performGeneTableTsneAction;
+    IntegralAction         _tsnePerplexity;
+    OptionsAction          _hiddenShowncolumns;
     
+    Dataset<Points>        _selectedPointsTSNEDataset;
+    Dataset<Points>        _selectedPointsDataset;
+    Dataset<Points>        _selectedPointsEmbeddingDataset;
+
+    Dataset<Clusters>        _tsneDatasetSpeciesColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Points>        _tsneDatasetExpressionColors;
+
+    OptionAction           _scatterplotColorOption;
 };
