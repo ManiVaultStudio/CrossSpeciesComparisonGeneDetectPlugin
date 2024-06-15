@@ -834,7 +834,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     }
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders= { headers[0], headers[2], headers[3], headers[4], headers[5]};
+    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };// , headers[5]};
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
     std::map<QString, QString> newickTrees;
