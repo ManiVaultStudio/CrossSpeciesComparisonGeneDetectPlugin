@@ -452,6 +452,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
                // qDebug()<< "Selected Points: " << selectedPoints.size();
                 //qDebug()<< "Selected Species: " << finalsettingSpeciesNamesArray.size();
+                //qDebug()<<"Species names: " << finalsettingSpeciesNamesArray;
                // qDebug()<< "TsneDataset: " << tsneDataset->getGuiName();
             }
 

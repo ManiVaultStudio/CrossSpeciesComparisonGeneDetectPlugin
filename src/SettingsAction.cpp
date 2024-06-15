@@ -177,12 +177,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
 
+            _selectedSpeciesVals.setString("");
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
             auto embeddingDataset= _embeddingDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
             auto clusterDataset = _clusterNamesDataset.getCurrentDataset();
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             auto filteringTreeDataset = _filteringTreeDataset.getCurrentDataset();
+
+            if (_selectedPointsTSNEDataset.isValid())
+            {
+                _selectedPointsTSNEDataset->setSelectionIndices({});
+            }
+
             bool isValid = false;
             QString datasetId = "";
             _geneNamesConnection.setString("");
