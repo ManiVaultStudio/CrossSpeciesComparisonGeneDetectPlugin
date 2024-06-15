@@ -123,7 +123,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotColorOption(this, "Scatterplot Color Option")
+    _scatterplotColorOption(this, "Scatterplot Color Option"),
+    _selectedSpeciesVals(this, "Selected Species Vals")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -138,6 +139,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _referenceTreeDataset.setSerializationName("CSCGDV:Reference Tree Dataset");
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
+    _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -511,7 +513,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     
                                     if (fullMean != 0.0)
                                     {
-                                        meanValue = shortMean / fullMean;
+                                        meanValue = shortMean/ fullMean;
                                     }
                                     //else
                                     //{
@@ -1460,6 +1462,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _scatterplotColorOption.fromParentVariantMap(variantMap);
+    _selectedSpeciesVals.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1484,6 +1487,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _scatterplotColorOption.insertIntoVariantMap(variantMap);
-
+    _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     return variantMap;
 }
