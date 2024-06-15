@@ -72,7 +72,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                     firstColumnValues << _tableView->model()->index(row, 0).data().toString();
                 }
                 QString firstColumnValue = firstColumnValues.join("*%$@*@$%*");
-                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
+                //_settingsAction.getGeneNamesConnection().setString(firstColumnValue);
 
 
             }
@@ -267,6 +267,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
+    extraOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
     
 
 
@@ -407,9 +408,72 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             selectedRowsStrList << QString::number(current.row());
             QString selectedRowsStr = selectedRowsStrList.join(",");
             _settingsAction.getSelectedRowIndexAction().setString(selectedRowsStr);
+            
+            std::map<QString, float> speciesExpressionMap;
+            QStringList finalsettingSpeciesNamesArray;
+            for (int i = 0; i < current.model()->columnCount(); i++) {
+                QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
+                speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
+                //qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+                if (columnName == "Newick tree")
+                {
+                    QString treeData = current.sibling(current.row(), i).data().toString();
+                    auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
+                    QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                    if (!valueStringReference.isEmpty())
+                    {
+                        treeDataset->setTreeData(valueStringReference);
+                        events().notifyDatasetDataChanged(treeDataset);
+                    }
+                }
+
+
+                if (columnName == "Gene Apearance Species Names")
+                {
+                     finalsettingSpeciesNamesArray = current.sibling(current.row(), i).data().toString().split(";");
+                    auto finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
+                    _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
+                }
+
+
+            }
+            
+            
+            auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
+            auto tsneDataset = _settingsAction.getSelectedPointsTSNEDataset();
+            std::vector<std::seed_seq::result_type> selectedPoints;
+            if (speciesColorClusterDataset.isValid() && tsneDataset.isValid())
+            {
+
+                for (auto& species : speciesColorClusterDataset->getClusters())
+                {
+                    auto speciesName = species.getName();
+                    auto speciesIndices = species.getIndices();
+
+                    if(finalsettingSpeciesNamesArray.contains(speciesName))
+                    {
+                        for (auto& index : speciesIndices)
+                        {
+                            selectedPoints.push_back(index);
+                        }
+                    }
+
+
+                }
+                tsneDataset->setSelectionIndices(selectedPoints);
+                mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
+               // qDebug()<< "Selected Points: " << selectedPoints.size();
+                //qDebug()<< "Selected Species: " << finalsettingSpeciesNamesArray.size();
+                //qDebug()<<"Species names: " << finalsettingSpeciesNamesArray;
+               // qDebug()<< "TsneDataset: " << tsneDataset->getGuiName();
+            }
+
+            
+            
+            
             if (_settingsAction.getScatterplotColorOption().getCurrentText() == "Expression")
             {
-                auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
+                
                 auto expressionColorPointDataset = _settingsAction.getTsneDatasetExpressionColors();
             
             if (speciesColorClusterDataset.isValid() && expressionColorPointDataset.isValid())
@@ -420,14 +484,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 int rowSize = expressionColorPointDataset->getNumPoints();
                 int columnSize = 1;// expressionColorPointDataset->getNumDimensions();
                 std::vector<QString> dimenName = { gene };
-                std::map<QString, float> speciesExpressionMap;
+               
                 std::vector<float> resultContainerColorPoints(rowSize * 1);
                 QString datasetIdEmb = expressionColorPointDataset->getId();
-                for (int i = 5; i < current.model()->columnCount(); i++) {
-                    QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
-                    speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
-                    qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
-                }
+                
+               
+
                 std::fill(resultContainerColorPoints.begin(), resultContainerColorPoints.end(), -1.0);
                 for (auto& species : speciesColorClusterDataset->getClusters())
                 {

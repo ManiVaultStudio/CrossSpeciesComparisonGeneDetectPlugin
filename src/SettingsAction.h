@@ -99,7 +99,7 @@ public: // Action getters
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
     OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
-
+    StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
 
 
     //tsne relatedDatasets
@@ -175,7 +175,7 @@ protected:
     ToggleAction            _performGeneTableTsneAction;
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
-    
+    StringAction            _selectedSpeciesVals;
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;

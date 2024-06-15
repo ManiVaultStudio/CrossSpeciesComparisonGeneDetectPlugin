@@ -123,7 +123,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotColorOption(this, "Scatterplot Color Option")
+    _scatterplotColorOption(this, "Scatterplot Color Option"),
+    _selectedSpeciesVals(this, "Selected Species Vals")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -138,6 +139,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _referenceTreeDataset.setSerializationName("CSCGDV:Reference Tree Dataset");
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
+    _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -175,12 +177,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
 
+            _selectedSpeciesVals.setString("");
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
             auto embeddingDataset= _embeddingDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
             auto clusterDataset = _clusterNamesDataset.getCurrentDataset();
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             auto filteringTreeDataset = _filteringTreeDataset.getCurrentDataset();
+
+            if (_selectedPointsTSNEDataset.isValid())
+            {
+                _selectedPointsTSNEDataset->setSelectionIndices({});
+            }
+
             bool isValid = false;
             QString datasetId = "";
             _geneNamesConnection.setString("");
@@ -511,7 +520,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     
                                     if (fullMean != 0.0)
                                     {
-                                        meanValue = shortMean / fullMean;
+                                        meanValue = shortMean/ fullMean;
                                     }
                                     //else
                                     //{
@@ -825,7 +834,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     }
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders= { headers[0], headers[2], headers[3], headers[4], headers[5]};
+    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };// , headers[5]};
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
     std::map<QString, QString> newickTrees;
@@ -1460,6 +1469,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _scatterplotColorOption.fromParentVariantMap(variantMap);
+    _selectedSpeciesVals.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1484,6 +1494,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _scatterplotColorOption.insertIntoVariantMap(variantMap);
-
+    _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     return variantMap;
 }
