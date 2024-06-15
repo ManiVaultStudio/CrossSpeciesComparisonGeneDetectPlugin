@@ -415,6 +415,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
                 speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
                 //qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
+                if (columnName == "Newick tree")
+                {
+                    QString treeData = current.sibling(current.row(), i).data().toString();
+                    auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
+                    QJsonObject valueStringReference = QJsonDocument::fromJson(treeData.toUtf8()).object();
+                    if (!valueStringReference.isEmpty())
+                    {
+                        treeDataset->setTreeData(valueStringReference);
+                        events().notifyDatasetDataChanged(treeDataset);
+                    }
+                }
+
 
                 if (columnName == "Gene Apearance Species Names")
                 {
