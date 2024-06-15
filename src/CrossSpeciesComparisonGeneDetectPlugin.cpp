@@ -72,7 +72,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                     firstColumnValues << _tableView->model()->index(row, 0).data().toString();
                 }
                 QString firstColumnValue = firstColumnValues.join("*%$@*@$%*");
-                _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
+                //_settingsAction.getGeneNamesConnection().setString(firstColumnValue);
 
 
             }
