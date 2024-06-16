@@ -881,61 +881,6 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         //add gene and newick to newickTrees
         newickTrees.insert(std::make_pair(gene, QString::fromStdString(newick)));
 
-        /*
-        int i = 0;
-        newick += ';';
-        std::string jsonString = "";
-        std::stringstream jsonStream;
-        while (i < newick.size()) {
-            if (newick[i] == '(') {
-                jsonStream << "{\n\"children\": [";
-                i++;
-            }
-            else if (newick[i] == ',') {
-                jsonStream << ",";
-                i++;
-            }
-            else if (newick[i] == ')') {
-                jsonStream << "],\n\"id\": 1,\n\"score\": 1,\n\"width\": 1\n}";
-                i++;
-            }
-            else if (newick[i] == ';') {
-                break;
-            }
-            else {
-                if (isdigit(newick[i])) {
-                    int skip = 1;
-                    std::string num = "";
-                    for (int j = i; j < newick.size(); j++) {
-                        if (isdigit(newick[j])) {
-                            continue;
-                        }
-                        else {
-                            num = newick.substr(i, j - i);
-
-                            skip = j - i;
-                            break;
-                        }
-                    }
-
-
-                    std::string species = leafnames[(std::stoi(num) - 1)].toStdString();
-                    jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"name\": \"" << species << "\"\n}";
-                    i += skip;
-                }
-            }
-        }
-
-        jsonString = jsonStream.str();
-
-        nlohmann::json json = nlohmann::json::parse(jsonString);
-        std::string jsonStr = json.dump(4);
-
-        QJsonObject valueStringReference = QJsonDocument::fromJson(QString::fromStdString(jsonStr).toUtf8()).object();
-
-        QString completedString = QJsonDocument(valueStringReference).toJson(QJsonDocument::Compact);
-
-        */
         delete[] distmat;
         delete[] merge;
         delete[] height;
@@ -1317,7 +1262,7 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
             i++;
         }
         else if (newick[i] == ')') {
-            jsonStream << "],\n\"id\": 1,\n\"score\": 1,\n\"width\": 1\n}";
+            jsonStream << "],\n\"id\": 1,\n\"score\": 1,\n\"branchLength\": 1.0,\n\"width\": 1\n}";
             i++;
         }
         else if (newick[i] == ';') {
@@ -1339,7 +1284,7 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
                     }
                 }
                 std::string species = leafnames[(std::stoi(num) - 1)].toStdString();
-                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"name\": \"" << species << "\"\n}";
+                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"branchLength\": 1.0,\n\"mean\": 0.0,\n\"name\": \"" << species << "\"\n}";
                 i += skip;
             }
         }
