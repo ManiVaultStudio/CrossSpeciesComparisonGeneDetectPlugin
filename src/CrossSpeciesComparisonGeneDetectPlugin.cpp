@@ -413,7 +413,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             QStringList finalsettingSpeciesNamesArray;
             for (int i = 0; i < current.model()->columnCount(); i++) {
                 QString columnName = current.model()->headerData(i, Qt::Horizontal).toString();
-                speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
+                if (i > 5)
+                {
+                    speciesExpressionMap[columnName] = current.sibling(current.row(), i).data().toFloat();
+                }
+                
+                
                 //qDebug() << columnName << ": " << current.sibling(current.row(), i).data().toString();
                 if (columnName == "Newick tree")
                 {
@@ -437,7 +442,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
 
             }
-            
+
+            //for (const auto& [species, value] : speciesExpressionMap) {
+                //qDebug() << species << ": " << value;
+            //}
+
             
             auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
             auto tsneDataset = _settingsAction.getSelectedPointsTSNEDataset();
