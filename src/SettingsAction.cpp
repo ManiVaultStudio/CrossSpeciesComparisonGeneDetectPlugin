@@ -837,21 +837,24 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };// , headers[5]};
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
-    std::map<QString, QString> newickTrees;
+    std::map<QString, std::pair<QString, std::map<QString, float>>> newickTrees;
+    //std::map<QString, std::map<QString, float>> meanExpressionValues;
     for (auto gene : returnGeneList)
     {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
-
-
+        std::map<QString, float> meanValuesForSpeciesMap;
+        //[speciesName][geneName]=meanValue;
         for (const auto& outerPair : map) {
             QString outerKey = outerPair.first;
             const std::map<QString, float>& innerMap = outerPair.second;
             try {
                 numbers.push_back(innerMap.at(gene));
+                meanValuesForSpeciesMap[outerKey] = innerMap.at(gene);
             }
             catch (const std::out_of_range& e) {
                 numbers.push_back(0);
+                meanValuesForSpeciesMap[outerKey] = 0;
             }
 
 
@@ -879,7 +882,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         int totalChars = newick.length();
         //std::cout << "\nOriginal Newick format: " << newick << std::endl;
         //add gene and newick to newickTrees
-        newickTrees.insert(std::make_pair(gene, QString::fromStdString(newick)));
+       // newickTrees.insert(std::make_pair(gene, QString::fromStdString(newick)));
+        newickTrees.insert(std::make_pair(gene, std::make_pair(QString::fromStdString(newick), meanValuesForSpeciesMap)));
 
         delete[] distmat;
         delete[] merge;
@@ -1013,8 +1017,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
                         qDebug() << "*****************\n";
                         */
                         //add a ";" to the end of the string pair.second.toStdString()
-                std::string modifiedNewick = pair.second.toStdString();
-
+                std::string modifiedNewick = pair.second.first.toStdString();
+                std::map <QString,float> speciesMeanMaps = pair.second.second;
 
                 const char* string1 = targetNewick.c_str();
                 const char* string2 = modifiedNewick.c_str();
@@ -1066,7 +1070,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
                 //insert pair.first modifiedNewick similarity to treeSimilarities
                 std::pair<QString, float>  temp;
-                temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames);
+                temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames, speciesMeanMaps);
                 temp.second = similarity;
                 treeSimilarities.insert(std::make_pair(pair.first, temp));
                 /*
@@ -1246,7 +1250,7 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
 }
 
 
-QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames)
+QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames, std::map <QString, float> speciesMeanValues)
 {
     int i = 0;
     std::string jsonString = "";
@@ -1284,7 +1288,19 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
                     }
                 }
                 std::string species = leafnames[(std::stoi(num) - 1)].toStdString();
-                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"branchLength\": 1.0,\n\"mean\": 0.0,\n\"name\": \"" << species << "\"\n}";
+                //std::string meanValue = std::to_string(speciesMeanValues[QString::fromStdString(species)]);
+                auto it = speciesMeanValues.find(QString::fromStdString(species));
+                std::string meanValue;
+                if (it != speciesMeanValues.end()) {
+                    // Key found, use the corresponding value
+                    meanValue = std::to_string(it->second);
+                }
+                else {
+                    // Key not found, assign -1
+                    meanValue = "-1";
+                }
+
+                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"branchLength\": 1.0,\n\"mean\": "<< meanValue <<", \n\"name\": \"" << species << "\"\n}";
                 i += skip;
             }
         }
