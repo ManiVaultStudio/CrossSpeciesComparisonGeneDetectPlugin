@@ -403,6 +403,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     connect(_tableView->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
 
         if (current.isValid()) {
+            QString finalSpeciesNameString = "";
             QString gene = current.sibling(current.row(), 0).data().toString();
             _settingsAction.getSelectedGeneAction().setString(gene);
             QStringList selectedRowsStrList;
@@ -437,8 +438,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 if (columnName == "Gene Apearance Species Names")
                 {
                      finalsettingSpeciesNamesArray = current.sibling(current.row(), i).data().toString().split(";");
-                    auto finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
-                    _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
+                    finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
+                   
                 }
 
 
@@ -535,7 +536,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             }
 
         }
-            
+            _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
         }
 
         });
