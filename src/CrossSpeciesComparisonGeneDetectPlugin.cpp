@@ -10,6 +10,7 @@
 #include <QSplitter>
 #include <QRandomGenerator>
 #include <QColor>
+#include <QJsonArray> 
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -446,6 +447,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             //for (const auto& [species, value] : speciesExpressionMap) {
                 //qDebug() << species << ": " << value;
             //}
+            auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();
+            if (referenceTreeDataset.isValid())
+            {
+                auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
+                if (referenceTree.isValid())
+                {
+                    QJsonObject speciesDataJson = referenceTree->getTreeData();
+                    updateSpeciesData(speciesDataJson, speciesExpressionMap);
+                    referenceTree->setTreeData(speciesDataJson);
+                    qDebug() << "Reference Tree Data: " << speciesDataJson;
+                    events().notifyDatasetDataChanged(referenceTree);
+                }
+            }
 
             
             auto speciesColorClusterDataset = _settingsAction.getTsneDatasetSpeciesColors();
@@ -527,250 +541,30 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         });
 
 
-
-
     emit model->layoutChanged();
 
-
-
-
-
-    /*
-    std::vector<float> items;
-    std::map<QString, std::vector<std::seed_seq::result_type>> clusterMap;
-    items.reserve(2 * model->rowCount()); // Reserve space for items
-
-    for (int i = 0; i < model->rowCount(); i++) {
-        auto index1 = model->index(i, 1);
-        auto index4 = model->index(i, 4);
-        auto index2 = model->index(i, 3);
-
-        if (index1.isValid() && index4.isValid()) {
-            bool ok1, ok4;
-            float item1 = index1.data().toFloat(&ok1);
-            float item4 = index4.data().toFloat(&ok4);
-            item4= item4 * 100;// change this to a percentage
-            if (ok1 && ok4) {
-                items.push_back(item1);
-                items.push_back(item4);
-                //qDebug() << "Item1: " << item1 << " Item4: " << item4;
-            }
-        }
-
-        if (index2.isValid()) {
-            QString gene = index2.data().toString();
-            if (!gene.isEmpty()) {
-                clusterMap[gene].push_back(i);
-            }
-        }
-    }
-    //iterate clustermap and get the min and max values
-    int minVal = INT_MAX;
-    int maxVal = INT_MIN;
-    for (const auto& [gene, indices] : clusterMap) {
-        int numberVal = gene.split("/")[0].toInt();
-        if (numberVal) {
-            if (numberVal < minVal) minVal = numberVal;
-            if (numberVal > maxVal) maxVal = numberVal;
+}
+void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, float>& speciesExpressionMap) {
+    // Check if the "name" key exists in the current node
+    if (node.contains("name")) {
+        QString nodeName = node["name"].toString();
+        auto it = speciesExpressionMap.find(nodeName);
+        // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
+        if (it != speciesExpressionMap.end()) {
+            node["mean"] = it->second; // Use it->second to access the value in the map
         }
     }
 
-    std::vector<QString> dimensionNames = { "Variance","Similarity" };
-    if (!_pointsDataset.isValid() || !_clusterDataset.isValid())
-    {
-        
-        _pointsDataset = mv::data().createDataset("Points", "GeneSimilarityDataset");
-        _pointsDataset->setGroupIndex(8);
-        mv::events().notifyDatasetAdded(_pointsDataset);
-        _clusterDataset = mv::data().createDataset("Cluster", "GeneSimilarityClusterDataset", _pointsDataset);
-        _clusterDataset->setGroupIndex(8);
-        mv::events().notifyDatasetAdded(_clusterDataset);
-
-   }
-
-    
-
-    if (_pointsDataset.isValid() && _clusterDataset.isValid())
-    {
-
-        _pointsDataset->setData(items.data(), items.size() / 2, 2);
-        _pointsDataset->setDimensionNames(dimensionNames);
-        bool canPerformTSNE = false;
-        auto perplexityValue = _settingsAction.getTsnePerplexity().getValue();
-        if ((items.size() / 2)> perplexityValue && perplexityValue>0)
-        {
-            canPerformTSNE = true;
+    // If the node has "children", recursively update them as well
+    if (node.contains("children")) {
+        QJsonArray children = node["children"].toArray();
+        for (int i = 0; i < children.size(); ++i) {
+            QJsonObject child = children[i].toObject();
+            updateSpeciesData(child, speciesExpressionMap); // Recursive call
+            children[i] = child; // Update the modified object back into the array
         }
-        events().notifyDatasetDataChanged(_pointsDataset);
-
-        _clusterDataset->getClusters() = QVector<Cluster>();
-        events().notifyDatasetDataChanged(_clusterDataset);
-        for (const auto& [gene, indices] : clusterMap) {
-            Cluster cluster;
-            cluster.setIndices(indices);
-            cluster.setName(gene);
-            int numberVal = gene.split("/")[0].toInt();
-            QColor color;
-
-            if (numberVal) {
-                color = getColorFromValue(numberVal, minVal, maxVal);
-            }
-            else {
-                color = QColor(Qt::gray);
-            }
-
-            cluster.setColor(color);
-
- 
-            
-
-
-            _clusterDataset->getClusters().append(cluster);
-        }
-        events().notifyDatasetDataChanged(_clusterDataset);
-
-        if (_settingsAction.getPerformGeneTableTsneAction().isChecked() && canPerformTSNE)
-        {
-            if (model->columnCount()>10)
-            {
-                std::vector<float> allitems;
-
-                allitems.reserve((model->columnCount() - 8)* model->rowCount()); // Reserve space for items
-
-                for (int i = 0; i < model->rowCount(); i++)
-                {
-                    for (int j = 8; j < (model->columnCount() - 8); j++)
-                    {
-                        auto index = model->index(i, j);
-                        float item = index.data().toFloat();
-                        allitems.push_back(item);
-                    }
-                }
-
-
-
-                _pointsDataset->setData(allitems.data(), items.size() / 2, 2);
-                _pointsDataset->setDimensionNames(dimensionNames);
-
-                events().notifyDatasetDataChanged(_pointsDataset);
-            }
-
-        
-        auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _pointsDataset });
-        if (!analysisPlugin) {
-            qDebug() << "Could not find create TSNE Analysis";
-            return;
-        }
-
-        if (_lowDimTSNEDataset.isValid())
-        {
-            auto runningAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
-
-            if (runningAction)
-            {
-                auto perplexityAction= dynamic_cast<IntegralAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/Perplexity"));
-                if (perplexityAction)
-                {
-                    qDebug()<< "Perplexity: Found" ;
-                    perplexityAction->setValue(perplexityValue);
-                }
-                else
-                {
-                    qDebug() << "Perplexity: Not Found";
-                }
-                if (runningAction->isChecked())
-                {
-                    auto stopAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
-                    if (stopAction)
-                    {
-                        stopAction->trigger();
-                        std::this_thread::sleep_for(std::chrono::seconds(5));
-                    }
-                }
-
-            }
-        }
-
-        if (_lowDimTSNEDataset.isValid())
-        {
-            auto datasetIDLowRem = _lowDimTSNEDataset.getDatasetId();
-            mv::events().notifyDatasetAboutToBeRemoved(_lowDimTSNEDataset);
-            mv::data().removeDataset(_lowDimTSNEDataset);
-            mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
-        }
-        _lowDimTSNEDataset = analysisPlugin->getOutputDataset();
-        if (_lowDimTSNEDataset.isValid())
-        {
-
-
-            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-            if (scatterplotViewFactory) {
-                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
-                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                        if (pointDatasetPickerAction) {
-                            pointDatasetPickerAction->setCurrentText("");
-
-                            pointDatasetPickerAction->setCurrentDataset(_lowDimTSNEDataset);
-
-                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                            if (colorDatasetPickerAction)
-                            {
-                                colorDatasetPickerAction->setCurrentText("");
-                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
-                            }
-                        }
-                    }
-                }
-            }
-
-            auto startAction = dynamic_cast<TriggerAction*>(_lowDimTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
-            if (startAction) {
-
-                startAction->trigger();
-
-                analysisPlugin->getOutputDataset()->setSelectionIndices({});
-            }
-
-        }
-
+        node["children"] = children; // Update the modified array back into the parent JSON object
     }
-        else
-        {
-
-            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-            if (scatterplotViewFactory) {
-                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
-                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                        if (pointDatasetPickerAction) {
-                            pointDatasetPickerAction->setCurrentText("");
-
-                            pointDatasetPickerAction->setCurrentDataset(_pointsDataset);
-
-                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                            if (colorDatasetPickerAction)
-                            {
-                                colorDatasetPickerAction->setCurrentText("");
-                                colorDatasetPickerAction->setCurrentDataset(_clusterDataset);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    
-    }
-    else
-    {
-        qDebug() << "Low dimensional dataset is not valid";
-
-    }
-    */
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
