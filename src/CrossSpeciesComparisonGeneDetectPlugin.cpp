@@ -456,7 +456,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                     QJsonObject speciesDataJson = referenceTree->getTreeData();
                     updateSpeciesData(speciesDataJson, speciesExpressionMap);
                     referenceTree->setTreeData(speciesDataJson);
-                    qDebug() << "Reference Tree Data: " << speciesDataJson;
+                    //qDebug() << "Reference Tree Data: " << speciesDataJson;
                     events().notifyDatasetDataChanged(referenceTree);
                 }
             }
