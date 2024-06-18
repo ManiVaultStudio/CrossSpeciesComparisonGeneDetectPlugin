@@ -518,9 +518,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                             fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
                                         }
                                     
-                                    if (fullMean != 0.0)
+                                    //if (fullMean != 0.0)
                                     {
-                                        meanValue = shortMean/ fullMean;
+                                        meanValue =  fullMean- shortMean ;
                                     }
                                     //else
                                     //{
