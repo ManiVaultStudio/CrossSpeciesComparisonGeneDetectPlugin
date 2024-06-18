@@ -124,7 +124,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
     _scatterplotColorOption(this, "Scatterplot Color Option"),
-    _selectedSpeciesVals(this, "Selected Species Vals")
+    _selectedSpeciesVals(this, "Selected Species Vals"),
+    _removeRowSelection(this, "Remove Row Selection")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -140,6 +141,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
+    _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -1431,6 +1433,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _scatterplotColorOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
+    _removeRowSelection.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1456,5 +1459,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _scatterplotColorOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
+    _removeRowSelection.insertIntoVariantMap(variantMap);
     return variantMap;
 }

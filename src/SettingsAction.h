@@ -100,7 +100,7 @@ public: // Action getters
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
     OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
-
+    TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
 
     //tsne relatedDatasets
     /*
@@ -120,7 +120,7 @@ public: // Action getters
     Dataset<Clusters>& getTsneDatasetSpeciesColors() { return _tsneDatasetSpeciesColors; }
     Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
     Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
-
+    
 
 
 
@@ -183,6 +183,6 @@ protected:
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
-
+    TriggerAction          _removeRowSelection;
     OptionAction           _scatterplotColorOption;
 };
