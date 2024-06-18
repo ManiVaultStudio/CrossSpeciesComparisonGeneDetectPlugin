@@ -306,16 +306,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
-
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotColorOption());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
 
-    mainOptionsGroupLayout->addWidget(mainOptionsGroup1->createWidget(&getWidget()));
-    mainOptionsGroupLayout->addWidget(mainOptionsGroup2->createWidget(&getWidget()));
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotColorOption());
 
-    
+    auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
+    group1Widget->setMaximumWidth(550);
+    mainOptionsGroupLayout->addWidget(group1Widget);
+
+    auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
+    group2Widget->setMaximumWidth(300);
+    mainOptionsGroupLayout->addWidget(group2Widget);  
 
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);

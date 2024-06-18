@@ -117,17 +117,18 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _clusterNamesDataset(this, "Cluster Names Dataset"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
-    _topNGenesFilter(this, "Top N Genes Filter", 10),
+    _topNGenesFilter(this, "Top N Genes", 10),
     _geneNamesConnection(this, "Gene Names Connection"),
     _createRowMultiSelectTree(this, "Create Row MultiSelect Tree"),
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotColorOption(this, "Scatterplot Color Option"),
+    _scatterplotColorOption(this, "Scatterplot Color"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
-    _removeRowSelection(this, "Remove Row Selection")
+    _removeRowSelection(this, "Remove Table Selection")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
+   
     _tableModel.setSerializationName("CSCGDV:Table Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
