@@ -341,43 +341,43 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
+    mainOptionsGroup2->addAction(&_settingsAction.getStatusAction());
+    //mainOptionsGroup2->addAction(&_settingsAction.getStatusAction(), -1, [this](WidgetAction* action, QWidget* widget) -> void
+    //    {
+    //        auto labelWidget = widget->findChild<QLabel*>("Label");
 
-    mainOptionsGroup2->addAction(&_settingsAction.getStatusAction(), -1, [this](WidgetAction* action, QWidget* widget) -> void
-        {
-            auto labelWidget = widget->findChild<QLabel*>("Label");
+    //        if (labelWidget)
+    //        {
+    //            // Set initial state text and color
+    //            labelWidget->setText("");
+    //            labelWidget->setStyleSheet("background-color: none; color: white;"); // Set initial text color to white
+    //            qDebug() << "Initial status color: " << _settingsAction.getStatusColorAction().getString();
+    //            connect(&_settingsAction.getStatusColorAction(), &StringAction::stringChanged, this, [this, labelWidget](const QString& string) -> void
+    //                {
+    //                    qDebug() << "Status color changed to: " << string;
+    //                    QString labelText = "";
+    //                    QString backgroundColor = "none";
+    //                    if (string == "C")
+    //                    {
+    //                        labelText = "Up-to-date";
+    //                        backgroundColor = "#28a745";
+    //                    }
+    //                    else if (string == "M")
+    //                    {
+    //                        labelText = "Outdated";
+    //                        backgroundColor = "#ffc107";
+    //                    }
+    //                    else
+    //                    {
+    //                        labelText = "Unknown";
+    //                        backgroundColor = "#6c757d";
+    //                    }
+    //                    labelWidget->setText(labelText);
+    //                    labelWidget->setStyleSheet(QString("background-color: %1; color: white;").arg(backgroundColor));
+    //                });
+    //        }
 
-            if (labelWidget)
-            {
-                // Set initial state text and color
-                labelWidget->setText("");
-                labelWidget->setStyleSheet("background-color: none; color: white;"); // Set initial text color to white
-                qDebug() << "Initial status color: " << _settingsAction.getStatusColorAction().getString();
-                connect(&_settingsAction.getStatusColorAction(), &StringAction::stringChanged, this, [this, labelWidget](const QString& string) -> void
-                    {
-                        qDebug() << "Status color changed to: " << string;
-                        QString labelText = "";
-                        QString backgroundColor = "none";
-                        if (string == "C")
-                        {
-                            labelText = "Up-to-date";
-                            backgroundColor = "#28a745";
-                        }
-                        else if (string == "M")
-                        {
-                            labelText = "Outdated";
-                            backgroundColor = "#ffc107";
-                        }
-                        else
-                        {
-                            labelText = "Unknown";
-                            backgroundColor = "#6c757d";
-                        }
-                        labelWidget->setText(labelText);
-                        labelWidget->setStyleSheet(QString("background-color: %1; color: white;").arg(backgroundColor));
-                    });
-            }
-
-        });
+    //    });
 
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
 

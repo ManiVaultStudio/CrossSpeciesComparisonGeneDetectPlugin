@@ -789,7 +789,51 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);  
     
-    
+    // Assuming this is within a member function of a class
+    &_statusAction, -1, [this](WidgetAction* action, QWidget* widget) -> void
+        {
+            auto labelWidget = widget->findChild<QLabel*>("Label");
+            if (labelWidget)
+            {
+                qDebug() << "Label widget found";
+
+                // Set initial state text and color
+                labelWidget->setText("");
+                labelWidget->setStyleSheet("background-color: none; color: white;");
+                qDebug() << "Initial status color: " << _statusColorAction.getString();
+
+                connect(&_statusColorAction, &StringAction::stringChanged, this, [labelWidget, this](const QString& string) -> void
+                    {
+                        qDebug() << "Status color changed to: " << string;
+                        QString labelText = "";
+                        QString backgroundColor = "none";
+                        if (string == "C")
+                        {
+                            labelText = "Up-to-date";
+                            backgroundColor = "#28a745";
+                        }
+                        else if (string == "M")
+                        {
+                            labelText = "Outdated";
+                            backgroundColor = "#ffc107";
+                        }
+                        else
+                        {
+                            labelText = "Unknown";
+                            backgroundColor = "#6c757d";
+                        }
+                        labelWidget->setText(labelText);
+                        labelWidget->setStyleSheet(QString("background-color: %1; color: white;").arg(backgroundColor));
+                    });
+
+                qDebug() << "Signal-slot connection established";
+            }
+            else
+            {
+                qDebug() << "Label widget not found";
+            }
+        };
+
 
 }
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
