@@ -30,6 +30,7 @@
 #include <string>
 #include "actions/VariantAction.h"
 #include "actions/GroupAction.h"
+#include "QStatusBar"
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -98,9 +99,12 @@ public: // Action getters
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
-    OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
+    DatasetPickerAction& getScatterplotEmbeddingColorOption() { return _scatterplotEmbeddingColorOption; }
+    DatasetPickerAction& getScatterplotEmbeddingPointsUMAPOption() { return _scatterplotEmbeddingPointsUMAPOption; }
+    OptionAction& getScatterplotReembedColorOption() { return _scatterplotReembedColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
-
+    TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
+    StringAction& getStatusColorAction() { return _statusColorAction; }
 
     //tsne relatedDatasets
     /*
@@ -120,8 +124,10 @@ public: // Action getters
     Dataset<Clusters>& getTsneDatasetSpeciesColors() { return _tsneDatasetSpeciesColors; }
     Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
     Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
-
-
+    std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
+    Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
+    Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
+    QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
 
 
 
@@ -134,7 +140,7 @@ public: // Action getters
 
     double* condensedDistanceMatrix(std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
-    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, float> speciesMeanValues);
 private:
     QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
@@ -179,10 +185,18 @@ protected:
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
+    Dataset<Points>        _filteredUMAPDatasetPoints;
+    Dataset<Points>        _filteredUMAPDatasetColors;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
+    TriggerAction          _removeRowSelection;
+    DatasetPickerAction           _scatterplotEmbeddingColorOption;
+    DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
+    OptionAction           _scatterplotReembedColorOption;
+    StringAction    _statusColorAction;
+    std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
+    QStatusBar*                     _statusBarActionWidget;
 
-    OptionAction           _scatterplotColorOption;
 };
