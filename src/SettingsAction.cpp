@@ -617,6 +617,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
                 qDebug() << "Invalid datasets";
             }
+            _removeRowSelection.trigger();
             _removeRowSelection.setEnabled(false);
         };
        
