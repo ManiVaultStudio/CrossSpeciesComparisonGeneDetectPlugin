@@ -126,7 +126,8 @@ public: // Action getters
     Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
     Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
     std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
-
+    Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
+    Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
 
 
 
@@ -184,6 +185,8 @@ protected:
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
+    Dataset<Points>        _filteredUMAPDatasetPoints;
+    Dataset<Points>        _filteredUMAPDatasetColors;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;

@@ -271,6 +271,23 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                             }                            
                             
+                            if (!_filteredUMAPDatasetPoints.isValid())
+                            {
+                                _filteredUMAPDatasetPoints = mv::data().createDataset("Points", "Filtered UMAP Dataset Points");
+                                _filteredUMAPDatasetPoints->setGroupIndex(10);
+                                mv::events().notifyDatasetAdded(_filteredUMAPDatasetPoints);
+                                if (!_filteredUMAPDatasetColors.isValid())
+                                {
+                                    //need to delete
+
+                                }
+                                _filteredUMAPDatasetColors = mv::data().createDataset("Points", "Filtered UMAP Dataset Colors", _filteredUMAPDatasetPoints);
+                                _filteredUMAPDatasetColors->setGroupIndex(10);
+                                mv::events().notifyDatasetAdded(_filteredUMAPDatasetColors);
+
+                            }
+
+
                             if (!_selectedPointsEmbeddingDataset.isValid())
                             {
                                 _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);

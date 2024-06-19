@@ -111,6 +111,39 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 // Update the view to ensure changes are reflected
                 _tableView->update();
                 _settingsAction.getSelctedSpeciesVals().setString("");
+
+
+                if (_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset().isValid() && _settingsAction.getScatterplotEmbeddingColorOption().getCurrentDataset().isValid())
+                {
+
+                    auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                    mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                    mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+
+
+                    if (scatterplotViewFactory) {
+                        for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                            if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                                pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                                if (pointDatasetPickerAction) {
+                                    pointDatasetPickerAction->setCurrentText("");
+
+                                    pointDatasetPickerAction->setCurrentDataset(_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset());
+
+                                    colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                    if (colorDatasetPickerAction)
+                                    {
+                                        colorDatasetPickerAction->setCurrentText("");
+                                        colorDatasetPickerAction->setCurrentDataset(_settingsAction.getScatterplotEmbeddingColorOption().getCurrentDataset());
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset()->setSelectionIndices(_settingsAction.getSelectedIndicesFromStorage());
+                    mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset());
+                }
             }
             else {
                 qDebug() << "TableView or its selection model is null";
