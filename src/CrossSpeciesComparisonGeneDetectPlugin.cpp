@@ -530,6 +530,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         QString gene = current.siblingAtColumn(0).data().toString();
         _settingsAction.getSelectedGeneAction().setString(gene);
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
+        
+
+
+
 
         std::map<QString, float> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
@@ -554,6 +558,106 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
         }
+
+
+
+        std::vector<std::seed_seq::result_type> selectedSpeciesIndices;
+        auto speciesDataset = _settingsAction.getSpeciesNamesDataset().getCurrentDataset();
+        auto umapDataset = _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset();
+        auto mainPointsDataset = _settingsAction.getMainPointsDataset().getCurrentDataset();
+        
+        if (speciesDataset.isValid() && umapDataset.isValid() && mainPointsDataset.isValid() && _settingsAction.getFilteredUMAPDatasetPoints().isValid() && _settingsAction.getFilteredUMAPDatasetColors().isValid())
+        {
+            auto speciesClusterDataset = mv::data().getDataset<Clusters>(speciesDataset.getDatasetId());
+            auto umapPointsDataset = mv::data().getDataset<Points>(umapDataset.getDatasetId());
+            auto fullMainPointsDataset = mv::data().getDataset<Points>(mainPointsDataset.getDatasetId());
+
+            auto speciesClusters= speciesClusterDataset->getClusters();
+            for (const auto& species : speciesClusters) {
+                if (finalsettingSpeciesNamesArray.contains(species.getName())) {
+                    const auto& indices = species.getIndices();
+                    selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
+                }
+            }
+            //
+           //getFilteredUMAPDatasetColors()
+            auto dimensionNamesUmap = umapPointsDataset->getDimensionNames();
+            std::vector<int> geneIndicesSpecies;
+            for (int i = 0; i < umapPointsDataset->getNumDimensions(); i++)
+            {
+                geneIndicesSpecies.push_back(i);
+            }
+
+            if (selectedSpeciesIndices.size() > 0)
+            {
+                std::vector<float> resultContainerSpeciesUMAP(selectedSpeciesIndices.size()* umapPointsDataset->getNumDimensions());
+                umapPointsDataset->populateDataForDimensions(resultContainerSpeciesUMAP, geneIndicesSpecies, selectedSpeciesIndices);
+                auto speciesDataId= _settingsAction.getFilteredUMAPDatasetPoints().getDatasetId();
+                int tempnumPoints = selectedSpeciesIndices.size();
+                int tempNumDimensions = geneIndicesSpecies.size();
+                _settingsAction.populatePointData(speciesDataId, resultContainerSpeciesUMAP, tempnumPoints, tempNumDimensions, dimensionNamesUmap);
+
+
+
+                std::vector<float> resultContainerSpeciesColors(selectedSpeciesIndices.size());
+                std::vector<int> selectedGeneIndex;
+
+                for (int i = 0; i < fullMainPointsDataset->getDimensionNames().size(); i++)
+                {
+                    if (fullMainPointsDataset->getDimensionNames()[i] == gene)
+                    {
+                        selectedGeneIndex.push_back(i);
+                        break;
+                    }
+                }
+
+
+                fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
+                auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
+                int tempnumPointsColors = selectedSpeciesIndices.size();
+                
+                std::vector<QString> columnGeneColors = { gene };
+                int tempNumDimensionsColors = columnGeneColors.size();
+                _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
+
+                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+
+
+                if (scatterplotViewFactory) {
+                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                        if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                            if (pointDatasetPickerAction) {
+                                pointDatasetPickerAction->setCurrentText("");
+
+                                pointDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetPoints());
+
+                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                if (colorDatasetPickerAction)
+                                {
+                                    colorDatasetPickerAction->setCurrentText("");
+                                    colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+
+
+        }
+
+
+
+
+
+
+
+
 
         if (treeDataFound) {
             auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
