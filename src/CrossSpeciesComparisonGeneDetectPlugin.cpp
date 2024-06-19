@@ -149,7 +149,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 qDebug() << "TableView or its selection model is null";
             }
 
-            
+            _settingsAction.getRemoveRowSelection().setDisabled(true);
 
         };
 
@@ -530,7 +530,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         QString gene = current.siblingAtColumn(0).data().toString();
         _settingsAction.getSelectedGeneAction().setString(gene);
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
-        
+        _settingsAction.getRemoveRowSelection().setEnabled(true);
 
 
 

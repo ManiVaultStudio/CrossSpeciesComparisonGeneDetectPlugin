@@ -147,6 +147,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
+    _removeRowSelection.setDisabled(true);
     _statusAction.setSerializationName("CSCGDV:Status");
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
     _statusAction.setDefaultWidgetFlags(StringAction::WidgetFlag::Label);
@@ -586,7 +587,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             {
                                 //_filteredGeneNamesVariant.setVariant(geneListTable);
                                 _tableModel.setVariant(geneListTable);
-
+                             
                             }
                             else
                             {
@@ -609,14 +610,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 {
                     qDebug() << "No points selected or no dimensions present";
                 }
+
             }
 
             else
             {
                 qDebug() << "Invalid datasets";
             }
-
-
+            _removeRowSelection.setEnabled(false);
         };
        
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
