@@ -30,6 +30,7 @@
 #include <string>
 #include "actions/VariantAction.h"
 #include "actions/GroupAction.h"
+#include "QStatusBar"
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -101,6 +102,8 @@ public: // Action getters
     OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
+    StringAction& getStatusAction() { return _statusAction; }
+    StringAction& getStatusColorAction() { return _statusColorAction; }
 
     //tsne relatedDatasets
     /*
@@ -185,4 +188,7 @@ protected:
     Dataset<Points>        _tsneDatasetExpressionColors;
     TriggerAction          _removeRowSelection;
     OptionAction           _scatterplotColorOption;
+    StringAction    _statusAction;
+    StringAction    _statusColorAction;
+
 };

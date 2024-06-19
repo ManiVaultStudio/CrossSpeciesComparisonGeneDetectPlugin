@@ -125,7 +125,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
     _scatterplotColorOption(this, "Scatterplot Color"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
-    _removeRowSelection(this, "Remove Table Selection")
+    _removeRowSelection(this, "Remove Table Selection"),
+    _statusAction(this, "Status"),
+    _statusColorAction(this, "Status color")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
    
@@ -143,6 +145,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
+    _statusAction.setSerializationName("CSCGDV:Status");
+    _statusColorAction.setSerializationName("CSCGDV:Status Color");
+    _statusAction.setDefaultWidgetFlags(StringAction::WidgetFlag::Label);
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -553,6 +558,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             {
                                 //_filteredGeneNamesVariant.setVariant(geneListTable);
                                 _tableModel.setVariant(geneListTable);
+
                             }
                             else
                             {
@@ -1435,6 +1441,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotColorOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
+    _statusAction.fromParentVariantMap(variantMap);
+    _statusColorAction.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1461,5 +1469,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotColorOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
+    _statusAction.insertIntoVariantMap(variantMap);
+    _statusColorAction.insertIntoVariantMap(variantMap);
     return variantMap;
 }

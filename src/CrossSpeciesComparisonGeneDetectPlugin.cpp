@@ -116,7 +116,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 qDebug() << "TableView or its selection model is null";
             }
 
-
+            
 
         };
 
@@ -125,7 +125,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     const auto updateTableModel = [this]() -> void
         {
             modifyTableData();
-
+            _settingsAction.getStatusColorAction().setString("C");
         };
 
     connect(&_settingsAction.getTableModelAction(), &VariantAction::variantChanged, this, updateTableModel);
@@ -306,7 +306,46 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
+
+    mainOptionsGroup2->addAction(&_settingsAction.getStatusAction(), -1, [this](WidgetAction* action, QWidget* widget) -> void
+        {
+            auto labelWidget = widget->findChild<QLabel*>("Label");
+
+            if (labelWidget)
+            {
+                // Set initial state text and color
+                labelWidget->setText("");
+                labelWidget->setStyleSheet("background-color: none; color: white;"); // Set initial text color to white
+                qDebug() << "Initial status color: " << _settingsAction.getStatusColorAction().getString();
+                connect(&_settingsAction.getStatusColorAction(), &StringAction::stringChanged, this, [this, labelWidget](const QString& string) -> void
+                    {
+                        qDebug() << "Status color changed to: " << string;
+                        QString labelText = "";
+                        QString backgroundColor = "none";
+                        if (string == "C")
+                        {
+                            labelText = "Up-to-date";
+                            backgroundColor = "#28a745";
+                        }
+                        else if (string == "M")
+                        {
+                            labelText = "Outdated";
+                            backgroundColor = "#ffc107";
+                        }
+                        else
+                        {
+                            labelText = "Unknown";
+                            backgroundColor = "#6c757d";
+                        }
+                        labelWidget->setText(labelText);
+                        labelWidget->setStyleSheet(QString("background-color: %1; color: white;").arg(backgroundColor));
+                    });
+            }
+
+        });
+
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
+
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
 
     mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
@@ -317,7 +356,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroupLayout->addWidget(group1Widget);
 
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    group2Widget->setMaximumWidth(300);
+    group2Widget->setMaximumWidth(400);
     mainOptionsGroupLayout->addWidget(group2Widget);  
 
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
@@ -364,7 +403,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     }
 
 
-
+    _settingsAction.getStatusColorAction().setString("M");
 
     // Set the layout for the widget
     getWidget().setLayout(mainLayout);
