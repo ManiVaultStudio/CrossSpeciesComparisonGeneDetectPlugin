@@ -645,6 +645,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                         }
                     }
                 }
+               // _settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(_settingsAction.getSelectedIndicesFromStorage());
+                //mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getFilteredUMAPDatasetPoints());
+
 
             }
 
