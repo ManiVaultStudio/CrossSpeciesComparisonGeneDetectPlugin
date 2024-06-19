@@ -218,8 +218,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
                 datasetId = referenceTreeDataset->getId();
                 isValid = speciesDataset->getParent() == pointsDataset && clusterDataset->getParent()==pointsDataset && embeddingDataset->getParent() == pointsDataset;
+                _selectedIndicesFromStorage.clear();
+                _selectedIndicesFromStorage = pointsDataset->getSelectionIndices();
 
-                auto allSelectedIndices = pointsDataset->getSelectionIndices();
                 auto rawEmbeddingDataset = mv::data().getDataset<Points>(embeddingDataset->getId());
                 auto rawPointdata = mv::data().getDataset<Points>(pointsDataset->getId());
                 auto allgeneList = rawPointdata->getDimensionNames();
@@ -235,7 +236,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 {
                     embeddingGeneIndices.push_back(i);
                 }
-                if (allSelectedIndices.size() > 0 && embeddingGeneIndices.size()>0)
+                if (_selectedIndicesFromStorage.size() > 0 && embeddingGeneIndices.size()>0)
                 {
 
 
@@ -301,31 +302,31 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
                                 
-                                std::vector<float> resultContainerForSelectedPoints(allSelectedIndices.size()* allGeneIndices.size());
-                                rawPointdata->populateDataForDimensions(resultContainerForSelectedPoints, allGeneIndices, allSelectedIndices);
+                                std::vector<float> resultContainerForSelectedPoints(_selectedIndicesFromStorage.size()* allGeneIndices.size());
+                                rawPointdata->populateDataForDimensions(resultContainerForSelectedPoints, allGeneIndices, _selectedIndicesFromStorage);
 
                                 QString datasetIdEmb = _selectedPointsDataset->getId();
-                                int sizeofdatasetEmb = allSelectedIndices.size();
+                                int sizeofdatasetEmb = _selectedIndicesFromStorage.size();
                                 int dimofDatasetEmb = allGeneIndices.size();
                                 populatePointData(datasetIdEmb, resultContainerForSelectedPoints, sizeofdatasetEmb, dimofDatasetEmb, allgeneList);
 
 
 
 
-                                std::vector<float> resultContainerForSelectedEmbeddingPoints(allSelectedIndices.size()* embeddingGeneIndices.size());
-                                rawEmbeddingDataset->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingGeneIndices, allSelectedIndices);
+                                std::vector<float> resultContainerForSelectedEmbeddingPoints(_selectedIndicesFromStorage.size()* embeddingGeneIndices.size());
+                                rawEmbeddingDataset->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingGeneIndices, _selectedIndicesFromStorage);
 
                                 QString datasetId = _selectedPointsEmbeddingDataset->getId();
-                                int sizeofdataset = allSelectedIndices.size();
+                                int sizeofdataset = _selectedIndicesFromStorage.size();
                                 int dimofDataset = embeddingGeneIndices.size();
                                 populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, sizeofdataset, dimofDataset, embeddingDimList);
                                 
                                 
-                                std::vector<float> resultContainerColorPoints(allSelectedIndices.size() * 1);
+                                std::vector<float> resultContainerColorPoints(_selectedIndicesFromStorage.size() * 1);
                                 std::fill(resultContainerColorPoints.begin(), resultContainerColorPoints.end(), -1.0);
 
                                 QString datasetIdExp = _tsneDatasetExpressionColors->getId();
-                                int sizeofdatasetExp = allSelectedIndices.size();
+                                int sizeofdatasetExp = _selectedIndicesFromStorage.size();
                                 int dimofDatasetExp = 1;
                                 std::vector<QString> dimensionNamesExp = { "Expression" };
 
@@ -341,7 +342,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     return;
                                 }
 
-                                int perplexity = std::min(static_cast<int>(allSelectedIndices.size()), _tsnePerplexity.getValue());
+                                int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
                                 if (perplexity < 2)
                                 {
                                     return;
@@ -472,7 +473,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 for (int i = 0; i < clusterIndices.size(); i++)
                                 {
 
-                                    int indexVal = findIndex(allSelectedIndices, clusterIndices[i]);
+                                    int indexVal = findIndex(_selectedIndicesFromStorage, clusterIndices[i]);
                                         if (indexVal != -1)
                                         {
                                             filteredIndices.push_back(indexVal);
@@ -492,7 +493,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 for (int i = 0; i < speciesIndices.size(); i++)
                                 {
 
-                                    int indexVal = findIndex(allSelectedIndices, speciesIndices[i]);
+                                    int indexVal = findIndex(_selectedIndicesFromStorage, speciesIndices[i]);
                                     if (indexVal != -1)
                                     {
                                         filteredIndices.push_back(indexVal);
@@ -506,9 +507,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 //indices overlap between  speciesIndices and allSelectedIndices
                                 std::vector<int> commonSelectedIndices;
 
-                                std::sort(allSelectedIndices.begin(), allSelectedIndices.end());
+                                std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                                 std::sort(speciesIndices.begin(), speciesIndices.end());
-                                std::set_intersection(allSelectedIndices.begin(), allSelectedIndices.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+                                std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
                                 
 

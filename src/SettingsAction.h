@@ -125,7 +125,7 @@ public: // Action getters
     Dataset<Clusters>& getTsneDatasetSpeciesColors() { return _tsneDatasetSpeciesColors; }
     Dataset<Clusters>& getTsneDatasetClusterColors() { return _tsneDatasetClusterColors; }
     Dataset<Points>& getTsneDatasetExpressionColors() { return _tsneDatasetExpressionColors; }
-    
+    std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
 
 
 
@@ -194,5 +194,6 @@ protected:
     OptionAction           _scatterplotReembedColorOption;
     StringAction    _statusAction;
     StringAction    _statusColorAction;
+    std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
 
 };
