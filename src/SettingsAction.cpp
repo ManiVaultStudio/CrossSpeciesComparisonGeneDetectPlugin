@@ -824,6 +824,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);
+
+
+    const auto updateTopGenesSlider = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
+
+
     _statusColorAction.setString("M");
 
 }
