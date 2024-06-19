@@ -296,6 +296,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     extraOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
+    extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingColorOption());
+    extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     
 
 
@@ -349,7 +351,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
 
     mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotColorOption());
+    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotReembedColorOption());
 
     auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(550);
@@ -553,7 +555,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
         }
 
-        if (_settingsAction.getScatterplotColorOption().getCurrentText() == "Expression") {
+        if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression") {
             auto expressionColorPointDataset = _settingsAction.getTsneDatasetExpressionColors();
             if (speciesColorClusterDataset.isValid() && expressionColorPointDataset.isValid()) {
                 const int rowSize = expressionColorPointDataset->getNumPoints();

@@ -99,7 +99,9 @@ public: // Action getters
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
-    OptionAction& getScatterplotColorOption() { return _scatterplotColorOption; }
+    DatasetPickerAction& getScatterplotEmbeddingColorOption() { return _scatterplotEmbeddingColorOption; }
+    DatasetPickerAction& getScatterplotEmbeddingPointsUMAPOption() { return _scatterplotEmbeddingPointsUMAPOption; }
+    OptionAction& getScatterplotReembedColorOption() { return _scatterplotReembedColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
     StringAction& getStatusAction() { return _statusAction; }
@@ -187,7 +189,9 @@ protected:
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
     TriggerAction          _removeRowSelection;
-    OptionAction           _scatterplotColorOption;
+    DatasetPickerAction           _scatterplotEmbeddingColorOption;
+    DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
+    OptionAction           _scatterplotReembedColorOption;
     StringAction    _statusAction;
     StringAction    _statusColorAction;
 

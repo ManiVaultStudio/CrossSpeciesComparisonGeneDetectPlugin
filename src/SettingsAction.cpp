@@ -123,7 +123,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotColorOption(this, "Scatterplot Color"),
+    _scatterplotReembedColorOption(this, "Reembeding Color"),
+    _scatterplotEmbeddingColorOption(this, "Embedding Color"),
+    _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "Remove Table Selection"),
     _statusAction(this, "Status"),
@@ -158,12 +160,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setMaximum(50);
     _tsnePerplexity.setValue(30);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
-    _scatterplotColorOption.setSerializationName("CSCGDV:Scatterplot Color Option");
+    _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
+    _scatterplotEmbeddingColorOption.setSerializationName("CSCGDV:Scatterplot Embedding Color Option"); 
+    _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
-    _scatterplotColorOption.initialize({"Species","Cluster","Expression"}, "Species");
+    _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
+    _scatterplotEmbeddingColorOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == ClusterType;
+        });
+    _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == PointType;
+        });
     _filteringTreeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == CrossSpeciesComparisonTreeType;
         });
@@ -401,7 +411,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                         
 
 
-                                                        auto selectedColorType = _scatterplotColorOption.getCurrentText();
+                                                        auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
                                                         if (selectedColorType != "")
                                                         {
                                                             if (selectedColorType == "Cluster")
@@ -682,7 +692,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
 
     const auto updateScatterplotColor = [this]() -> void {
-        auto selectedColorType= _scatterplotColorOption.getCurrentText();
+        auto selectedColorType= _scatterplotReembedColorOption.getCurrentText();
         if (selectedColorType != "")
         {
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -704,7 +714,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-                                auto selectedColorType = _scatterplotColorOption.getCurrentText();
+                                auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
                                 if (selectedColorType != "")
                                 {
                                     if (selectedColorType == "Cluster")
@@ -750,7 +760,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         }
         
         };
-    connect(&_scatterplotColorOption, &OptionAction::currentIndexChanged, this, updateScatterplotColor);
+    connect(&_scatterplotReembedColorOption, &OptionAction::currentIndexChanged, this, updateScatterplotColor);
     
     
     const auto updateEmbeddingDataset = [this]() -> void {
@@ -1438,7 +1448,9 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
-    _scatterplotColorOption.fromParentVariantMap(variantMap);
+    _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
+    _scatterplotEmbeddingColorOption.fromParentVariantMap(variantMap);
+    _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _statusAction.fromParentVariantMap(variantMap);
@@ -1466,7 +1478,9 @@ QVariantMap SettingsAction::toVariantMap() const
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
-    _scatterplotColorOption.insertIntoVariantMap(variantMap);
+    _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
+    _scatterplotEmbeddingColorOption.insertIntoVariantMap(variantMap);
+    _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _statusAction.insertIntoVariantMap(variantMap);
