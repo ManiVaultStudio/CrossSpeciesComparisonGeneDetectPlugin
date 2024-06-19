@@ -579,8 +579,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                     selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
                 }
             }
-            //
-           //getFilteredUMAPDatasetColors()
+
+
             auto dimensionNamesUmap = umapPointsDataset->getDimensionNames();
             std::vector<int> geneIndicesSpecies;
             for (int i = 0; i < umapPointsDataset->getNumDimensions(); i++)
@@ -645,7 +645,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                         }
                     }
                 }
-               // _settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(_settingsAction.getSelectedIndicesFromStorage());
+
+                
+                //std::vector<std::seed_seq::result_type> storageIndices = _settingsAction.getSelectedIndicesFromStorage(); // Convert to a compatible type if necessary
+
+                //std::vector<std::seed_seq::result_type> filtSelectInnd;
+
+                //// Ensure both input ranges are sorted
+                //std::sort(selectedSpeciesIndices.begin(), selectedSpeciesIndices.end());
+                //std::sort(storageIndices.begin(), storageIndices.end());
+
+                //// Perform the intersection
+                //std::set_intersection(selectedSpeciesIndices.begin(), selectedSpeciesIndices.end(),
+                //    storageIndices.begin(), storageIndices.end(),
+                //    std::back_inserter(filtSelectInnd));
+
+                //qDebug()<< "Filtered indices: " << filtSelectInnd.size();
+                //qDebug() << "Selected indices: " << selectedSpeciesIndices;
+                //qDebug()  << "Storage indices: " << storageIndices;
+                //qDebug() << "Filtered indices: " << filtSelectInnd;
+                //qDebug() << "Selected indices: " << ;
+                //_settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(filtSelectInnd);
                 //mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getFilteredUMAPDatasetPoints());
 
 
