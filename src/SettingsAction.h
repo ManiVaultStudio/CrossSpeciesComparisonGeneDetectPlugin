@@ -104,7 +104,6 @@ public: // Action getters
     OptionAction& getScatterplotReembedColorOption() { return _scatterplotReembedColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
-    StringAction& getStatusAction() { return _statusAction; }
     StringAction& getStatusColorAction() { return _statusColorAction; }
 
     //tsne relatedDatasets
@@ -128,6 +127,7 @@ public: // Action getters
     std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
     Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
+    QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
 
 
 
@@ -195,8 +195,8 @@ protected:
     DatasetPickerAction           _scatterplotEmbeddingColorOption;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
     OptionAction           _scatterplotReembedColorOption;
-    StringAction    _statusAction;
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
+    QStatusBar*                     _statusBarActionWidget;
 
 };

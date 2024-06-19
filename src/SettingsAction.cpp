@@ -128,11 +128,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "Remove Table Selection"),
-    _statusAction(this, "Status"),
     _statusColorAction(this, "Status color")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
-   
+    _statusBarActionWidget  = new QStatusBar();
+    _statusBarActionWidget->setStatusTip("Status");
+    _statusBarActionWidget->setFixedHeight(20);
+    _statusBarActionWidget->setFixedWidth(100);
+    _statusBarActionWidget->setAutoFillBackground(true);
+    _statusBarActionWidget->setSizeGripEnabled(false);
+
+
+
+
+
     _tableModel.setSerializationName("CSCGDV:Table Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
@@ -148,9 +157,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
-    _statusAction.setSerializationName("CSCGDV:Status");
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
-    _statusAction.setDefaultWidgetFlags(StringAction::WidgetFlag::Label);
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -783,57 +790,41 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_scatterplotReembedColorOption, &OptionAction::currentIndexChanged, this, updateScatterplotColor);
     
     
+    const auto updateStatus = [this]() -> void {
+        // Assuming the context is to modify the QStatusBar _statusBarActionWidget based on the string value
+        auto string = _statusColorAction.getString();
+        QString labelText = "";
+        QString backgroundColor = "none";
+        if (string == "C") {
+            labelText = "Updated";
+            backgroundColor = "#28a745"; // Green
+        }
+        else if (string == "M") {
+            labelText = "Pending";
+            backgroundColor = "#ffc107"; // Gold
+        }
+        else {
+            labelText = "Unknown";
+            backgroundColor = "#6c757d"; // Grey
+        }
+
+
+
+
+        // Update the _statusBarActionWidget with the new label text and background color
+        _statusBarActionWidget->showMessage("Status: " + labelText);
+        _statusBarActionWidget->setStyleSheet("QStatusBar{padding-left:8px;background:" + backgroundColor + ";color:white;}");
+
+
+        };
+    connect(&_statusColorAction, &StringAction::stringChanged, this, updateStatus);
+
     const auto updateEmbeddingDataset = [this]() -> void {
 
 
         };
-    connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);  
-    
-    // Assuming this is within a member function of a class
-    &_statusAction, -1, [this](WidgetAction* action, QWidget* widget) -> void
-        {
-            auto labelWidget = widget->findChild<QLabel*>("Label");
-            if (labelWidget)
-            {
-                qDebug() << "Label widget found";
-
-                // Set initial state text and color
-                labelWidget->setText("");
-                labelWidget->setStyleSheet("background-color: none; color: white;");
-                qDebug() << "Initial status color: " << _statusColorAction.getString();
-
-                connect(&_statusColorAction, &StringAction::stringChanged, this, [labelWidget, this](const QString& string) -> void
-                    {
-                        qDebug() << "Status color changed to: " << string;
-                        QString labelText = "";
-                        QString backgroundColor = "none";
-                        if (string == "C")
-                        {
-                            labelText = "Up-to-date";
-                            backgroundColor = "#28a745";
-                        }
-                        else if (string == "M")
-                        {
-                            labelText = "Outdated";
-                            backgroundColor = "#ffc107";
-                        }
-                        else
-                        {
-                            labelText = "Unknown";
-                            backgroundColor = "#6c757d";
-                        }
-                        labelWidget->setText(labelText);
-                        labelWidget->setStyleSheet(QString("background-color: %1; color: white;").arg(backgroundColor));
-                    });
-
-                qDebug() << "Signal-slot connection established";
-            }
-            else
-            {
-                qDebug() << "Label widget not found";
-            }
-        };
-
+    connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);
+    _statusColorAction.setString("M");
 
 }
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
@@ -1519,7 +1510,6 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
-    _statusAction.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
 }
 
@@ -1549,7 +1539,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
-    _statusAction.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     return variantMap;
 }
