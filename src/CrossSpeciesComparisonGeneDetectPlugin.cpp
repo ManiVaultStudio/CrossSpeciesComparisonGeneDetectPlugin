@@ -531,7 +531,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         auto speciesDataset = _settingsAction.getSpeciesNamesDataset().getCurrentDataset();
         auto umapDataset = _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset();
         auto mainPointsDataset = _settingsAction.getMainPointsDataset().getCurrentDataset();
-        
+        std::vector<std::seed_seq::result_type> filtSelectInndx;
         if (speciesDataset.isValid() && umapDataset.isValid() && mainPointsDataset.isValid() && _settingsAction.getFilteredUMAPDatasetPoints().isValid() && _settingsAction.getFilteredUMAPDatasetColors().isValid())
         {
             auto speciesClusterDataset = mv::data().getDataset<Clusters>(speciesDataset.getDatasetId());
@@ -543,8 +543,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 if (finalsettingSpeciesNamesArray.contains(species.getName())) {
                     const auto& indices = species.getIndices();
                     selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
+
                 }
             }
+            
+            std::vector<std::seed_seq::result_type>& selectedIndicesFromStorage = _settingsAction.getSelectedIndicesFromStorage();
+            for (int i = 0; i < selectedSpeciesIndices.size(); i++)
+            {
+                if (std::find(selectedIndicesFromStorage.begin(), selectedIndicesFromStorage.end(), selectedSpeciesIndices[i]) != selectedIndicesFromStorage.end())
+                {
+                    filtSelectInndx.push_back(i);
+                }
+            }
+
+
 
 
             auto dimensionNamesUmap = umapPointsDataset->getDimensionNames();
@@ -613,26 +625,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 }
 
                 
-                //std::vector<std::seed_seq::result_type> storageIndices = _settingsAction.getSelectedIndicesFromStorage(); // Convert to a compatible type if necessary
-
-                //std::vector<std::seed_seq::result_type> filtSelectInnd;
-
-                //// Ensure both input ranges are sorted
-                //std::sort(selectedSpeciesIndices.begin(), selectedSpeciesIndices.end());
-                //std::sort(storageIndices.begin(), storageIndices.end());
-
-                //// Perform the intersection
-                //std::set_intersection(selectedSpeciesIndices.begin(), selectedSpeciesIndices.end(),
-                //    storageIndices.begin(), storageIndices.end(),
-                //    std::back_inserter(filtSelectInnd));
-
-                //qDebug()<< "Filtered indices: " << filtSelectInnd.size();
-                //qDebug() << "Selected indices: " << selectedSpeciesIndices;
-                //qDebug()  << "Storage indices: " << storageIndices;
-                //qDebug() << "Filtered indices: " << filtSelectInnd;
-                //qDebug() << "Selected indices: " << ;
-                //_settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(filtSelectInnd);
-                //mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getFilteredUMAPDatasetPoints());
+               // qDebug() << "Selected species indices size: " << selectedSpeciesIndices.size();
+               // qDebug()<<"datasetSize: "<<_settingsAction.getFilteredUMAPDatasetPoints()->getNumPoints();
+               // qDebug()<< "filtSelectInndx points value range"<< *std::min_element(filtSelectInndx.begin(), filtSelectInndx.end()) << " " << *std::max_element(filtSelectInndx.begin(), filtSelectInndx.end());
+                _settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(filtSelectInndx);
+                mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getFilteredUMAPDatasetPoints());
 
 
             }
