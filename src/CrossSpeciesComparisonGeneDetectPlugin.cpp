@@ -606,6 +606,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 if (scatterplotViewFactory) {
                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                         if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                            //plugin->printChildren();
                             pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                             if (pointDatasetPickerAction) {
                                 pointDatasetPickerAction->setCurrentText("");
@@ -619,6 +620,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                                     colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
 
                                 }
+
+                                auto focusSelectionAction = dynamic_cast<ToggleAction*>(plugin->findChildByPath("Settings/Plot/Point/Focus selection"));
+                                //auto focusSelectionAction = dynamic_cast<ToggleAction*>(plugin->findChildByPath("Focus selection"));
+                                if (focusSelectionAction)
+                                {
+                                    focusSelectionAction->setChecked(true);
+
+                                }
+
                             }
                         }
                     }
