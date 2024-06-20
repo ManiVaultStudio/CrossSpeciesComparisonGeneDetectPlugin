@@ -901,7 +901,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
-    QStringList initColumnNames = { "ID", "Newick tree","Tree Similarity with Reference Tree", "Total Mean","Top Gene Appearances/" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
+    QStringList initColumnNames = { "ID", "Newick tree","Similarity with Reference Tree", "Mean Differential Expression","Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
     model->setHorizontalHeaderLabels(initColumnNames);
     
     std::map<QString, std::map<QString, float>>::const_iterator it = map.begin();
