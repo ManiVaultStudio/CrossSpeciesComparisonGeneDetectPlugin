@@ -628,6 +628,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                                     focusSelectionAction->setChecked(true);
 
                                 }
+                                //"Settings/Plot/Point/Point opacity"
+                                //"Settings/Plot/Point/Point opacity/Point opacity"
+                                auto opacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Plot/Point/Point opacity/Point opacity"));
+                                if (opacityAction)
+                                {
+                                    opacityAction->setValue(20.0);
+                                }
 
                             }
                         }
