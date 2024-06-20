@@ -696,24 +696,53 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
 
         if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression") {
+            
+            
+            
             auto expressionColorPointDataset = _settingsAction.getTsneDatasetExpressionColors();
-            if (speciesColorClusterDataset.isValid() && expressionColorPointDataset.isValid()) {
-                const int rowSize = expressionColorPointDataset->getNumPoints();
-                std::vector<float> resultContainerColorPoints(rowSize, -1.0);
-                const QString datasetIdEmb = expressionColorPointDataset->getId();
+            
+            auto selectedPointsMain = _settingsAction.getSelectedPointsDataset();
 
-                for (const auto& species : speciesColorClusterDataset->getClusters()) {
-                    float speciesValue = speciesExpressionMap[species.getName()];
-                    for (auto index : species.getIndices()) {
-                        resultContainerColorPoints[index] = speciesValue;
+            if (expressionColorPointDataset.isValid() && selectedPointsMain.isValid()) {
+
+                const int rowSize = expressionColorPointDataset->getNumPoints();
+
+                if (rowSize == selectedPointsMain->getNumPoints())
+                {
+                    std::vector<float> resultContainerColorPoints(rowSize, -1.0);
+
+                    QString datasetIdEmb = expressionColorPointDataset->getId();
+
+                    std::vector<int> indexOfGene;
+                    auto dimsValsTemp = selectedPointsMain->getDimensionNames();
+                    for (int i = 0; i < dimsValsTemp.size(); i++)
+                    {
+                        if (dimsValsTemp[i] == gene)
+                        {
+                            indexOfGene.push_back(i);
+                            break;
+                        }
+                    }
+                    std::vector<int> tempselectIndices;
+                    for (int i = 0; i < selectedPointsMain->getNumPoints(); i++)
+                    {
+                        tempselectIndices.push_back(i);
+                    }
+                    if (indexOfGene.size() > 0 && tempselectIndices.size() > 0)
+                    {
+                        selectedPointsMain->populateDataForDimensions(resultContainerColorPoints, indexOfGene, tempselectIndices);
+
+
+
+                        int rowSizeEmbd = rowSize;
+                        int columnSizeEmbd = 1;
+                        std::vector<QString> columnGeneEmbd = { gene };
+                        _settingsAction.populatePointData(datasetIdEmb, resultContainerColorPoints, rowSizeEmbd, columnSizeEmbd, columnGeneEmbd);
+
                     }
                 }
 
-                QString tempDatasetIdEmb = datasetIdEmb; // Assuming datasetIdEmb is const QString
-                int rowSizeEmbd = rowSize;
-                int columnSizeEmbd = 1;
-                std::vector<QString> columnGeneEmbd = { gene };
-                _settingsAction.populatePointData(tempDatasetIdEmb, resultContainerColorPoints, rowSizeEmbd, columnSizeEmbd, columnGeneEmbd);
+
 
             }
         }
