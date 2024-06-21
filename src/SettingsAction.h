@@ -105,7 +105,7 @@ public: // Action getters
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
     StringAction& getStatusColorAction() { return _statusColorAction; }
-
+    OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -182,6 +182,8 @@ protected:
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
     StringAction            _selectedSpeciesVals;
+    OptionAction                    _typeofTopNGenes;
+
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
@@ -198,5 +200,6 @@ protected:
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
+    
 
 };

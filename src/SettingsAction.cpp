@@ -103,7 +103,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _filteringTreeDataset(this, "Filtering Tree Dataset"),
     _selectedRowIndex(this, "Selected Row Index"),
     _optionSelectionAction(*this),
-    _startComputationTriggerAction(this, "Compute table"),
+    _startComputationTriggerAction(this, "Update"),
     _referenceTreeDataset(this, "Reference Tree Dataset"),
     _mainPointsDataset(this, "Main Points Dataset"),
     _embeddingDataset(this, "Embedding Dataset"),
@@ -114,18 +114,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _clusterNamesDataset(this, "Cluster Names Dataset"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
-    _topNGenesFilter(this, "Top N Genes", 10),
+    _topNGenesFilter(this, "Top N", 10),
     _geneNamesConnection(this, "Gene Names Connection"),
     _createRowMultiSelectTree(this, "Create Row MultiSelect Tree"),
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotReembedColorOption(this, "Reembeding Color"),
-    _scatterplotEmbeddingColorOption(this, "Embedding Color"),
+    _scatterplotReembedColorOption(this, "Reembed Color"),
+    _scatterplotEmbeddingColorOption(this, "Embed Color"),
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
-    _removeRowSelection(this, "Remove Table Selection"),
-    _statusColorAction(this, "Status color")
+    _removeRowSelection(this, "Remove Selection"),
+    _statusColorAction(this, "Status color"),
+    _typeofTopNGenes(this, "N Type")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -168,11 +169,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingColorOption.setSerializationName("CSCGDV:Scatterplot Embedding Color Option"); 
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
+    _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
+    _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Absolute");
     _scatterplotEmbeddingColorOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
@@ -791,12 +794,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_embeddingDataset, &DatasetPickerAction::currentIndexChanged, this, updateEmbeddingDataset);
 
 
+    const auto updateTypeOfTopNGenesFilter = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_typeofTopNGenes, &OptionAction::currentIndexChanged, this, updateTypeOfTopNGenesFilter);
     const auto updateTopGenesSlider = [this]() -> void {
         _statusColorAction.setString("M");
 
         };
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
-
 
     _statusColorAction.setString("M");
 
@@ -806,15 +813,29 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     if (map.empty() || n <= 0) {
         return QVariant();
     }
-
     enum class SelectionOption {
         AbsoluteTopN,
         PositiveTopN,
         NegativeTopN,
         MixedTopN
     };
-
+    auto optionValue= _typeofTopNGenes.getCurrentText();
     SelectionOption option = SelectionOption::AbsoluteTopN;
+    if (optionValue == "Positive")
+    {
+        option = SelectionOption::PositiveTopN;
+    }
+    else if (optionValue == "Negative")
+    {
+        option = SelectionOption::NegativeTopN;
+    }
+    else if (optionValue == "Mixed")
+    {
+        option = SelectionOption::MixedTopN;
+    }
+
+
+    
 
     QSet<QString> geneList;
     QStringList returnGeneList;
@@ -1297,6 +1318,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
+    _typeofTopNGenes.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1326,5 +1348,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
+    _typeofTopNGenes.insertIntoVariantMap(variantMap);
     return variantMap;
 }

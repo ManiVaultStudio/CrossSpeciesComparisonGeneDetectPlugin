@@ -346,18 +346,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
-
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
 
     mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotReembedColorOption());
+    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
+
+    
 
     auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
-    group1Widget->setMaximumWidth(550);
+    group1Widget->setMaximumWidth(460);
     mainOptionsGroupLayout->addWidget(group1Widget);
 
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    group2Widget->setMaximumWidth(400);
+    group2Widget->setMaximumWidth(500);
     mainOptionsGroupLayout->addWidget(group2Widget);  
 
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
