@@ -848,33 +848,33 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
-    QStringList initColumnNames = { "ID", "Newick tree","Similarity with Reference Tree", "Mean Differential Expression","Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Apearance Species Names" };
+    QStringList initColumnNames = { "ID", "Newick tree", "Similarity with Reference Tree", "Mean Differential Expression", "Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Appearance Species Names" };
     model->setHorizontalHeaderLabels(initColumnNames);
-    
-    std::map<QString, std::map<QString, float>>::const_iterator it = map.begin();
-    for (int i = 0 + initColumnNames.size(); i < numOfSpecies + initColumnNames.size(); i++, it++) {
+
+    for (auto it = map.cbegin(); it != map.cend(); ++it) {
         QString headerTitle = it->first;
-        //headerTitle.replace("_", " ");
-        //headerTitle = QString("Mean ") + headerTitle;
-        model->setHorizontalHeaderItem(i, new QStandardItem(headerTitle));
+        model->setHorizontalHeaderItem(initColumnNames.size() + std::distance(map.cbegin(), it), new QStandardItem(headerTitle));
     }
-    QStringList headers;
-    for (int i = 0; i < model->columnCount(); ++i) {
-        headers.push_back(model->horizontalHeaderItem(i)->text());
+
+    QStringList headers = initColumnNames;
+    headers.reserve(initColumnNames.size() + map.size());
+    for (auto it = map.cbegin(); it != map.cend(); ++it) {
+        headers.push_back(it->first);
     }
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };// , headers[5]};
+    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
+
     std::map<QString, std::pair<QString, std::map<QString, float>>> newickTrees;
-    //std::map<QString, std::map<QString, float>> meanExpressionValues;
+
     for (auto gene : returnGeneList)
     {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         std::map<QString, float> meanValuesForSpeciesMap;
-        //[speciesName][geneName]=meanValue;
+
         for (const auto& outerPair : map) {
             QString outerKey = outerPair.first;
             const std::map<QString, float>& innerMap = outerPair.second;
@@ -910,44 +910,37 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         hclust_fast(numOfLeaves, distmat, opt_method, merge, height);
         std::string newick = mergeToNewick(merge, numOfLeaves);
         int totalChars = newick.length();
-        //std::cout << "\nOriginal Newick format: " << newick << std::endl;
-        //add gene and newick to newickTrees
-       // newickTrees.insert(std::make_pair(gene, QString::fromStdString(newick)));
+
         newickTrees.insert(std::make_pair(gene, std::make_pair(QString::fromStdString(newick), meanValuesForSpeciesMap)));
 
         delete[] distmat;
         delete[] merge;
         delete[] height;
 
-        //Statistics stats = calculateStatistics(numbers);
+       row.push_back(new QStandardItem(gene));
 
-        row.push_back(new QStandardItem(gene));
-        //row.push_back(new QStandardItem(QString::number(stats.variance)));
         row.push_back(new QStandardItem(""));
-        //row.push_back(new QStandardItem(QString::number(-1)));
+
         row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
         float meanV= calculateMean(numbers);
         row.push_back(new QStandardItem()), row.back()->setData(meanV, Qt::DisplayRole), row.back()->setData(meanV, Qt::UserRole);
         QString key = gene;
-        //qDebug() << "\n**Trying to find key:" << gene << "\n";
+
         int count = -1;
         auto it = geneCounter.find(key);
         if (it != geneCounter.end()) {
-            //qDebug()<< "Species counter"<< key << "found.\n";
-            //qDebug()<< "it->second"<< it->second << "found.\n";
-            //qDebug()<< "(it->second).size()"<< (it->second).size() << "found.\n";
+
             count = (it->second).size();
-            //row.push_back(new QStandardItem(QString::number(count)));
+
             row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         }
         else {
             qDebug() << "Key " << gene << "not found.\n";
-            //row.push_back(new QStandardItem(QString::number(-1)));
+
             row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         }
 
-        //row.push_back(new QStandardItem(QString::number(stats.stdDeviation)));
-        //row.push_back(new QStandardItem(QString::number(stats.mean)));
+
         QString speciesGeneAppearancesComb;
         for (const auto& str : it->second) {
             if (!speciesGeneAppearancesComb.isEmpty()) {
@@ -956,44 +949,23 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             speciesGeneAppearancesComb += str;
         }
 
-        //row.push_back(new QStandardItem(speciesGeneAppearancesComb));
+
         row.push_back(new QStandardItem()), row.back()->setData(speciesGeneAppearancesComb, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
         for (auto numb : numbers)
         {
-            //row.push_back(new QStandardItem(QString::number(numb)));
+
             row.push_back(new QStandardItem()), row.back()->setData(numb, Qt::DisplayRole), row.back()->setData(numb, Qt::UserRole);
         }
 
-        // Create a new item for the vertical header
-        //QStandardItem* verticalHeaderItem = new QStandardItem(QString::number(geneCounter[gene]));
 
-        // Add the new item to the model's vertical header
-       // model->setVerticalHeaderItem(model->rowCount(), verticalHeaderItem);
-
-        // Add the row to the model
         model->appendRow(row);
     }
 
-    //qDebug() << "***********Access location\n";
-    //for (auto& pair : geneCounter) {
-    //    std::cout << "Gene: " << pair.first.toStdString() << ", Count: " << pair.second << std::endl;
-    //}
 
-    //print newickTrees
-    //for (auto& pair : newickTrees) {
-    //    std::cout << "Gene: " << pair.first.toStdString() << ", Newick: " << pair.second.toStdString() << std::endl;
-    //}
-
-
-
-    //check which newick trees are exactly similar to "(((((((20,(((24,((25,9),(12,11))),(19,15)),(22,21))),((1,17),23)),((2,18),(8,6))),(14,10)),(3,16)),(7,5)),(13,4));" and add color "#00a2ed" to the genes
-    // Define the target newick tree and color
-    //std::string targetNewick = "((((((20,(((((18,24),(19,17)),16),(11,25)),(9,6))),(23,4)),((3,1),(15,(22,((13,2),7))))),(10,5)),(8,21)),(12,14));";
     QString targetColor = "#fdb900";
     std::string targetNewick = "";
     QStringList fullTreeNames;
 
-    //iterate std::map<QString, std::map<QString, float>> map and fill keys in std::vector<QString> leafNames 
     std::vector<QString> leafnames;
     for (const auto& outerPair : map) {
         leafnames.push_back(outerPair.first);
@@ -1389,25 +1361,19 @@ std::string SettingsAction::mergeToNewick(int* merge, int numOfLeaves) {
     return stack.top() + ";";
 }
 
-double* SettingsAction::condensedDistanceMatrix(std::vector<float>& items) {
-    int n = items.size();
+double* SettingsAction::condensedDistanceMatrix(const std::vector<float>& items) {
+    size_t n = items.size();
     double* distmat = new double[(n * (n - 1)) / 2];
-    int k = 0;
+    size_t k = 0;
 
-    for (int i = 0; i < n; ++i) {
-        for (int j = i + 1; j < n; ++j) {
+#pragma omp parallel for schedule(dynamic) collapse(2) private(k)
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = i + 1; j < n; ++j) {
+            k = ((n * (n - 1)) / 2) - ((n - i) * (n - i - 1)) / 2 + j - i - 1;
             distmat[k] = std::abs(items[i] - items[j]);
-            ++k;
         }
     }
 
-    /*std::cout << "Distance matrix: " << std::endl;
-    int index = 0;
-    for (int i = 0; i < n; ++i) {
-        for (int j = i + 1; j < n; ++j) {
-            std::cout << "Distance " << i << " value: " << items[i] << " and " << j << " value: " << items[j] << ": " << distmat[index++] << std::endl;
-        }
-    }*/
     return distmat;
 }
 
