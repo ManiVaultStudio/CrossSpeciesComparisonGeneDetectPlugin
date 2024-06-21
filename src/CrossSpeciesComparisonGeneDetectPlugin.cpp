@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QColor>
 #include <QJsonArray> 
+#include <unordered_set>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -508,22 +509,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
         const auto* model = current.model();
         const int columnCount = model->columnCount();
+        const auto initColumnNamesSize = _settingsAction.getInitColumnNames().size(); 
         for (int i = 0; i < columnCount; ++i) {
             const QString columnName = model->headerData(i, Qt::Horizontal).toString();
             const auto data = current.siblingAtColumn(i).data();
-            if (i > _settingsAction.getInitColumnNames().size()) {
-                speciesExpressionMap[columnName] = data.toFloat();
-            }
+
             if (columnName == "Newick tree") {
                 treeDataFound = true;
                 valueStringReference = QJsonDocument::fromJson(data.toString().toUtf8()).object();
             }
-            if (columnName == "Gene Appearance Species Names") {
+            else if (columnName == "Gene Appearance Species Names") {
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
+            //for all columns other than _settingsAction.getInitColumnNames().size(
+            if (i > initColumnNamesSize) {
+                speciesExpressionMap[columnName] = data.toFloat();
+            }
         }
-
 
 
         std::vector<std::seed_seq::result_type> selectedSpeciesIndices;
@@ -531,20 +534,28 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         auto umapDataset = _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset();
         auto mainPointsDataset = _settingsAction.getMainPointsDataset().getCurrentDataset();
         std::vector<std::seed_seq::result_type> filtSelectInndx;
-        if (speciesDataset.isValid() && umapDataset.isValid() && mainPointsDataset.isValid() && _settingsAction.getFilteredUMAPDatasetPoints().isValid() && _settingsAction.getFilteredUMAPDatasetColors().isValid())
+
+
+        if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid())
+        {
+            qDebug() << "One of the datasets is not valid";
+            return;
+        }
+
+
         {
             auto speciesClusterDataset = mv::data().getDataset<Clusters>(speciesDataset.getDatasetId());
             auto umapPointsDataset = mv::data().getDataset<Points>(umapDataset.getDatasetId());
             auto fullMainPointsDataset = mv::data().getDataset<Points>(mainPointsDataset.getDatasetId());
 
-            auto speciesClusters= speciesClusterDataset->getClusters();
-            for (const auto& species : speciesClusters) {
-                if (finalsettingSpeciesNamesArray.contains(species.getName())) {
+            std::unordered_set<QString> speciesNamesSet(finalsettingSpeciesNamesArray.begin(), finalsettingSpeciesNamesArray.end());
+            for (const auto& species : speciesClusterDataset->getClusters()) {
+                if (speciesNamesSet.find(species.getName()) != speciesNamesSet.end()) {
                     const auto& indices = species.getIndices();
                     selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
-
                 }
             }
+
             
             std::vector<std::seed_seq::result_type>& selectedIndicesFromStorage = _settingsAction.getSelectedIndicesFromStorage();
             for (int i = 0; i < selectedSpeciesIndices.size(); i++)
