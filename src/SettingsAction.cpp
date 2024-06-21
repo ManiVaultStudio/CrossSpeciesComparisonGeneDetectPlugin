@@ -807,33 +807,74 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         return QVariant();
     }
 
+    enum class SelectionOption {
+        AbsoluteTopN,
+        PositiveTopN,
+        NegativeTopN,
+        MixedTopN
+    };
+
+    SelectionOption option = SelectionOption::AbsoluteTopN;
+
     QSet<QString> geneList;
     QStringList returnGeneList;
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
 
-    for (const auto& outerPair : map) {
-        // Convert map to vector of pairs and sort in descending order based on the expression value
-        std::vector<std::pair<QString, float>> geneExpressionVec(outerPair.second.begin(), outerPair.second.end());
-        std::partial_sort(geneExpressionVec.begin(), geneExpressionVec.begin() + std::min(n, static_cast<int>(geneExpressionVec.size())), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-            return a.second > b.second;
-            });
 
-        // Process top n genes
-        for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-            const auto& gene = geneExpressionVec[i].first;
-            geneList.insert(gene);
-            geneAppearanceCounter[gene].push_back(outerPair.first);
+    for (const auto& outerPair : map) {
+        std::vector<std::pair<QString, float>> geneExpressionVec(outerPair.second.begin(), outerPair.second.end());
+
+        // Lambda for sorting based on the selection option
+        auto sortLambda = [&option](const auto& a, const auto& b) {
+            if (option == SelectionOption::AbsoluteTopN) {
+                return std::abs(a.second) > std::abs(b.second);
+            }
+            else if (option == SelectionOption::PositiveTopN || option == SelectionOption::MixedTopN) {
+                return a.second > b.second;
+            }
+            else { // NegativeTopN
+                return a.second < b.second;
+            }
+            };
+
+        // Sort and select top elements based on the selection option
+        if (option == SelectionOption::MixedTopN) {
+            // For MixedTopN, sort once and select top n/2 positive and top n/2 negative
+            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
+            int positiveLimit = std::min(n / 2, static_cast<int>(geneExpressionVec.size()));
+            for (int i = 0; i < positiveLimit; ++i) {
+                const auto& gene = geneExpressionVec[i].first;
+                geneList.insert(gene);
+                geneAppearanceCounter[gene].push_back(outerPair.first);
+            }
+            int negativeStart = std::max(static_cast<int>(geneExpressionVec.size()) - n / 2, 0);
+            for (int i = negativeStart; i < geneExpressionVec.size(); ++i) {
+                const auto& gene = geneExpressionVec[i].first;
+                geneList.insert(gene);
+                geneAppearanceCounter[gene].push_back(outerPair.first);
+            }
+        }
+        else {
+            // For other options, sort and select top N or until the end of the vector
+            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
+            int limit = std::min(n, static_cast<int>(geneExpressionVec.size()));
+            for (int i = 0; i < limit; ++i) {
+                const auto& gene = geneExpressionVec[i].first;
+                if (option == SelectionOption::NegativeTopN && geneExpressionVec[i].second >= 0) {
+                    continue; // Skip non-negative values for NegativeTopN
+                }
+                geneList.insert(gene);
+                geneAppearanceCounter[gene].push_back(outerPair.first);
+            }
         }
     }
 
-    // Convert QSet<QString> geneList to QStringList returnGeneList
+
+
     returnGeneList = QStringList(geneList.begin(), geneList.end());
 
 
-    //qDebug() << "***********Insert location\n";
-    //for (auto& pair : geneAppearanceCounter) {
-    //    std::cout << "Gene: " << pair.first.toStdString() << ", Count: " << pair.second << std::endl;
-    //}
+
 
     QVariant returnValue = createModelFromData(returnGeneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, n);
 
@@ -908,6 +949,8 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         row.push_back(new QStandardItem(QString::number(-1.0)));  //2
 
         float meanV = calculateMean(numbers);
+        // make meanV into 2 decimal places
+        meanV = std::round(meanV * 100) / 100;
         row.push_back(new QStandardItem(QString::number(meanV)));//3
 
         auto it = geneCounter.find(gene);
