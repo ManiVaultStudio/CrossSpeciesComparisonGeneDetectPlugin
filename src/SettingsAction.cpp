@@ -25,11 +25,10 @@ float calculateMean(const std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
 
-    float sum = std::reduce(std::execution::par, v.begin(), v.end());
-    float mean = sum / v.size();
-
-    return mean;
+    float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+    return sum / static_cast<float>(v.size());
 }
+
 //struct Statistics {
 //    float mean;
 //    float variance;
@@ -74,30 +73,27 @@ bool areSameIgnoreOrder(const QStringList& list1, const QStringList& list2) {
         return false;
     }
 
-    QStringList sortedList1 = list1;
-    QStringList sortedList2 = list2;
+    QHash<QString, int> list1Counts;
+    for (const auto& item : list1) {
+        ++list1Counts[item];
+    }
 
-    std::sort(sortedList1.begin(), sortedList1.end());
-    std::sort(sortedList2.begin(), sortedList2.end());
+    for (const auto& item : list2) {
+        auto it = list1Counts.find(item);
+        if (it == list1Counts.end() || --it.value() < 0) {
+            return false;
+        }
+    }
 
-    return sortedList1 == sortedList2;
+    return true;
 }
 
 
-int findIndex(const std::vector<std::seed_seq::result_type >& vec, int value) {
+int findIndex(const std::vector<std::seed_seq::result_type>& vec, int value) {
     auto it = std::find(vec.begin(), vec.end(), value);
-
-    // If element was found
-    if (it != vec.end()) {
-        // Calculating the index
-        int index = std::distance(vec.begin(), it);
-        return index;
-    }
-    else {
-        // Element not found
-        return -1;
-    }
+    return (it != vec.end()) ? std::distance(vec.begin(), it) : -1;
 }
+
 
 SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpeciesComparisonGeneDetectPlugin) :
     WidgetAction(&CrossSpeciesComparisonGeneDetectPlugin, "CrossSpeciesComparisonGeneDetectPlugin Settings"),
@@ -214,7 +210,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             bool isValid = false;
             QString referenceTreedatasetId = "";
 
-            if (!pointsDataset.isValid() && !embeddingDataset.isValid() && !speciesDataset.isValid() && !clusterDataset.isValid() && !referenceTreeDataset.isValid())
+            if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
             {
                 qDebug() << "No datasets selected";
                 return;
@@ -503,17 +499,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         auto speciesName = species.getName();
                         auto speciesColor = species.getColor();
 
+
                         std::vector<int> filteredIndices;
                         for (int i = 0; i < speciesIndices.size(); i++)
-                        {
-
-                            int indexVal = findIndex(_selectedIndicesFromStorage, speciesIndices[i]);
-                            if (indexVal != -1)
                             {
-                                filteredIndices.push_back(indexVal);
+                                int indexVal = findIndex(_selectedIndicesFromStorage, speciesIndices[i]);
+                                if (indexVal != -1)
+                                {
+                                    filteredIndices.push_back(indexVal);
+                                }   
                             }
 
-                        }
                         selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
 
 
