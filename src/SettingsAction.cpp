@@ -869,8 +869,17 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
     std::map<QString, std::pair<QString, std::map<QString, float>>> newickTrees;
 
-    for (auto gene : returnGeneList)
-    {
+    // Precompute the clusteringTypeMap outside of the loop to avoid redundant computations
+    const std::unordered_map<std::string, int> clusteringTypeMap = {
+        {"Complete", HCLUST_METHOD_COMPLETE},
+        {"Average", HCLUST_METHOD_AVERAGE},
+        {"Median", HCLUST_METHOD_MEDIAN},
+        {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
+    };
+    std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
+    int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); // Directly use .at() since "Single" is now guaranteed to be in the map
+
+    for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         std::map<QString, float> meanValuesForSpeciesMap;
@@ -878,85 +887,47 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         for (const auto& outerPair : map) {
             QString outerKey = outerPair.first;
             const std::map<QString, float>& innerMap = outerPair.second;
-            try {
-                numbers.push_back(innerMap.at(gene));
-                meanValuesForSpeciesMap[outerKey] = innerMap.at(gene);
-            }
-            catch (const std::out_of_range& e) {
-                numbers.push_back(0);
-                meanValuesForSpeciesMap[outerKey] = 0;
-            }
-
-
-
+            auto it = innerMap.find(gene);
+            float value = (it != innerMap.end()) ? it->second : 0.0f;
+            numbers.push_back(value);
+            meanValuesForSpeciesMap[outerKey] = value;
         }
 
-        const std::unordered_map<std::string, int> clusteringTypeMap = {
-    {"Complete", HCLUST_METHOD_COMPLETE},
-    {"Average", HCLUST_METHOD_AVERAGE},
-    {"Median", HCLUST_METHOD_MEDIAN}
-        };
-        std::string clusteringTypecurrentText = "Single";  //"Single","Complete", "Average","Median"
-        int opt_method = clusteringTypeMap.count(clusteringTypecurrentText) ? clusteringTypeMap.at(clusteringTypecurrentText) : HCLUST_METHOD_SINGLE;
+        auto numOfLeaves = static_cast<int>(numOfSpecies);
+        std::unique_ptr<double[]> distmat(condensedDistanceMatrix(numbers));
 
-        auto numOfLeaves = numOfSpecies;
-        double* distmat = new double[(numOfLeaves * (numOfLeaves - 1)) / 2];
+        std::unique_ptr<int[]> merge(new int[2 * (numOfLeaves - 1)]);
+        std::unique_ptr<double[]> height(new double[numOfLeaves - 1]);
+        hclust_fast(numOfLeaves, distmat.get(), opt_method, merge.get(), height.get());
+        std::string newick = mergeToNewick(merge.get(), numOfLeaves);
 
+        newickTrees.insert({ gene, {QString::fromStdString(newick), meanValuesForSpeciesMap} });
 
-        distmat = condensedDistanceMatrix(numbers);
-
-        int* merge = new int[2 * (numOfLeaves - 1)];
-        double* height = new double[numOfLeaves - 1];
-        hclust_fast(numOfLeaves, distmat, opt_method, merge, height);
-        std::string newick = mergeToNewick(merge, numOfLeaves);
-        int totalChars = newick.length();
-
-        newickTrees.insert(std::make_pair(gene, std::make_pair(QString::fromStdString(newick), meanValuesForSpeciesMap)));
-
-        delete[] distmat;
-        delete[] merge;
-        delete[] height;
-
-       row.push_back(new QStandardItem(gene));
-
+        row.push_back(new QStandardItem(gene));
         row.push_back(new QStandardItem(""));
 
-        row.push_back(new QStandardItem()), row.back()->setData(-1, Qt::DisplayRole), row.back()->setData(-1, Qt::UserRole);
-        float meanV= calculateMean(numbers);
-        row.push_back(new QStandardItem()), row.back()->setData(meanV, Qt::DisplayRole), row.back()->setData(meanV, Qt::UserRole);
-        QString key = gene;
+        float meanV = calculateMean(numbers);
+        row.push_back(new QStandardItem(QString::number(meanV)));
 
-        int count = -1;
-        auto it = geneCounter.find(key);
-        if (it != geneCounter.end()) {
-
-            count = (it->second).size();
-
-            row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
-        }
-        else {
-            qDebug() << "Key " << gene << "not found.\n";
-
-            row.push_back(new QStandardItem()), row.back()->setData(count, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
-        }
-
+        auto it = geneCounter.find(gene);
+        int count = (it != geneCounter.end()) ? it->second.size() : -1;
+        row.push_back(new QStandardItem(QString::number(count)));
 
         QString speciesGeneAppearancesComb;
-        for (const auto& str : it->second) {
-            if (!speciesGeneAppearancesComb.isEmpty()) {
-                speciesGeneAppearancesComb += ";";
+        if (it != geneCounter.end()) {
+            for (const auto& str : it->second) {
+                if (!speciesGeneAppearancesComb.isEmpty()) {
+                    speciesGeneAppearancesComb += ";";
+                }
+                speciesGeneAppearancesComb += str;
             }
-            speciesGeneAppearancesComb += str;
         }
 
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb));
 
-        row.push_back(new QStandardItem()), row.back()->setData(speciesGeneAppearancesComb, Qt::DisplayRole), row.back()->setData(count, Qt::UserRole);
-        for (auto numb : numbers)
-        {
-
-            row.push_back(new QStandardItem()), row.back()->setData(numb, Qt::DisplayRole), row.back()->setData(numb, Qt::UserRole);
+        for (auto numb : numbers) {
+            row.push_back(new QStandardItem(QString::number(numb)));
         }
-
 
         model->appendRow(row);
     }
