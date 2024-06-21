@@ -938,37 +938,27 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     QStringList fullTreeNames;
 
     std::vector<QString> leafnames;
+    leafnames.reserve(map.size());
     for (const auto& outerPair : map) {
         leafnames.push_back(outerPair.first);
     }
 
-
-
     std::map<QString, std::pair<QString, float>> treeSimilarities;
-    if (treeDatasetId != "")
+    if (!treeDatasetId.isEmpty()) 
     {
         auto fullTreeData = mv::data().getDataset<CrossSpeciesComparisonTree>(treeDatasetId);
         if (fullTreeData.isValid())
         {
             fullTreeNames = fullTreeData->getTreeLeafNames();
             auto treeData = fullTreeData->getTreeData();
-
-            QJsonDocument jsonDoc(treeData);
-            auto temp = jsonDoc.toJson(QJsonDocument::Compact).toStdString();
-            auto jsonTree = nlohmann::json::parse(temp);
+            auto jsonTree = nlohmann::json::parse(QJsonDocument(treeData).toJson(QJsonDocument::Compact).toStdString());
             targetNewick = jsonToNewick(jsonTree, leafnames);
             targetNewick += ";";  // End of Newick string
         }
-
     }
 
-    /*
 
-    auto jsonTree = nlohmann::json::parse(jsonString);
-    std::string targetNewick = jsonToNewick(jsonTree, leafnames);
-    targetNewick += ";";  // End of Newick string
 
-    */
     if (fullTreeNames.size() > 0 && leafnames.size() > 0 && targetNewick != "")
     {
 
