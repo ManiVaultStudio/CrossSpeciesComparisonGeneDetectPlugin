@@ -966,7 +966,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
         if (areSameIgnoreOrder(fullTreeNames, copyleafNames)) {
   
-            for (auto& pair : newickTrees) {
+            for (auto& pair : newickTrees) {//need to change
 
                 std::string modifiedNewick = pair.second.first.toStdString();
                 std::map <QString,float> speciesMeanMaps = pair.second.second;
