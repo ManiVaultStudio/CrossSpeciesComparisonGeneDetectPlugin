@@ -316,32 +316,35 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
 
+                        // Assuming populatePointData is a function that cannot be modified and is optimized for its purpose.
+                        // The optimization focuses on reducing redundant operations and improving memory management.
 
-                        std::vector<float> resultContainerForSelectedPoints(_selectedIndicesFromStorage.size() * pointsDatasetallColumnIndices.size());
+                        // Pre-calculate sizes to avoid recalculating them inside loops or function calls
+                         int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
+                         int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
+                         int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
+
+                        // Reserve space for vectors to avoid reallocations
+                        std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize* pointsDatasetColumnsSize);
                         pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
 
                         QString datasetIdEmb = _selectedPointsDataset->getId();
-                        int sizeofdatasetEmb = _selectedIndicesFromStorage.size();
-                        int dimofDatasetEmb = pointsDatasetallColumnIndices.size();
-                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, sizeofdatasetEmb, dimofDatasetEmb, pointsDatasetallColumnNameList);
+                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
 
-                        std::vector<float> resultContainerForSelectedEmbeddingPoints(_selectedIndicesFromStorage.size() * embeddingDatasetColumnIndices.size());
+                        std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
                         embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
 
                         QString datasetId = _selectedPointsEmbeddingDataset->getId();
-                        int sizeofdataset = _selectedIndicesFromStorage.size();
-                        int dimofDataset = embeddingDatasetColumnIndices.size();
-                        populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, sizeofdataset, dimofDataset, embeddingDatasetallColumnNameList);
+                        populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
 
-
-                        std::vector<float> resultContainerColorPoints(_selectedIndicesFromStorage.size(), -1.0f);
+                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f); 
 
                         QString datasetIdExp = _tsneDatasetExpressionColors->getId();
-                        int sizeofdatasetExp = _selectedIndicesFromStorage.size();
                         int dimofDatasetExp = 1;
                         std::vector<QString> dimensionNamesExp = { "Expression" };
 
-                        populatePointData(datasetIdExp, resultContainerColorPoints, sizeofdatasetExp, dimofDatasetExp, dimensionNamesExp);
+                        populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
+
 
                         auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
                         if (!analysisPlugin) {
