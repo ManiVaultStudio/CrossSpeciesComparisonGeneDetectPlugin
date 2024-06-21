@@ -863,7 +863,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     }
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };
+    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] , headers[5] };
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
 
@@ -877,7 +877,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
     };
     std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
-    int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); // Directly use .at() since "Single" is now guaranteed to be in the map
+    int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); 
 
     for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
@@ -903,15 +903,16 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
         newickTrees.insert({ gene, {QString::fromStdString(newick), meanValuesForSpeciesMap} });
 
-        row.push_back(new QStandardItem(gene));
-        row.push_back(new QStandardItem(""));
+        row.push_back(new QStandardItem(gene)); //0
+        row.push_back(new QStandardItem(""));  //1
+        row.push_back(new QStandardItem(QString::number(-1.0)));  //2
 
         float meanV = calculateMean(numbers);
-        row.push_back(new QStandardItem(QString::number(meanV)));
+        row.push_back(new QStandardItem(QString::number(meanV)));//3
 
         auto it = geneCounter.find(gene);
         int count = (it != geneCounter.end()) ? it->second.size() : -1;
-        row.push_back(new QStandardItem(QString::number(count)));
+        row.push_back(new QStandardItem(QString::number(count)));//4
 
         QString speciesGeneAppearancesComb;
         if (it != geneCounter.end()) {
@@ -923,7 +924,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             }
         }
 
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb));
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb));//5
 
         for (auto numb : numbers) {
             row.push_back(new QStandardItem(QString::number(numb)));
@@ -1014,9 +1015,10 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             const auto& [newick, similarity] = it->second;
 
             model->item(i, 1)->setText(newick);
-            auto item = model->item(i, 2);
-            item->setData(similarity, Qt::DisplayRole);
-            item->setData(similarity, Qt::UserRole);
+
+            auto item2 = model->item(i, 2);
+            item2->setData(similarity, Qt::DisplayRole);
+            item2->setData(similarity, Qt::UserRole);
         }
     }
 
