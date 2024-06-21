@@ -819,31 +819,35 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         NegativeTopN,
         MixedTopN
     };
-    auto optionValue= _typeofTopNGenes.getCurrentText();
+    auto optionValue = _typeofTopNGenes.getCurrentText();
     SelectionOption option = SelectionOption::AbsoluteTopN;
-    if (optionValue == "Positive")
-    {
+    if (optionValue == "Positive") {
         option = SelectionOption::PositiveTopN;
     }
-    else if (optionValue == "Negative")
-    {
+    else if (optionValue == "Negative") {
         option = SelectionOption::NegativeTopN;
     }
-    else if (optionValue == "Mixed")
-    {
+    else if (optionValue == "Mixed") {
         option = SelectionOption::MixedTopN;
     }
-
-
-    
 
     QSet<QString> geneList;
     QStringList returnGeneList;
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
 
-
     for (const auto& outerPair : map) {
-        std::vector<std::pair<QString, float>> geneExpressionVec(outerPair.second.begin(), outerPair.second.end());
+        std::vector<std::pair<QString, float>> geneExpressionVec;
+        // Reserve space to avoid reallocations
+        geneExpressionVec.reserve(outerPair.second.size());
+
+        // Filter based on the selection option to avoid unnecessary sorting
+        if (option == SelectionOption::NegativeTopN) {
+            std::copy_if(outerPair.second.begin(), outerPair.second.end(), std::back_inserter(geneExpressionVec),
+                [](const auto& pair) { return pair.second < 0; });
+        }
+        else {
+            geneExpressionVec.assign(outerPair.second.begin(), outerPair.second.end());
+        }
 
         // Lambda for sorting based on the selection option
         auto sortLambda = [&option](const auto& a, const auto& b) {
@@ -858,16 +862,27 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             }
             };
 
-        // Sort and select top elements based on the selection option
+        // Sort once for all options
+        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
+
+        // Determine the limit for selection based on the option
+        int limit = n;
         if (option == SelectionOption::MixedTopN) {
-            // For MixedTopN, sort once and select top n/2 positive and top n/2 negative
-            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
-            int positiveLimit = std::min(n / 2, static_cast<int>(geneExpressionVec.size()));
-            for (int i = 0; i < positiveLimit; ++i) {
-                const auto& gene = geneExpressionVec[i].first;
-                geneList.insert(gene);
-                geneAppearanceCounter[gene].push_back(outerPair.first);
-            }
+            limit = std::min(n / 2, static_cast<int>(geneExpressionVec.size()));
+        }
+        else {
+            limit = std::min(n, static_cast<int>(geneExpressionVec.size()));
+        }
+
+        // Select top elements based on the selection option
+        for (int i = 0; i < limit; ++i) {
+            const auto& gene = geneExpressionVec[i].first;
+            geneList.insert(gene);
+            geneAppearanceCounter[gene].push_back(outerPair.first);
+        }
+
+        // Additional loop for MixedTopN to select negative values
+        if (option == SelectionOption::MixedTopN) {
             int negativeStart = std::max(static_cast<int>(geneExpressionVec.size()) - n / 2, 0);
             for (int i = negativeStart; i < geneExpressionVec.size(); ++i) {
                 const auto& gene = geneExpressionVec[i].first;
@@ -875,21 +890,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
                 geneAppearanceCounter[gene].push_back(outerPair.first);
             }
         }
-        else {
-            // For other options, sort and select top N or until the end of the vector
-            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
-            int limit = std::min(n, static_cast<int>(geneExpressionVec.size()));
-            for (int i = 0; i < limit; ++i) {
-                const auto& gene = geneExpressionVec[i].first;
-                if (option == SelectionOption::NegativeTopN && geneExpressionVec[i].second >= 0) {
-                    continue; // Skip non-negative values for NegativeTopN
-                }
-                geneList.insert(gene);
-                geneAppearanceCounter[gene].push_back(outerPair.first);
-            }
-        }
     }
-
 
 
     returnGeneList = QStringList(geneList.begin(), geneList.end());
