@@ -219,6 +219,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 qDebug() << "No datasets selected";
                 return;
             }
+            if (pointsDataset->getSelectionIndices().size() <1)
+            {
+                qDebug() << "No points selected";
+                return;
+            }
+
+
+
             if (_selectedPointsTSNEDataset.isValid())
             {
                 _selectedPointsTSNEDataset->setSelectionIndices({});
