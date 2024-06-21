@@ -526,43 +526,29 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
 
-
-
-                        for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++)
-                        {
-                            auto geneName = pointsDatasetallColumnNameList[i];
+                        for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
+                            auto& geneName = pointsDatasetallColumnNameList[i];
                             auto geneIndex = { i };
                             float meanValue = 0.0;
-                            if (commonSelectedIndices.size() > 0) {
-
+                            if (!commonSelectedIndices.empty()) {
                                 std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                 pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                 float shortMean = calculateMean(resultContainerShort);
-                                float fullMean = 0.0;
-                                if (_clusterGeneMeanExpressionMap[speciesName].find(geneName) == _clusterGeneMeanExpressionMap[speciesName].end())
-                                {
+
+                                // Use cached mean value if available to avoid recalculating
+                                float& fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                if (fullMean == 0.0) { // Assuming that 0.0 indicates uninitialized since mean can't be negative
                                     std::vector<float> resultContainerFull(speciesIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                                     fullMean = calculateMean(resultContainerFull);
-                                    _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
-                                }
-                                else
-                                {
-                                    fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
                                 }
 
-                                //if (fullMean != 0.0)
-                                {
-                                    meanValue = fullMean - shortMean;
-                                }
-                                //else
-                                //{
-                                //    meanValue = 0.0;
-                                //}
+                                meanValue = fullMean - shortMean;
                             }
 
                             _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
                         }
+
 
 
                     }
