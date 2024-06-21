@@ -1011,21 +1011,17 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         }
     }
 
-    for (int i = 0; i < model->rowCount(); i++) {
+    for (int i = 0; i < model->rowCount(); ++i) {
         QString gene = model->item(i, 0)->text();
 
         auto it = treeSimilarities.find(gene);
-        auto map = it->second;
-        auto similarity = map.second;
-        auto newick = map.first;
-
         if (it != treeSimilarities.end()) {
+            const auto& [newick, similarity] = it->second;
 
             model->item(i, 1)->setText(newick);
-            model->item(i, 2)->setData(similarity, Qt::DisplayRole);
-            model->item(i, 2)->setData(similarity, Qt::UserRole);
-
-
+            auto item = model->item(i, 2);
+            item->setData(similarity, Qt::DisplayRole);
+            item->setData(similarity, Qt::UserRole);
         }
     }
 
