@@ -812,41 +812,23 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
 
     for (const auto& outerPair : map) {
-        // Convert map to vector of pairs
+        // Convert map to vector of pairs and sort in descending order based on the expression value
         std::vector<std::pair<QString, float>> geneExpressionVec(outerPair.second.begin(), outerPair.second.end());
-
-        // Sort the vector in descending order based on the expression value
-        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+        std::partial_sort(geneExpressionVec.begin(), geneExpressionVec.begin() + std::min(n, static_cast<int>(geneExpressionVec.size())), geneExpressionVec.end(), [](const auto& a, const auto& b) {
             return a.second > b.second;
             });
 
-        // Add the top n genes to the geneList and initialize their count in geneAppearanceCounter
+        // Process top n genes
         for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-            geneList.insert(geneExpressionVec[i].first);
+            const auto& gene = geneExpressionVec[i].first;
+            geneList.insert(gene);
+            geneAppearanceCounter[gene].push_back(outerPair.first);
         }
     }
 
     // Convert QSet<QString> geneList to QStringList returnGeneList
     returnGeneList = QStringList(geneList.begin(), geneList.end());
 
-    // Increment count for each gene in geneList for the geneAppearanceCounter for top n genes
-    for (const auto& outerPair : map) {
-        // Convert map to vector of pairs
-        std::vector<std::pair<QString, float>> geneExpressionVec(outerPair.second.begin(), outerPair.second.end());
-
-        // Sort the vector in descending order based on the expression value
-        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-            return a.second > b.second;
-            });
-
-        for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-            // If geneExpressionVec[i].first is present in the key of geneAppearanceCounter, push the outerpair.first in the vector
-            if (geneList.contains(geneExpressionVec[i].first)) {
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
-            }
-
-        }
-    }
 
     //qDebug() << "***********Insert location\n";
     //for (auto& pair : geneAppearanceCounter) {
