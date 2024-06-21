@@ -17,6 +17,7 @@
 #include <stack>
 #include <algorithm> // for std::find
 #include <vector>
+#include <unordered_set>
 using namespace mv;
 using namespace mv::gui;
 
@@ -316,10 +317,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
 
-                        // Assuming populatePointData is a function that cannot be modified and is optimized for its purpose.
-                        // The optimization focuses on reducing redundant operations and improving memory management.
-
-                        // Pre-calculate sizes to avoid recalculating them inside loops or function calls
                          int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
                          int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
                          int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
@@ -479,18 +476,18 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         auto clusterName = clusters.getName();
                         auto clusterColor = clusters.getColor();
                         std::vector<int> filteredIndices;
-                        for (int i = 0; i < clusterIndices.size(); i++)
+                        std::unordered_set<int> selectedIndicesSet(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
+
+                        for (int index : clusterIndices)
                         {
-
-                            int indexVal = findIndex(_selectedIndicesFromStorage, clusterIndices[i]);
-                            if (indexVal != -1)
+                            if (selectedIndicesSet.find(index) != selectedIndicesSet.end())
                             {
-                                filteredIndices.push_back(indexVal);
+                                filteredIndices.push_back(index);
                             }
-
                         }
                         selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
                     }
+
 
                     for (auto& species : speciesValuesAll)
                     {
