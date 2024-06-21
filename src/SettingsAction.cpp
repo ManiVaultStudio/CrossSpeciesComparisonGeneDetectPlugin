@@ -518,12 +518,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-                        //indices overlap between  speciesIndices and allSelectedIndices
                         std::vector<int> commonSelectedIndices;
+                        std::unordered_set<int> speciesIndicesSet(speciesIndices.begin(), speciesIndices.end());
+                        commonSelectedIndices.reserve(_selectedIndicesFromStorage.size()); 
+                        for (const auto& index : _selectedIndicesFromStorage) {
+                            if (speciesIndicesSet.find(index) != speciesIndicesSet.end()) {
+                                commonSelectedIndices.push_back(index);
+                            }
+                        }
 
-                        std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-                        std::sort(speciesIndices.begin(), speciesIndices.end());
-                        std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
 
                         for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
