@@ -585,13 +585,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 std::vector<float> resultContainerSpeciesColors(selectedSpeciesIndices.size());
                 std::vector<int> selectedGeneIndex;
 
-                for (int i = 0; i < fullMainPointsDataset->getDimensionNames().size(); i++)
-                {
-                    if (fullMainPointsDataset->getDimensionNames()[i] == gene)
-                    {
-                        selectedGeneIndex.push_back(i);
-                        break;
-                    }
+                auto dimensionNames = fullMainPointsDataset->getDimensionNames();
+                auto it = std::find(dimensionNames.begin(), dimensionNames.end(), gene);
+                if (it != dimensionNames.end()) {
+                    selectedGeneIndex.push_back(std::distance(dimensionNames.begin(), it));
                 }
 
 
@@ -720,19 +717,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
                     std::vector<int> indexOfGene;
                     auto dimsValsTemp = selectedPointsMain->getDimensionNames();
-                    for (int i = 0; i < dimsValsTemp.size(); i++)
-                    {
-                        if (dimsValsTemp[i] == gene)
-                        {
-                            indexOfGene.push_back(i);
-                            break;
-                        }
+                    auto it = std::find(dimsValsTemp.begin(), dimsValsTemp.end(), gene);
+                    if (it != dimsValsTemp.end()) {
+                        indexOfGene.push_back(it - dimsValsTemp.begin());
                     }
-                    std::vector<int> tempselectIndices;
-                    for (int i = 0; i < selectedPointsMain->getNumPoints(); i++)
-                    {
-                        tempselectIndices.push_back(i);
-                    }
+
+                    std::vector<int> tempselectIndices(selectedPointsMain->getNumPoints());
+                    std::iota(tempselectIndices.begin(), tempselectIndices.end(), 0);
+
                     if (indexOfGene.size() > 0 && tempselectIndices.size() > 0)
                     {
                         selectedPointsMain->populateDataForDimensions(resultContainerColorPoints, indexOfGene, tempselectIndices);
