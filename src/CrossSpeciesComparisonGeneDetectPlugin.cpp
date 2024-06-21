@@ -558,23 +558,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
             
             std::vector<std::seed_seq::result_type>& selectedIndicesFromStorage = _settingsAction.getSelectedIndicesFromStorage();
-            for (int i = 0; i < selectedSpeciesIndices.size(); i++)
-            {
-                if (std::find(selectedIndicesFromStorage.begin(), selectedIndicesFromStorage.end(), selectedSpeciesIndices[i]) != selectedIndicesFromStorage.end())
-                {
+            std::unordered_set<std::seed_seq::result_type> indicesSet(selectedIndicesFromStorage.begin(), selectedIndicesFromStorage.end());
+            filtSelectInndx.reserve(selectedSpeciesIndices.size());
+            for (int i = 0; i < selectedSpeciesIndices.size(); ++i) {
+                if (indicesSet.find(selectedSpeciesIndices[i]) != indicesSet.end()) {
                     filtSelectInndx.push_back(i);
                 }
             }
-
-
-
-
             auto dimensionNamesUmap = umapPointsDataset->getDimensionNames();
-            std::vector<int> geneIndicesSpecies;
-            for (int i = 0; i < umapPointsDataset->getNumDimensions(); i++)
-            {
-                geneIndicesSpecies.push_back(i);
-            }
+            auto numDimensions = umapPointsDataset->getNumDimensions();
+            std::vector<int> geneIndicesSpecies(numDimensions);
+            std::iota(geneIndicesSpecies.begin(), geneIndicesSpecies.end(), 0);
+
 
             if (selectedSpeciesIndices.size() > 0)
             {
