@@ -962,7 +962,6 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     if (fullTreeNames.size() > 0 && leafnames.size() > 0 && targetNewick != "")
     {
 
-        //convert  std::vector<QString> to QStringList leafnames
         QStringList copyleafNames;
         for (auto& leaf : leafnames) {
             copyleafNames.push_back(leaf);
@@ -971,29 +970,16 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
 
         if (areSameIgnoreOrder(fullTreeNames, copyleafNames)) {
-            // Iterate over the newickTrees map
+  
             for (auto& pair : newickTrees) {
-                /*
-                        qDebug() << "\n*****************";
-                        qDebug() << "First tree: " << pair.second;
-                        qDebug() << "Second tree: " << QString::fromStdString(targetNewick);
-                        qDebug() << "*****************\n";
-                        */
-                        //add a ";" to the end of the string pair.second.toStdString()
+
                 std::string modifiedNewick = pair.second.first.toStdString();
                 std::map <QString,float> speciesMeanMaps = pair.second.second;
 
                 const char* string1 = targetNewick.c_str();
                 const char* string2 = modifiedNewick.c_str();
-
-                //const char* string1 = "(((((((20,(((24,((25,9),(12,11))),(19,15)),(22,21))),(23,(1,17))),((2,18),(8,6))),(14,10)),(3,16)),(7,5)),(13,4));";
-                //const char* string2 = "(((((((20,(((24,((25,9),(12,11))),(19,15)),(22,21))),((1,17),23)),((2,18),(8,6))),(14,10)),(16,3)),(7,5)),(13,4));";
-
-            // Create two Tree objects
                 Tree t1;
                 Tree t2;
-
-                // Change the standard input to read from the strings
                 freopen("CON", "r", stdin);
                 FILE* file1;
                 FILE* file2;
@@ -1008,146 +994,26 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
                 if (file1 != nullptr) {
                     fclose(file2);
                 }
-
-                // Read tree structures from the strings
                 freopen("file1.txt", "r", stdin);
                 t1.CreateTree();
                 freopen("file2.txt", "r", stdin);
                 t2.CreateTree();
+                int sim = Calculate(&t1, &t2); 
 
-                // Calculate and print the similarity
-                int sim = Calculate(&t1, &t2); // sim is the minimum number of leaves to remove to make the trees isomorphic
-
-                /* qDebug() << "\n*****************\n"
-                     << "First tree: " << string1
-                     << "\nSecond tree: " << string2
-                     << "\nSimvalue: " << sim
-                     << "\n*****************\n"; */
-
-                     //qDebug()<<"\n****Simvalue: "<<sim<<"****\n";
-
-                     // If the current newick tree is the same as the target
-
-                float similarity = 1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpecies); //the similarity between two Newick trees,
-
-
-                //insert pair.first modifiedNewick similarity to treeSimilarities
+                float similarity = 1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpecies); 
                 std::pair<QString, float>  temp;
                 temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames, speciesMeanMaps);
                 temp.second = similarity;
                 treeSimilarities.insert(std::make_pair(pair.first, temp));
-                /*
-                 1.	Calculate(&t1, &t2) is a function that takes two trees in Newick format and returns the minimum number of leaves that need to be removed to make them isomorphic.
-        2.	sim is the result of this calculation.
-        3.	numOfSpeciesLeaves is presumably the total number of leaves in the tree (or in both trees if they have the same number of leaves).
-        4.	static_cast<float>(sim) / static_cast<float>(numOfSpeciesLeaves) calculates the proportion of leaves that need to be removed to make the trees isomorphic.
-        5.	1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpeciesLeaves) then subtracts this proportion from 1 to give the proportion of leaves that do not need to be removed, which can be interpreted as a measure of similarity between the trees.
-                 if no leaves need to be removed (i.e., the trees are already isomorphic), sim will be 0, and the similarity will be 1.0. If all leaves need to be removed, sim will be equal to numOfSpeciesLeaves, and the similarity will be 0.
-                */
-                /*
-                int x= (1-treeSimilarityScore)*numOfSpecies;
 
-                if (sim <= x) {
-                    // Find the corresponding gene in the model
-                    QList<QStandardItem*> items = model->findItems(pair.first);
-                    for (auto& item : items) {
-                        // Get the row of the item
-                        int row = item->row();
-                        // Set the background color of each item in the row
-                        for (int i = 0; i < model->columnCount(); i++) {
-                            QStandardItem* itemInRow = model->item(row, i);
-                            if (itemInRow) {
-                                itemInRow->setBackground(QBrush(QColor(targetColor)));
-                            }
-                        }
-                    }
-                }
-
-                */
             }
 
         }
     }
 
-    //check which newick trees are the same and group them together
-    /*
-    std::map<QString, std::vector<QString>> clusteringMap;
-
-    for (auto it = newickTrees.begin(); it != newickTrees.end(); ++it) {
-        QString currentNewick = it->second;
-        QString currentGene = it->first;
-        if (clusteringMap.empty()) {
-            clusteringMap[currentNewick] = { currentGene };
-        }
-        else {
-            bool found = false;
-            for (auto& cluster : clusteringMap) {
-                QString clusterNewick = cluster.first;
-                if (currentNewick == clusterNewick) {
-                    cluster.second.push_back(currentGene);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                clusteringMap[currentNewick] = { currentGene };
-            }
-        }
-    }
-    */
-    //QStringList colorCodes = {"#8dd3c7" ,"#ffffb3"}
-
-    //colors
-    // left right color codes https://encycolorpedia.com/00a2ed #ff5d12 and #00a2ed  or #0fb1e0 and #f04e1f
-    //testing
-    //clusteringMap[clusteringMap.begin()->first] = { "VSTM5", "REC8", "TPGS2" }; 
-    //clusteringMap[(++clusteringMap.begin())->first] = { "FGD6", "ANGEL1","FANCC" };
-
-
-    //print clusteringMap    '
-    /*for (auto& cluster : clusteringMap) {
-        QString newick = cluster.first;
-        std::vector<QString> genes = cluster.second;
-
-        if (genes.size() > 1) {
-            std::cout << "Newick: " << newick.toStdString() << std::endl;
-            std::cout << "Genes: ";
-            for (auto& gene : genes) {
-                std::cout << gene.toStdString() << ", ";
-            }
-            std::cout << std::endl;
-        }
-
-    }
-    */
-    /*
-    QStringList colorCodes = { "#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f", "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928" };
-    int colorIndex = 0;
-    for (auto& cluster : clusteringMap) {
-        QString newick = cluster.first;
-        std::vector<QString> genes = cluster.second;
-
-        if (genes.size() > 1) {
-            for (auto& gene : genes) {
-                for (int i = 0; i < model->rowCount(); i++) {
-                    if (model->item(i, 0)->text() == gene) {
-                        for (int j = 0; j < model->columnCount(); j++) {
-                            model->item(i, j)->setBackground(QBrush(QColor(colorCodes[colorIndex])));
-                        }
-                    }
-                }
-            }
-            colorIndex = (colorIndex + 1) % colorCodes.size();
-        }
-    }
-
-    */
-
-    //based on first column string value from  model, update the 4th column vaLUE   from treeSimilarities
     for (int i = 0; i < model->rowCount(); i++) {
         QString gene = model->item(i, 0)->text();
-        //qDebug() <<"Gene: " << gene;
-        //qDebug() << "Tree Similarity: " << treeSimilarities[gene];
+
         auto it = treeSimilarities.find(gene);
         auto map = it->second;
         auto similarity = map.second;
@@ -1156,8 +1022,6 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
         if (it != treeSimilarities.end()) {
 
             model->item(i, 1)->setText(newick);
-            //model->item(i, 2)->setText(QString::number(similarity));
-
             model->item(i, 2)->setData(similarity, Qt::DisplayRole);
             model->item(i, 2)->setData(similarity, Qt::UserRole);
 
