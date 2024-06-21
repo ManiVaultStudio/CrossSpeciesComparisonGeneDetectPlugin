@@ -128,7 +128,7 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
-
+    QStringList& getInitColumnNames() { return _initColumnNames; }
 
 
 
@@ -200,6 +200,6 @@ protected:
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
-    
+    QStringList _initColumnNames;
 
 };

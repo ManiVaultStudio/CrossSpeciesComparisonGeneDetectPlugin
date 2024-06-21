@@ -500,9 +500,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
 
-
-
-
         std::map<QString, float> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
@@ -514,14 +511,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         for (int i = 0; i < columnCount; ++i) {
             const QString columnName = model->headerData(i, Qt::Horizontal).toString();
             const auto data = current.siblingAtColumn(i).data();
-            if (i > 5) {
+            if (i > _settingsAction.getInitColumnNames().size()) {
                 speciesExpressionMap[columnName] = data.toFloat();
             }
-            else if (columnName == "Newick tree") {
+            if (columnName == "Newick tree") {
                 treeDataFound = true;
                 valueStringReference = QJsonDocument::fromJson(data.toString().toUtf8()).object();
             }
-            else if (columnName == "Gene Apearance Species Names") {
+            if (columnName == "Gene Appearance Species Names") {
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }

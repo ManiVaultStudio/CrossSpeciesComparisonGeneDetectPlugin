@@ -911,16 +911,16 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
-    QStringList initColumnNames = { "ID", "Newick tree", "Similarity with Reference Tree", "Mean Differential Expression", "Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Appearance Species Names" };
-    model->setHorizontalHeaderLabels(initColumnNames);
+    _initColumnNames = { "ID", "Newick tree", "Similarity with Reference Tree", "Mean Differential Expression", "Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Appearance Species Names" };
+    model->setHorizontalHeaderLabels(_initColumnNames);
 
     for (auto it = map.cbegin(); it != map.cend(); ++it) {
         QString headerTitle = it->first;
-        model->setHorizontalHeaderItem(initColumnNames.size() + std::distance(map.cbegin(), it), new QStandardItem(headerTitle));
+        model->setHorizontalHeaderItem(_initColumnNames.size() + std::distance(map.cbegin(), it), new QStandardItem(headerTitle));
     }
 
-    QStringList headers = initColumnNames;
-    headers.reserve(initColumnNames.size() + map.size());
+    QStringList headers = _initColumnNames;
+    headers.reserve(_initColumnNames.size() + map.size());
     for (auto it = map.cbegin(); it != map.cend(); ++it) {
         headers.push_back(it->first);
     }
