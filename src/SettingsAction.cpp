@@ -79,14 +79,14 @@ bool areSameIgnoreOrder(const QStringList& list1, const QStringList& list2) {
     }
 
     for (const auto& item : list2) {
-        auto it = list1Counts.find(item);
-        if (it == list1Counts.end() || --it.value() < 0) {
+        if (!list1Counts.contains(item) || --list1Counts[item] < 0) {
             return false;
         }
     }
 
     return true;
 }
+
 
 
 int findIndex(const std::vector<std::seed_seq::result_type>& vec, int value) {
@@ -962,12 +962,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
     if (fullTreeNames.size() > 0 && leafnames.size() > 0 && targetNewick != "")
     {
 
-        QStringList copyleafNames;
-        for (auto& leaf : leafnames) {
-            copyleafNames.push_back(leaf);
-        }
-
-
+        QStringList copyleafNames = QStringList(leafnames.begin(), leafnames.end());
 
         if (areSameIgnoreOrder(fullTreeNames, copyleafNames)) {
   
