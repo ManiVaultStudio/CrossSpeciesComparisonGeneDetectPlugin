@@ -140,8 +140,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _selectedCellClusterInfoStatusBar = new QStatusBar();
     _selectedCellClusterInfoStatusBar->setStatusTip("Status");
-    _selectedCellClusterInfoStatusBar->setFixedHeight(50);
-    //_statusBarActionWidget->setFixedWidth(100);
+    _selectedCellClusterInfoStatusBar->setMinimumHeight(40);
+    _selectedCellClusterInfoStatusBar->setMinimumWidth(100);
     _selectedCellClusterInfoStatusBar->setAutoFillBackground(true);
     _selectedCellClusterInfoStatusBar->setSizeGripEnabled(false);
 
@@ -644,22 +644,27 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         auto clusterValues = _tsneDatasetClusterColors->getClusters();
                         if (!clusterValues.empty())
                         {
-                            QString selectedClusterInfo = "<html><head/><body><p>";
+                            QString selectedClusterInfo = "<html><head/><body><p>Cell counts: <br>";
+                            int clusterCounter = 0;
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
                                 auto clusterIndicesSize = cluster.getIndices().size();
                                 auto clusterColor = cluster.getColor().name(); // Assuming getColor() returns a QColor
 
                                 // Use the background-color style for the span to set the background of the text
-                                selectedClusterInfo += QString("<span style=\"background-color:%3;\">%1: %2;</span> ").arg(clusterName).arg(clusterIndicesSize).arg(clusterColor);
+                                selectedClusterInfo += QString(" <span style=\"background-color:%3;\">%1: %2;</span> ").arg(clusterName).arg(clusterIndicesSize).arg(clusterColor);
+                                ++clusterCounter;
+                                if (clusterCounter % 7 == 0) {
+                                    selectedClusterInfo += "<br>"; // Add a new line after every 5 clusters
+                                }
                             }
-                            selectedClusterInfo.chop(2); // Remove the last "; " for formatting
+                            if (clusterCounter % 5 != 0) { // If the last line doesn't end with a "; "
+                                selectedClusterInfo.chop(2); // Remove the last "; " for formatting
+                            }
                             selectedClusterInfo += "</p></body></html>";
                             _selectedCellClusterInfoBox.setString(selectedClusterInfo);
-
-
-                   
                         }
+
                     }
 
 
