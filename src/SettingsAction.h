@@ -84,7 +84,7 @@ public: // Action getters
     VariantAction& getTableModelAction() { return _tableModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
-    DatasetPickerAction& getFilteringTreeDatasetAction() { return _filteringTreeDataset; }
+    DatasetPickerAction& getFilteringEditTreeDatasetAction() { return _filteringEditTreeDataset; }
     OptionSelectionAction& getOptionSelectionAction() { return _optionSelectionAction; }
     TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
     DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
@@ -164,7 +164,7 @@ protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
     VariantAction                 _tableModel;
     StringAction                  _selectedGene;
-    DatasetPickerAction          _filteringTreeDataset;
+    DatasetPickerAction          _filteringEditTreeDataset;
     StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;

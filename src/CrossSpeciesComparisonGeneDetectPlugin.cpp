@@ -30,9 +30,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     const auto updateSelectedRowIndex = [this]() -> void
         {
 
-            if (_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().isValid())
+            if (_settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().isValid())
             {
-                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
+                auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().getDatasetId());
               
                 QStringList selectedRowsStrList = _settingsAction.getSelectedRowIndexAction().getString().split(",");
                 QList<int> selectedRows;
@@ -319,7 +319,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getTableModelAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedRowIndexAction());
-    extraOptionsGroup->addAction(&_settingsAction.getFilteringTreeDatasetAction());
+    extraOptionsGroup->addAction(&_settingsAction.getFilteringEditTreeDatasetAction());
     extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
     extraOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
     extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
@@ -509,7 +509,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         QString finalSpeciesNameString;
         QJsonObject valueStringReference;
         bool treeDataFound = false;
-
+        bool isEditTreePresent = _settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().isValid();
         const auto* model = current.model();
         const int columnCount = model->columnCount();
         const auto initColumnNamesSize = _settingsAction.getInitColumnNames().size(); 
@@ -517,7 +517,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             const QString columnName = model->headerData(i, Qt::Horizontal).toString();
             const auto data = current.siblingAtColumn(i).data();
 
-            if (columnName == "Newick tree") {
+            if (columnName == "Newick tree" && isEditTreePresent) {
                 treeDataFound = true;
                 valueStringReference = QJsonDocument::fromJson(data.toString().toUtf8()).object();
             }
@@ -667,12 +667,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
 
 
-        if (treeDataFound) {
-            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringTreeDatasetAction().getCurrentDataset().getDatasetId());
+        if (treeDataFound && isEditTreePresent) {
+            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().getDatasetId());
+
             if (!valueStringReference.isEmpty()) {
                 treeDataset->setTreeData(valueStringReference);
                 events().notifyDatasetDataChanged(treeDataset);
             }
+
         }
 
         auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();

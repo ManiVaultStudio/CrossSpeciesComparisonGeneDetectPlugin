@@ -99,7 +99,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _crossSpeciesComparisonGeneDetectPlugin(CrossSpeciesComparisonGeneDetectPlugin),
     _tableModel(this, "Table Model"),
     _selectedGene(this, "Selected Gene"),
-    _filteringTreeDataset(this, "Filtering Tree Dataset"),
+    _filteringEditTreeDataset(this, "Filtering Tree Dataset"),
     _selectedRowIndex(this, "Selected Row Index"),
     _optionSelectionAction(*this),
     _startComputationTriggerAction(this, "Update"),
@@ -148,7 +148,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _clusterNamesDataset.setSerializationName("CSCGDV:Cluster Names Dataset");
     _filteredGeneNamesVariant.setSerializationName("CSCGDV:Filtered Gene Names");
     _topNGenesFilter.setSerializationName("CSCGDV:Top N Genes Filter");
-    _filteringTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
+    _filteringEditTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
     _referenceTreeDataset.setSerializationName("CSCGDV:Reference Tree Dataset");
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
@@ -184,7 +184,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
-    _filteringTreeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+    _filteringEditTreeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == CrossSpeciesComparisonTreeType;
         });
     _referenceTreeDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
@@ -611,9 +611,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
     const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
         
-        if (_filteringTreeDataset.getCurrentDataset().isValid())
+        if (_filteringEditTreeDataset.getCurrentDataset().isValid())
         {
-            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_filteringTreeDataset.getCurrentDataset().getDatasetId());
+            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_filteringEditTreeDataset.getCurrentDataset().getDatasetId());
 
             QStringList selectedRowsStrList = _geneNamesConnection.getString().split("*%$@*@$%*");
 
@@ -1359,7 +1359,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _clusterNamesDataset.fromParentVariantMap(variantMap);
     _filteredGeneNamesVariant.fromParentVariantMap(variantMap);
     _topNGenesFilter.fromParentVariantMap(variantMap);
-    _filteringTreeDataset.fromParentVariantMap(variantMap);
+    _filteringEditTreeDataset.fromParentVariantMap(variantMap);
     _referenceTreeDataset.fromParentVariantMap(variantMap);
     _selectedRowIndex.fromParentVariantMap(variantMap);
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
@@ -1390,7 +1390,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _clusterNamesDataset.insertIntoVariantMap(variantMap);
     _filteredGeneNamesVariant.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);
-    _filteringTreeDataset.insertIntoVariantMap(variantMap);
+    _filteringEditTreeDataset.insertIntoVariantMap(variantMap);
     _referenceTreeDataset.insertIntoVariantMap(variantMap);
     _selectedRowIndex.insertIntoVariantMap(variantMap);
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
