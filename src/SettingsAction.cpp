@@ -140,8 +140,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _selectedCellClusterInfoStatusBar = new QStatusBar();
     _selectedCellClusterInfoStatusBar->setStatusTip("Status");
-    _selectedCellClusterInfoStatusBar->setMinimumHeight(40);
-    _selectedCellClusterInfoStatusBar->setMinimumWidth(100);
+    //_selectedCellClusterInfoStatusBar->setMinimumHeight(40);
+    //_selectedCellClusterInfoStatusBar->setMinimumWidth(100);
     _selectedCellClusterInfoStatusBar->setAutoFillBackground(true);
     _selectedCellClusterInfoStatusBar->setSizeGripEnabled(false);
 
@@ -649,16 +649,26 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
                                 auto clusterIndicesSize = cluster.getIndices().size();
-                                auto clusterColor = cluster.getColor().name(); // Assuming getColor() returns a QColor
+                                auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
 
-                                // Use the background-color style for the span to set the background of the text
-                                selectedClusterInfo += QString(" <span style=\"background-color:%3;\">%1: %2;</span> ").arg(clusterName).arg(clusterIndicesSize).arg(clusterColor);
+                                // Calculate luminance
+                                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+                                // Choose text color based on luminance
+                                QString textColor = (luminance > 0.5) ? "black" : "white";
+
+                                // Use the background-color and color styles for the span
+                                selectedClusterInfo += QString(" <span style=\"background-color:%3; color:%4;\">%1: %2;</span> ")
+                                                           .arg(clusterName)
+                                                           .arg(clusterIndicesSize)
+                                                           .arg(clusterColor.name())
+                                                           .arg(textColor);
                                 ++clusterCounter;
                                 if (clusterCounter % 7 == 0) {
-                                    selectedClusterInfo += "<br>"; // Add a new line after every 5 clusters
+                                    selectedClusterInfo += "<br>"; // Add a new line after every 7 clusters
                                 }
                             }
-                            if (clusterCounter % 5 != 0) { // If the last line doesn't end with a "; "
+                            if (clusterCounter % 7 != 0) { // Adjusted to match the new line break condition
                                 selectedClusterInfo.chop(2); // Remove the last "; " for formatting
                             }
                             selectedClusterInfo += "</p></body></html>";
