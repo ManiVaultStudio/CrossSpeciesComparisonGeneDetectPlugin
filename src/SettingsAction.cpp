@@ -126,7 +126,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection(this, "Remove Selection"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
-    _usePreComputedTSNE(this, "Use Precomputed TSNE")
+    _usePreComputedTSNE(this, "Use Precomputed TSNE"),
+    _selectedCellClusterInfoBox(this, "Selected Cell Cluster Info")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -137,7 +138,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget->setSizeGripEnabled(false);
 
 
-
+    _selectedCellClusterInfoStatusBar = new QStatusBar();
+    _selectedCellClusterInfoStatusBar->setStatusTip("Status");
+    _selectedCellClusterInfoStatusBar->setFixedHeight(50);
+    //_statusBarActionWidget->setFixedWidth(100);
+    _selectedCellClusterInfoStatusBar->setAutoFillBackground(true);
+    _selectedCellClusterInfoStatusBar->setSizeGripEnabled(false);
 
 
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -156,6 +162,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
+    _selectedCellClusterInfoBox.setSerializationName("CSCGDV:Selected Cell Cluster Info");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -178,6 +185,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Absolute");
+   
     _scatterplotEmbeddingColorOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
@@ -204,7 +212,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         });
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
-
+            
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
             auto embeddingDataset = _embeddingDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
@@ -212,6 +220,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             _selectedSpeciesVals.setString("");
             _geneNamesConnection.setString("");
+            _selectedCellClusterInfoBox.setString("");
             bool isValid = false;
             QString referenceTreedatasetId = "";
 
@@ -630,6 +639,30 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
                     populateClusterData(clusterColorDatasetId, selctedClustersMap);
 
+                    if (_tsneDatasetClusterColors.isValid())
+                    {
+                        auto clusterValues = _tsneDatasetClusterColors->getClusters();
+                        if (!clusterValues.empty())
+                        {
+                            QString selectedClusterInfo = "<html><head/><body><p>";
+                            for (auto cluster : clusterValues) {
+                                auto clusterName = cluster.getName();
+                                auto clusterIndicesSize = cluster.getIndices().size();
+                                auto clusterColor = cluster.getColor().name(); // Assuming getColor() returns a QColor
+
+                                // Use the background-color style for the span to set the background of the text
+                                selectedClusterInfo += QString("<span style=\"background-color:%3;\">%1: %2;</span> ").arg(clusterName).arg(clusterIndicesSize).arg(clusterColor);
+                            }
+                            selectedClusterInfo.chop(2); // Remove the last "; " for formatting
+                            selectedClusterInfo += "</p></body></html>";
+                            _selectedCellClusterInfoBox.setString(selectedClusterInfo);
+
+
+                   
+                        }
+                    }
+
+
                     QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
 
                     if (!geneListTable.isNull())
@@ -861,6 +894,30 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_statusColorAction, &StringAction::stringChanged, this, updateStatus);
 
+    const auto updateSelectedCellClusterInfoBox = [this]() -> void {
+
+        // Clear any previous message
+        _selectedCellClusterInfoStatusBar->clearMessage();
+
+        // Check if there's a previously added label and remove it
+        if (_currentCellSelectionClusterInfoLabel != nullptr) {
+            _selectedCellClusterInfoStatusBar->removeWidget(_currentCellSelectionClusterInfoLabel);
+            delete _currentCellSelectionClusterInfoLabel; // Delete the previous label to avoid memory leaks
+            _currentCellSelectionClusterInfoLabel = nullptr; // Reset the pointer to indicate there's no current label
+        }
+
+        // Create a new QLabel
+        _currentCellSelectionClusterInfoLabel = new QLabel;
+        auto string = _selectedCellClusterInfoBox.getString();
+        QString htmlText = string; 
+        _currentCellSelectionClusterInfoLabel->setText(htmlText); 
+        _selectedCellClusterInfoStatusBar->addWidget(_currentCellSelectionClusterInfoLabel); 
+
+
+
+
+        };
+    connect(&_selectedCellClusterInfoBox, &StringAction::stringChanged, this, updateSelectedCellClusterInfoBox);
     const auto updateEmbeddingDataset = [this]() -> void {
 
 
@@ -880,7 +937,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
 
     _statusColorAction.setString("M");
-
 }
 
 void SettingsAction::computeGeneMeanExpressionMap()
@@ -1426,6 +1482,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
+    _selectedCellClusterInfoBox.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1457,5 +1514,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
+    _selectedCellClusterInfoBox.insertIntoVariantMap(variantMap);
     return variantMap;
 }

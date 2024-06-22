@@ -107,6 +107,7 @@ public: // Action getters
     StringAction& getStatusColorAction() { return _statusColorAction; }
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
+    StringAction& getSelectedCellClusterInfoBox() { return _selectedCellClusterInfoBox; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -130,6 +131,7 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
+    QStatusBar* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
 
 
 
@@ -201,6 +203,9 @@ protected:
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
+    QStatusBar* _selectedCellClusterInfoStatusBar;
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
+    StringAction                _selectedCellClusterInfoBox;
+    QLabel* _currentCellSelectionClusterInfoLabel;
 };

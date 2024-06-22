@@ -321,96 +321,66 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getSelectedRowIndexAction());
     extraOptionsGroup->addAction(&_settingsAction.getFilteringEditTreeDatasetAction());
     extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
-    extraOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
-    extraOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
-    extraOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
-    extraOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
-    extraOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
-    extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
-    extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
-    extraOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
-    extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingColorOption());
-    extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     
-    auto tsneOptionsGroup= new VerticalGroupAction(this,"TSNE Options");
+
+
+
+    auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
+    datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingColorOption());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
+    
+    auto tsneOptionsGroup= new VerticalGroupAction(this,"Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-
+    tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
     auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
-
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-
-
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
     mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
-
     mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
     mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
-
-    
-
     auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(460);
     mainOptionsGroupLayout->addWidget(group1Widget);
-
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
     group2Widget->setMaximumWidth(500);
     mainOptionsGroupLayout->addWidget(group2Widget);  
 
+
+
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
-    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 2);
-    mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 1);
-    mainLayout->addLayout(mainOptionsLayout);
+    
+    mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
+    mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
+    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
 
+    auto fullSettingsLayout = new QVBoxLayout();
+    fullSettingsLayout->addLayout(mainOptionsLayout);
 
+    //fullSettingsLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
 
-    //
-    if (0)
-    {
-        // Create a new QSplitter
-        QSplitter* splitter = new QSplitter();
-
-        // Add _tableView to the splitter
-        splitter->addWidget(_tableView);
-
-        // Create another view
-        QWidget* anotherView = new QWidget();
-        splitter->addWidget(anotherView);
-
-        // Set stretch factors for the widgets
-        splitter->setStretchFactor(0, 1); // _tableView
-        splitter->setStretchFactor(1, 1); // anotherView
-
-        // Get the total available width
-        int totalWidth = splitter->width();
-
-        // Calculate the width for each widget
-        int widgetWidth = totalWidth / 2; // divide by the number of widgets
-
-        // Set the sizes of the child widgets
-        QList<int> sizes;
-        sizes << widgetWidth << widgetWidth; // adjust these values as needed
-        splitter->setSizes(sizes);
-
-        // Set the splitter as the main widget in your layout
-        mainLayout->addWidget(splitter);
-    }
-    else
-    {
-        mainLayout->addWidget(_tableView);
-    }
-
-
+    mainLayout->addLayout(fullSettingsLayout);
+    mainLayout->addWidget(_tableView);
+    _settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    mainLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
     // Set the layout for the widget
     getWidget().setLayout(mainLayout);
