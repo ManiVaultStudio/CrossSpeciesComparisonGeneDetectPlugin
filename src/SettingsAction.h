@@ -105,7 +105,7 @@ public: // Action getters
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
     StringAction& getStatusColorAction() { return _statusColorAction; }
-
+    OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -128,17 +128,17 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
+    QStringList& getInitColumnNames() { return _initColumnNames; }
 
 
 
 
-
-
+    void computeGeneMeanExpressionMap();
 
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
 
-    double* condensedDistanceMatrix(std::vector<float>& items);
+    double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, float> speciesMeanValues);
 private:
@@ -182,6 +182,8 @@ protected:
     IntegralAction         _tsnePerplexity;
     OptionsAction          _hiddenShowncolumns;
     StringAction            _selectedSpeciesVals;
+    OptionAction                    _typeofTopNGenes;
+
     Dataset<Points>        _selectedPointsTSNEDataset;
     Dataset<Points>        _selectedPointsDataset;
     Dataset<Points>        _selectedPointsEmbeddingDataset;
@@ -198,5 +200,6 @@ protected:
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
+    QStringList _initColumnNames;
 
 };
