@@ -336,7 +336,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     
     auto tsneOptionsGroup= new VerticalGroupAction(this,"TSNE Options");
-    tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
+    tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("wrench"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
 
