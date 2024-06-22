@@ -17,7 +17,6 @@
 #include <stack>
 #include <algorithm> // for std::find
 #include <vector>
-#include <unordered_set>
 using namespace mv;
 using namespace mv::gui;
 
@@ -483,14 +482,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         auto clusterName = clusters.getName();
                         auto clusterColor = clusters.getColor();
                         std::vector<int> filteredIndices;
-                        std::unordered_set<int> selectedIndicesSet(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-
-                        for (int index : clusterIndices)
+                        for (int i = 0; i < clusterIndices.size(); i++)
                         {
-                            if (selectedIndicesSet.find(index) != selectedIndicesSet.end())
+
+                            int indexVal = findIndex(_selectedIndicesFromStorage, clusterIndices[i]);
+                            if (indexVal != -1)
                             {
-                                filteredIndices.push_back(index);
+                                filteredIndices.push_back(indexVal);
                             }
+
                         }
                         selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
                     }
@@ -518,13 +518,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
                         std::vector<int> commonSelectedIndices;
-                        std::unordered_set<int> speciesIndicesSet(speciesIndices.begin(), speciesIndices.end());
-                        commonSelectedIndices.reserve(_selectedIndicesFromStorage.size()); 
-                        for (const auto& index : _selectedIndicesFromStorage) {
-                            if (speciesIndicesSet.find(index) != speciesIndicesSet.end()) {
-                                commonSelectedIndices.push_back(index);
-                            }
-                        }
+
+                        std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
+                        std::sort(speciesIndices.begin(), speciesIndices.end());
+                        std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+
+
+
 
 
 
