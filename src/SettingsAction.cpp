@@ -125,7 +125,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "Remove Selection"),
     _statusColorAction(this, "Status color"),
-    _typeofTopNGenes(this, "N Type")
+    _typeofTopNGenes(this, "N Type"),
+    _usePreComputedTSNE(this, "Use Precomputed TSNE")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -164,6 +165,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
     _tsnePerplexity.setValue(30);
+    _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
+    _usePreComputedTSNE.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingColorOption.setSerializationName("CSCGDV:Scatterplot Embedding Color Option"); 
@@ -1369,6 +1372,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _removeRowSelection.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
+    _usePreComputedTSNE.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1399,5 +1403,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
+    _usePreComputedTSNE.insertIntoVariantMap(variantMap);
     return variantMap;
 }

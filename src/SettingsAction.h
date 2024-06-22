@@ -106,6 +106,7 @@ public: // Action getters
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
     StringAction& getStatusColorAction() { return _statusColorAction; }
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
+    ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -201,5 +202,5 @@ protected:
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
     QStringList _initColumnNames;
-
+    ToggleAction                  _usePreComputedTSNE;
 };

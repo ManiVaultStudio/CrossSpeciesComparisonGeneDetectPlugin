@@ -328,7 +328,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
-    extraOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
@@ -336,6 +335,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingColorOption());
     extraOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     
+    auto tsneOptionsGroup= new VerticalGroupAction(this,"TSNE Options");
+    tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
+    tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
+    tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
 
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
@@ -365,8 +368,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
-    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
-    
+    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 2);
+    mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 1);
     mainLayout->addLayout(mainOptionsLayout);
 
 
