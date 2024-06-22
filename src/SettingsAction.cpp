@@ -708,10 +708,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         }
-        else
-        {
-            qDebug() << "Tree dataset is not valid";
-        }
+
 
         };
 
