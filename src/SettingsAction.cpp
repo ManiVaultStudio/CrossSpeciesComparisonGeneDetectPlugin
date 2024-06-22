@@ -226,7 +226,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 return;
             }
 
-
+            
 
             if (_selectedPointsTSNEDataset.isValid())
             {
@@ -351,40 +351,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
 
-
-                        auto analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
-                        if (!analysisPlugin) {
-                            qDebug() << "Could not find create TSNE Analysis";
-                            return;
-                        }
-
-                        int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
-                        if (perplexity < 5)
-                        {
-                            qDebug() << "Perplexity is less than 5";
-                            return;
-                        }
-                        if (perplexity != _tsnePerplexity.getValue())
-                        {
-                            _tsnePerplexity.setValue(perplexity);
-                        }
-
                         if (_selectedPointsTSNEDataset.isValid())
                         {
                             auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
 
                             if (runningAction)
                             {
-                                auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
-                                if (perplexityAction)
-                                {
-                                    qDebug() << "Perplexity: Found";
-                                    perplexityAction->setValue(perplexity);
-                                }
-                                else
-                                {
-                                    qDebug() << "Perplexity: Not Found";
-                                }
+
                                 if (runningAction->isChecked())
                                 {
                                     auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
@@ -405,73 +378,156 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             mv::data().removeDataset(_selectedPointsTSNEDataset);
                             mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                         }
-                        _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
-                        if (_selectedPointsTSNEDataset.isValid())
-                        {
 
 
-                            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-                            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-                            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-                            if (scatterplotViewFactory) {
-                                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
-                                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                                        if (pointDatasetPickerAction) {
-                                            pointDatasetPickerAction->setCurrentText("");
+                        mv::plugin::AnalysisPlugin* analysisPlugin; 
+                        bool usePreTSNE= _usePreComputedTSNE.isChecked();
+                        
+                        auto scatterplotModificationsLowDimUMAP = [this]() { 
+                            if (_selectedPointsTSNEDataset.isValid()) {
+                                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                                if (scatterplotViewFactory) {
+                                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                                        if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                                            if (pointDatasetPickerAction) {
+                                                pointDatasetPickerAction->setCurrentText("");
 
-                                            pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
+                                                pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
 
-                                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                                            if (colorDatasetPickerAction)
-                                            {
-                                                colorDatasetPickerAction->setCurrentText("");
-
-
-
-                                                auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
-                                                if (selectedColorType != "")
+                                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                                if (colorDatasetPickerAction)
                                                 {
-                                                    if (selectedColorType == "Cluster")
-                                                    {
-                                                        if (_tsneDatasetClusterColors.isValid())
-                                                        {
-                                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
-                                                        }
-                                                    }
-                                                    else if (selectedColorType == "Species")
-                                                    {
-                                                        if (_tsneDatasetSpeciesColors.isValid())
-                                                        {
-                                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
-                                                        }
-                                                    }
-                                                    else if (selectedColorType == "Expression")
-                                                    {
-                                                        if (_tsneDatasetExpressionColors.isValid())
-                                                        {
-                                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
-                                                        }
-                                                    }
+                                                    colorDatasetPickerAction->setCurrentText("");
 
 
 
+                                                    auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
+                                                    if (selectedColorType != "")
+                                                    {
+                                                        if (selectedColorType == "Cluster")
+                                                        {
+                                                            if (_tsneDatasetClusterColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
+                                                            }
+                                                        }
+                                                        else if (selectedColorType == "Species")
+                                                        {
+                                                            if (_tsneDatasetSpeciesColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
+                                                            }
+                                                        }
+                                                        else if (selectedColorType == "Expression")
+                                                        {
+                                                            if (_tsneDatasetExpressionColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                            }
+                                                        }
+
+
+
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
+                            
+                            };
+                        
+                        if (!usePreTSNE)
+                        {
+                            analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
+                            if (!analysisPlugin) {
+                                qDebug() << "Could not find create TSNE Analysis";
+                                return;
+                            }
+                            _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
+                            if (_selectedPointsTSNEDataset.isValid())
+                            {
+                            
+                                int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
+                                if (perplexity < 5)
+                                {
+                                    qDebug() << "Perplexity is less than 5";
+                                    return;
+                                }
+                                if (perplexity != _tsnePerplexity.getValue())
+                                {
+                                    _tsnePerplexity.setValue(perplexity);
+                                }
+                            
+                                auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
+                                if (perplexityAction)
+                                {
+                                    qDebug() << "Perplexity: Found";
+                                    perplexityAction->setValue(perplexity);
+                                }
+                                else
+                                {
+                                    qDebug() << "Perplexity: Not Found";
+                                }
 
-                            auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
-                            if (startAction) {
+                                scatterplotModificationsLowDimUMAP();
 
-                                startAction->trigger();
+                                auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
+                                if (startAction) {
 
-                                analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                                    startAction->trigger();
+
+                                    analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                                }
+
+                            }
+                            }
+                        else
+                        {
+                            auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
+
+                            if (umapDataset.isValid()) 
+                            {
+        
+
+                                _selectedPointsTSNEDataset = mv::data().createDerivedDataset<Points>("SelectedPointsTSNEDataset", _selectedPointsEmbeddingDataset, _selectedPointsEmbeddingDataset);
+
+                                mv::events().notifyDatasetAdded(_selectedPointsTSNEDataset);
+
+                                auto umapDatasetRaw = mv::data().getDataset<Points>(umapDataset->getId());
+                                auto dimNames = umapDatasetRaw->getDimensionNames();
+                                int preComputedEmbeddingColumnsSize = umapDatasetRaw->getNumDimensions();
+                                std::vector<float> resultContainerPreComputedUMAP(selectedIndicesFromStorageSize* preComputedEmbeddingColumnsSize);
+                                std::vector<int> preComputedEmbeddingColumnIndices(preComputedEmbeddingColumnsSize);
+
+                                std::iota(preComputedEmbeddingColumnIndices.begin(), preComputedEmbeddingColumnIndices.end(), 0);
+
+                                umapDatasetRaw->populateDataForDimensions(resultContainerPreComputedUMAP, preComputedEmbeddingColumnIndices, _selectedIndicesFromStorage);
+  
+                                QString datasetId = _selectedPointsTSNEDataset->getId();
+                                populatePointData(datasetId, resultContainerPreComputedUMAP, selectedIndicesFromStorageSize, preComputedEmbeddingColumnsSize, dimNames);
+
+                                if (_selectedPointsTSNEDataset.isValid())
+                                {
+                                    scatterplotModificationsLowDimUMAP();
+                                }
+                            }
+                            else
+                            {
+                                qDebug() << "UMAP Dataset not valid";
                             }
 
+
+
+
+
+                           
                         }
+
 
 
                     }
