@@ -531,7 +531,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                             auto& geneName = pointsDatasetallColumnNameList[i];
                             auto geneIndex = { i };
-                            float meanValue = 0.0;
+                            
+                            float fullMean;
+                            float meanValue;
                             if (!commonSelectedIndices.empty()) {
                                 std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                 pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
@@ -543,13 +545,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                     std::vector<float> resultContainerFull(speciesIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                    float fullMean = calculateMean(resultContainerFull);
+                                    fullMean = calculateMean(resultContainerFull);
                                     // Insert the calculated mean into the map
                                     _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
-                                    meanValue = fullMean - shortMean;
+                                    
                                 }
-
-                                
+                                else
+                                {
+                                    fullMean= _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                }
+                                meanValue = fullMean - shortMean;
                             }
 
                             _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
