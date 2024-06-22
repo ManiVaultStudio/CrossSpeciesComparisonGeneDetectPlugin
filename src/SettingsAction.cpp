@@ -536,16 +536,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                 pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                 float shortMean = calculateMean(resultContainerShort);
+                                
+                                
+                                auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
+                                if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
 
-                                // Use cached mean value if available to avoid recalculating
-                                float& fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
-                                if (fullMean == 0.0) { // Assuming that 0.0 indicates uninitialized since mean can't be negative
                                     std::vector<float> resultContainerFull(speciesIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                    fullMean = calculateMean(resultContainerFull);
+                                    float fullMean = calculateMean(resultContainerFull);
+                                    // Insert the calculated mean into the map
+                                    _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                                    meanValue = fullMean - shortMean;
                                 }
 
-                                meanValue = fullMean - shortMean;
+                                
                             }
 
                             _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
@@ -651,7 +655,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateMainPointsDataset = [this]() -> void {
 
-        _clusterGeneMeanExpressionMap.clear();
+ 
+        computeGeneMeanExpressionMap();
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
             
@@ -681,10 +686,18 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setValue(0);
             
         }
-
+        
  };
 
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
+
+    const auto updateSpeciesNameDataset = [this]() -> void {
+
+        
+        computeGeneMeanExpressionMap();
+        };
+
+    connect(&_speciesNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateSpeciesNameDataset);
 
     const auto updateScatterplotColor = [this]() -> void {
         auto selectedColorType= _scatterplotReembedColorOption.getCurrentText();
@@ -808,6 +821,36 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction.setString("M");
 
 }
+
+void SettingsAction::computeGeneMeanExpressionMap()
+{
+    
+    
+    _clusterGeneMeanExpressionMap.clear(); 
+    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
+        auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+        auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
+            auto speciesclusters = speciesClusterDatasetFull->getClusters();
+            auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
+            QFuture<void> future = QtConcurrent::map(speciesclusters.begin(), speciesclusters.end(), [&](const auto& species) {
+                auto speciesIndices = species.getIndices();
+                auto speciesName = species.getName();
+                for (int i = 0; i < mainPointDimensionNames.size(); i++) {
+                    auto& geneName = mainPointDimensionNames[i];
+                    auto geneIndex = { i };
+                    std::vector<float> resultContainerFull(speciesIndices.size());
+                    mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
+                    float fullMean = calculateMean(resultContainerFull);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                }
+                });
+            future.waitForFinished();
+        }
+    }
+
+}
+
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
 
     if (map.empty() || n <= 0) {

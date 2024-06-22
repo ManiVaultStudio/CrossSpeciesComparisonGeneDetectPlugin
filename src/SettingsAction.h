@@ -133,7 +133,7 @@ public: // Action getters
 
 
 
-
+    void computeGeneMeanExpressionMap();
 
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
