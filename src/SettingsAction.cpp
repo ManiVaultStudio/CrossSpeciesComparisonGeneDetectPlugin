@@ -268,7 +268,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
                 auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
                 auto clusterDatasetRaw = mv::data().getDataset<Clusters>(clusterDataset->getId());
-
+                auto clusterDatasetName= clusterDatasetRaw->getGuiName();
                 auto clustersValuesAll = clusterDatasetRaw->getClusters();
                 auto speciesValuesAll = speciesDatasetRaw->getClusters();
 
@@ -644,7 +644,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         auto clusterValues = _tsneDatasetClusterColors->getClusters();
                         if (!clusterValues.empty())
                         {
-                            QString selectedClusterInfo = "<html><head/><body><p>Cell counts: <br>";
+                            QString selectedClusterInfo = "<html><head/><body><p>Selected cell counts per "+ clusterDatasetName +": <br>";
                             int clusterCounter = 0;
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
