@@ -379,24 +379,26 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                          QString datasetIdExp = _tsneDatasetExpressionColors->getId();
                          stopCodeTimer("Part7.1");
                          startCodeTimer("Part7.2");
+
+                         //first start
                         std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize* pointsDatasetColumnsSize);
                         pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
+                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
+                        //first end
 
-
+                        //second start
                         std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
                         embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
-
-                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
-                        stopCodeTimer   ("Part7.2");
-
-                        startCodeTimer("Part7.3");
-                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-
                         populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
+                        //second end
 
+                        //third start
+                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
 
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
-                        stopCodeTimer("Part7.3");
+
+                        //third end
+                        stopCodeTimer("Part7.2");
 
                         stopCodeTimer("Part7");
                         startCodeTimer("Part8");
