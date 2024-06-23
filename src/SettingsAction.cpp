@@ -616,73 +616,64 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                     stopCodeTimer("Part12.1");
                     startCodeTimer("Part12.2");
-                    for (auto& species : speciesValuesAll)
-                    {
-                        auto speciesIndices = species.getIndices();
-                        auto speciesName = species.getName();
-                        auto speciesColor = species.getColor();
 
+                    std::vector<std::future<void>> futures;
 
-                        std::vector<int> filteredIndices;
-                        for (int i = 0; i < speciesIndices.size(); i++)
-                            {
+                    for (auto& species : speciesValuesAll) {
+                        futures.push_back(std::async(std::launch::async, [&]() {
+                            auto speciesIndices = species.getIndices();
+                            auto speciesName = species.getName();
+                            auto speciesColor = species.getColor();
+
+                            std::vector<int> filteredIndices;
+                            for (int i = 0; i < speciesIndices.size(); i++) {
                                 int indexVal = findIndex(_selectedIndicesFromStorage, speciesIndices[i]);
-                                if (indexVal != -1)
-                                {
+                                if (indexVal != -1) {
                                     filteredIndices.push_back(indexVal);
-                                }   
+                                }
                             }
 
-                        selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
+                            selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
 
+                            std::vector<int> commonSelectedIndices;
+                            std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
+                            std::sort(speciesIndices.begin(), speciesIndices.end());
+                            std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
+                            for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
+                                auto& geneName = pointsDatasetallColumnNameList[i];
+                                auto geneIndex = { i };
 
-                        std::vector<int> commonSelectedIndices;
+                                float fullMean;
+                                float meanValue;
+                                if (!commonSelectedIndices.empty()) {
+                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
+                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
+                                    float shortMean = calculateMean(resultContainerShort);
 
-                        std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-                        std::sort(speciesIndices.begin(), speciesIndices.end());
-                        std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-
-
-
-
-
-
-                        for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
-                            auto& geneName = pointsDatasetallColumnNameList[i];
-                            auto geneIndex = { i };
-                            
-                            float fullMean;
-                            float meanValue;
-                            if (!commonSelectedIndices.empty()) {
-                                std::vector<float> resultContainerShort(commonSelectedIndices.size());
-                                pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                float shortMean = calculateMean(resultContainerShort);
-                                
-                                
-                                auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
-                                if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
-
-                                    std::vector<float> resultContainerFull(speciesIndices.size());
-                                    pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                    fullMean = calculateMean(resultContainerFull);
-                                    // Insert the calculated mean into the map
-                                    _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
-                                    
+                                    auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
+                                    if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
+                                        std::vector<float> resultContainerFull(speciesIndices.size());
+                                        pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
+                                        fullMean = calculateMean(resultContainerFull);
+                                        _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                                    }
+                                    else {
+                                        fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                    }
+                                    meanValue = fullMean - shortMean;
                                 }
-                                else
-                                {
-                                    fullMean= _clusterGeneMeanExpressionMap[speciesName][geneName];
-                                }
-                                meanValue = fullMean - shortMean;
+
+                                _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
                             }
-
-                            _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
-                        }
-
-
-
+                            }));
                     }
+
+                    // Wait for all futures to complete
+                    for (auto& future : futures) {
+                        future.get();
+                    }
+
                     stopCodeTimer("Part12.2");
 
                     auto clusterColorDatasetId = _tsneDatasetClusterColors->getId();
