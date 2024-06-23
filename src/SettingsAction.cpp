@@ -16,9 +16,38 @@
 #include <sstream>
 #include <stack>
 #include <algorithm> // for std::find
-#include <vector>
+
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <chrono>
+
 using namespace mv;
 using namespace mv::gui;
+
+
+
+
+std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
+
+void startCodeTimer(const std::string& message) {
+    timers[message] = std::chrono::high_resolution_clock::now();
+    std::cout << "Timer started for: " << message << std::endl;
+}
+
+void stopCodeTimer(const std::string& message) {
+    auto search = timers.find(message);
+    if (search != timers.end()) {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - search->second;
+        std::cout << "Timer stopped for: " << message << ". Elapsed time: " << elapsed.count() << "s\n";
+        timers.erase(search); // Remove the timer from the map
+    }
+    else {
+        std::cout << "Timer not found for: " << message << ". Ensure the timer was started with the exact same message string." << std::endl;
+    }
+}
 
 float calculateMean(const std::vector<float>& v) {
     if (v.empty())
@@ -208,6 +237,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
             
+            startCodeTimer("Part1");
+            
+
             auto pointsDataset = _mainPointsDataset.getCurrentDataset();
             auto embeddingDataset = _embeddingDataset.getCurrentDataset();
             auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
@@ -217,8 +249,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _geneNamesConnection.setString("");
             _selectedCellClusterInfoBox.setString("");
             bool isValid = false;
+            
             QString referenceTreedatasetId = "";
-
+            stopCodeTimer("Part1");
+            startCodeTimer("Part2");
             if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
             {
                 qDebug() << "No datasets selected";
@@ -229,13 +263,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 qDebug() << "No points selected";
                 return;
             }
-
-            
-
             if (_selectedPointsTSNEDataset.isValid())
             {
                 _selectedPointsTSNEDataset->setSelectionIndices({});
             }
+            stopCodeTimer("Part2");
+            startCodeTimer("Part3");
             _clusterNameToGeneNameToExpressionValue.clear();
             referenceTreedatasetId = referenceTreeDataset->getId();
             isValid = speciesDataset->getParent() == pointsDataset && clusterDataset->getParent() == pointsDataset && embeddingDataset->getParent() == pointsDataset;
@@ -251,17 +284,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto pointsDatasetRaw = mv::data().getDataset<Points>(pointsDataset->getId());
             auto pointsDatasetallColumnNameList = pointsDatasetRaw->getDimensionNames();
             auto embeddingDatasetallColumnNameList = embeddingDatasetRaw->getDimensionNames();
-
+            stopCodeTimer("Part3");
+            startCodeTimer("Part4");
             std::vector<int> embeddingDatasetColumnIndices(embeddingDatasetallColumnNameList.size());
             std::iota(embeddingDatasetColumnIndices.begin(), embeddingDatasetColumnIndices.end(), 0);
 
             std::vector<int> pointsDatasetallColumnIndices(pointsDatasetallColumnNameList.size());
             std::iota(pointsDatasetallColumnIndices.begin(), pointsDatasetallColumnIndices.end(), 0);
-
+            stopCodeTimer("Part4");
         {
-            if (_selectedIndicesFromStorage.size() > 0 && embeddingDatasetColumnIndices.size() > 0)
+            
+                if (_selectedIndicesFromStorage.size() > 0 && embeddingDatasetColumnIndices.size() > 0)
             {
-                auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
+                    startCodeTimer("Part5");
+                    auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
                 auto clusterDatasetRaw = mv::data().getDataset<Clusters>(clusterDataset->getId());
                 auto clusterDatasetName= clusterDatasetRaw->getGuiName();
                 auto clustersValuesAll = clusterDatasetRaw->getClusters();
@@ -269,10 +305,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                 std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
                 std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
-
+                stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
                 {
-
+                    startCodeTimer("Part6");
                     if (!_selectedPointsDataset.isValid())
                     {
                         _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
@@ -322,9 +358,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         _tsneDatasetClusterColors->setGroupIndex(10);
                         mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                     }
-
+                    stopCodeTimer("Part6");
                     if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                     {
+                       startCodeTimer("Part7");
                         _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
                         _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
@@ -354,7 +391,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         std::vector<QString> dimensionNamesExp = { "Expression" };
 
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
-
+                        stopCodeTimer("Part7");
+                        startCodeTimer("Part8");
                         if (_selectedPointsTSNEDataset.isValid())
                         {
                             auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
@@ -382,8 +420,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             mv::data().removeDataset(_selectedPointsTSNEDataset);
                             mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                         }
-
-
+                        stopCodeTimer("Part8");
+                        startCodeTimer("Part9");
                         mv::plugin::AnalysisPlugin* analysisPlugin; 
                         bool usePreTSNE= _usePreComputedTSNE.isChecked();
                         
@@ -444,9 +482,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             }
                             
                             };
-                        
+                        stopCodeTimer("Part9"); 
                         if (!usePreTSNE)
                         {
+                           startCodeTimer("Part10");
                             analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
                             if (!analysisPlugin) {
                                 qDebug() << "Could not find create TSNE Analysis";
@@ -489,9 +528,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 }
 
                             }
+                            stopCodeTimer("Part10");
                             }
                         else
                         {
+                            startCodeTimer("Part11");
                             auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
 
                             if (umapDataset.isValid()) 
@@ -526,7 +567,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             }
 
 
-
+                            stopCodeTimer("Part11");
 
 
                            
@@ -539,6 +580,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     {
                         qDebug() << "Datasets are not valid";
                     }
+                    startCodeTimer("Part12");
                     for (auto& clusters : clustersValuesAll)
                     {
                         auto clusterIndices = clusters.getIndices();
@@ -633,12 +675,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
                     populateClusterData(clusterColorDatasetId, selctedClustersMap);
-
+                    stopCodeTimer("Part12");
                     if (_tsneDatasetClusterColors.isValid())
                     {
+                        
                         auto clusterValues = _tsneDatasetClusterColors->getClusters();
                         if (!clusterValues.empty())
                         {
+                            startCodeTimer("Part13");
                             QString selectedClusterInfo = "<html><head/><body><p>Selected cell counts per "+ clusterDatasetName +": <br>";
                             int clusterCounter = 0;
                             for (auto cluster : clusterValues) {
@@ -667,18 +711,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 selectedClusterInfo.chop(2); // Remove the last "; " for formatting
                             }
                             selectedClusterInfo += "</p></body></html>";
+                            stopCodeTimer("Part13");
                             _selectedCellClusterInfoBox.setString(selectedClusterInfo);
                         }
-
+                        
                     }
 
-
+                    startCodeTimer("Part14");
                     QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
-
+                    stopCodeTimer("Part14");
                     if (!geneListTable.isNull())
                     {
+                        startCodeTimer("Part15");
                         //_filteredGeneNamesVariant.setVariant(geneListTable);
                         _tableModel.setVariant(geneListTable);
+                        stopCodeTimer("Part15");
 
                     }
                     else
@@ -697,7 +744,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
             }
-
+            
             else
             {
                 qDebug() << "No points selected or no dimensions present";
