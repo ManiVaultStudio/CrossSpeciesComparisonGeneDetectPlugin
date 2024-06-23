@@ -308,7 +308,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
                 {
-                    startCodeTimer("Part6");
+                    startCodeTimer("Part6.1");
                     if (!_selectedPointsDataset.isValid())
                     {
                         _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
@@ -358,15 +358,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         _tsneDatasetClusterColors->setGroupIndex(10);
                         mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                     }
-                    stopCodeTimer("Part6");
+                    stopCodeTimer("Part6.1");
                     if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                     {
-                       startCodeTimer("Part7");
+                       startCodeTimer("Part6.2");
                         _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
                         _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
-
+                        stopCodeTimer("Part6.2");
+                        startCodeTimer("Part7");
                          int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
                          int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
                          int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
