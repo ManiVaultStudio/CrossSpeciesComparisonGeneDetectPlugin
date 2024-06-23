@@ -368,30 +368,36 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
                         stopCodeTimer("Part6.2");
                         startCodeTimer("Part7");
+                        startCodeTimer("Part7.1");
                          int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
                          int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
                          int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
-
-                        // Reserve space for vectors to avoid reallocations
+                         QString datasetIdEmb = _selectedPointsDataset->getId();
+                         QString datasetId = _selectedPointsEmbeddingDataset->getId();
+                         int dimofDatasetExp = 1;
+                         std::vector<QString> dimensionNamesExp = { "Expression" };
+                         QString datasetIdExp = _tsneDatasetExpressionColors->getId();
+                         stopCodeTimer("Part7.1");
+                         startCodeTimer("Part7.2");
                         std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize* pointsDatasetColumnsSize);
                         pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
 
-                        QString datasetIdEmb = _selectedPointsDataset->getId();
-                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
 
                         std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
                         embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
 
-                        QString datasetId = _selectedPointsEmbeddingDataset->getId();
+                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
+                        stopCodeTimer   ("Part7.2");
+
+                        startCodeTimer("Part7.3");
+                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
+
                         populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
 
-                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f); 
-
-                        QString datasetIdExp = _tsneDatasetExpressionColors->getId();
-                        int dimofDatasetExp = 1;
-                        std::vector<QString> dimensionNamesExp = { "Expression" };
 
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
+                        stopCodeTimer("Part7.3");
+
                         stopCodeTimer("Part7");
                         startCodeTimer("Part8");
                         if (_selectedPointsTSNEDataset.isValid())
