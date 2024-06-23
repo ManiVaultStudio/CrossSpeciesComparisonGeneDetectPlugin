@@ -16,7 +16,7 @@
 #include <sstream>
 #include <stack>
 #include <algorithm> // for std::find
-
+#include <mutex>
 
 #include <iostream>
 #include <map>
@@ -617,6 +617,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     stopCodeTimer("Part12.1");
                     startCodeTimer("Part12.2");
 
+
+
+                    std::mutex selectedSpeciesMapMutex;
+                    std::mutex clusterGeneMeanExpressionMapMutex;
+                    std::mutex clusterNameToGeneNameToExpressionValueMutex;
+
                     std::vector<std::future<void>> futures;
 
                     for (auto& species : speciesValuesAll) {
@@ -633,7 +639,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 }
                             }
 
-                            selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
+                            {
+                                std::lock_guard<std::mutex> lock(selectedSpeciesMapMutex);
+                                selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
+                            }
 
                             std::vector<int> commonSelectedIndices;
                             std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
@@ -644,27 +653,33 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 auto& geneName = pointsDatasetallColumnNameList[i];
                                 auto geneIndex = { i };
 
-                                float fullMean;
-                                float meanValue;
+                                float fullMean = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                float meanValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                     float shortMean = calculateMean(resultContainerShort);
 
-                                    auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
-                                    if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
-                                        std::vector<float> resultContainerFull(speciesIndices.size());
-                                        pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                        fullMean = calculateMean(resultContainerFull);
-                                        _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
-                                    }
-                                    else {
-                                        fullMean = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                    {
+                                        std::lock_guard<std::mutex> lock(clusterGeneMeanExpressionMapMutex);
+                                        auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
+                                        if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
+                                            std::vector<float> resultContainerFull(speciesIndices.size());
+                                            pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
+                                            fullMean = calculateMean(resultContainerFull);
+                                            _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                                        }
+                                        else {
+                                            fullMean = speciesIter->second[geneName];
+                                        }
                                     }
                                     meanValue = fullMean - shortMean;
                                 }
 
-                                _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
+                                {
+                                    std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
+                                }
                             }
                             }));
                     }
@@ -673,6 +688,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     for (auto& future : futures) {
                         future.get();
                     }
+
 
                     stopCodeTimer("Part12.2");
 
