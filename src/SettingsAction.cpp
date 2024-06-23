@@ -109,8 +109,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //_hierarchyBottomClusterDataset(this, "Hierarchy Bottom Cluster Dataset"),
     //_hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
     //_hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
-    _speciesNamesDataset(this, "Species Names Dataset"),
-    _clusterNamesDataset(this, "Cluster Names Dataset"),
+    _speciesNamesDataset(this, "Species Names"),
+    _clusterNamesDataset(this, "Cluster Names"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N", 10),
@@ -120,7 +120,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
     _scatterplotReembedColorOption(this, "Reembed Color"),
-    _scatterplotEmbeddingColorOption(this, "Embed Color"),
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "Remove Selection"),
@@ -176,7 +175,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
-    _scatterplotEmbeddingColorOption.setSerializationName("CSCGDV:Scatterplot Embedding Color Option"); 
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _performGeneTableTsneAction.setChecked(false);
@@ -186,9 +184,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Absolute");
    
-    _scatterplotEmbeddingColorOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
-        return dataset->getDataType() == ClusterType;
-        });
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
@@ -1490,7 +1485,6 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
-    _scatterplotEmbeddingColorOption.fromParentVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
@@ -1522,7 +1516,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
-    _scatterplotEmbeddingColorOption.insertIntoVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);

@@ -115,7 +115,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 _settingsAction.getSelctedSpeciesVals().setString("");
 
 
-                if (_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset().isValid() && _settingsAction.getScatterplotEmbeddingColorOption().getCurrentDataset().isValid())
+                if (_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset().isValid() && _settingsAction.getClusterNamesDataset().getCurrentDataset().isValid())
                 {
 
                     auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -136,7 +136,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                     if (colorDatasetPickerAction)
                                     {
                                         colorDatasetPickerAction->setCurrentText("");
-                                        colorDatasetPickerAction->setCurrentDataset(_settingsAction.getScatterplotEmbeddingColorOption().getCurrentDataset());
+                                        colorDatasetPickerAction->setCurrentDataset(_settingsAction.getClusterNamesDataset().getCurrentDataset());
 
                                     }
                                 }
@@ -335,7 +335,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
-    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingColorOption());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
