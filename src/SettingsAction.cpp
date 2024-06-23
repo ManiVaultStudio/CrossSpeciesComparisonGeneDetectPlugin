@@ -590,6 +590,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         qDebug() << "Datasets are not valid";
                     }
                     startCodeTimer("Part12");
+                    startCodeTimer("Part12.1");
                     for (auto& clusters : clustersValuesAll)
                     {
                         auto clusterIndices = clusters.getIndices();
@@ -608,8 +609,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         }
                         selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
                     }
-
-
+                    stopCodeTimer("Part12.1");
+                    startCodeTimer("Part12.2");
                     for (auto& species : speciesValuesAll)
                     {
                         auto speciesIndices = species.getIndices();
@@ -677,13 +678,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
                     }
-
+                    stopCodeTimer("Part12.2");
 
                     auto clusterColorDatasetId = _tsneDatasetClusterColors->getId();
                     auto speciesColorDatasetId = _tsneDatasetSpeciesColors->getId();
-
+                    startCodeTimer("Part12.3");
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
+                    stopCodeTimer("Part12.3");
+                    startCodeTimer("Part12.4"); 
                     populateClusterData(clusterColorDatasetId, selctedClustersMap);
+                    stopCodeTimer("Part12.4");
                     stopCodeTimer("Part12");
                     if (_tsneDatasetClusterColors.isValid())
                     {
