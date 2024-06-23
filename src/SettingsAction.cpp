@@ -380,24 +380,24 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                          stopCodeTimer("Part7.1");
                          startCodeTimer("Part7.2");
 
-                         //first start
+                         //first thread start
                         std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize* pointsDatasetColumnsSize);
                         pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
                         populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-                        //first end
+                        
 
-                        //second start
+                        //second thread start
                         std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
                         embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
                         populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
-                        //second end
+                        
 
-                        //third start
+                        //third thread start
                         std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
-
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
+                        
+                        //wait for all threads to finish
 
-                        //third end
                         stopCodeTimer("Part7.2");
 
                         stopCodeTimer("Part7");
