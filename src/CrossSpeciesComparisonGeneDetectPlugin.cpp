@@ -78,10 +78,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
             }
-            else
-            {
-                qDebug() << "Tree dataset is not valid";
-            }
+
         };
 
     connect(&_settingsAction.getSelectedRowIndexAction(), &StringAction::stringChanged, this, updateSelectedRowIndex);
