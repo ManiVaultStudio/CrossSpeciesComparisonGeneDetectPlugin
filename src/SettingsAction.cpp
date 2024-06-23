@@ -591,24 +591,29 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     }
                     startCodeTimer("Part12");
                     startCodeTimer("Part12.1");
-                    for (auto& clusters : clustersValuesAll)
-                    {
-                        auto clusterIndices = clusters.getIndices();
-                        auto clusterName = clusters.getName();
-                        auto clusterColor = clusters.getColor();
-                        std::vector<int> filteredIndices;
-                        for (int i = 0; i < clusterIndices.size(); i++)
-                        {
+                    QtConcurrent::run([&]() {
+                        QMutex mutex;
+                        for (auto& clusters : clustersValuesAll) {
+                            auto clusterIndices = clusters.getIndices();
+                            auto clusterName = clusters.getName();
+                            auto clusterColor = clusters.getColor();
+                            std::vector<int> filteredIndices;
 
-                            int indexVal = findIndex(_selectedIndicesFromStorage, clusterIndices[i]);
-                            if (indexVal != -1)
+                            QtConcurrent::blockingMap(clusterIndices, [&](int index) {
+                                int indexVal = findIndex(_selectedIndicesFromStorage, index);
+                                if (indexVal != -1) {
+                                    QMutexLocker locker(&mutex);
+                                    filteredIndices.push_back(indexVal);
+                                }
+                                });
+
                             {
-                                filteredIndices.push_back(indexVal);
+                                QMutexLocker locker(&mutex);
+                                selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
                             }
-
                         }
-                        selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
-                    }
+                        });
+
                     stopCodeTimer("Part12.1");
                     startCodeTimer("Part12.2");
                     for (auto& species : speciesValuesAll)
