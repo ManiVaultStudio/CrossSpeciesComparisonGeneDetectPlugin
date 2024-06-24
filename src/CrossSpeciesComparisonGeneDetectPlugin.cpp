@@ -12,9 +12,19 @@
 #include <QColor>
 #include <QJsonArray> 
 #include <unordered_set>
+#include <cmath>
+#include <algorithm>
+#include <execution>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
+
+
+void applyLogTransformation(std::vector<float>& values) {
+    std::transform(std::execution::par, values.begin(), values.end(), values.begin(),
+        [](float value) { return std::log(value + 1); });
+}
+
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
@@ -568,6 +578,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 
                 std::vector<QString> columnGeneColors = { gene };
                 int tempNumDimensionsColors = columnGeneColors.size();
+                applyLogTransformation(resultContainerSpeciesColors);
                 _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
 
                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -706,6 +717,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                         int rowSizeEmbd = rowSize;
                         int columnSizeEmbd = 1;
                         std::vector<QString> columnGeneEmbd = { gene };
+                        applyLogTransformation(resultContainerColorPoints);
                         _settingsAction.populatePointData(datasetIdEmb, resultContainerColorPoints, rowSizeEmbd, columnSizeEmbd, columnGeneEmbd);
 
                     }

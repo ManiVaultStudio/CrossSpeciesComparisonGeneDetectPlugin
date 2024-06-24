@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <chrono>
+#include <cmath> // Include for std::log
 
 using namespace mv;
 using namespace mv::gui;
@@ -56,6 +57,28 @@ float calculateMean(const std::vector<float>& v) {
     float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
     return sum / static_cast<float>(v.size());
 }
+float calculateMeanLogTransformed(const std::vector<float>& v) {
+    if (v.empty())
+        return 0.0f;
+
+    // Use a lambda to filter and log-transform positive values only
+    auto logTransform = [](float value) -> float {
+        return value > 0.0f ? std::log(value) : 0.0f;
+        };
+
+    // Count how many positive values are present
+    size_t positiveCount = std::count_if(v.begin(), v.end(), [](float value) { return value > 0.0f; });
+
+    // If there are no positive values, return 0 to avoid division by zero
+    if (positiveCount == 0)
+        return 0.0f;
+
+    float sum = std::transform_reduce(std::execution::par, v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
+
+    return sum / static_cast<float>(positiveCount);
+}
+
+
 
 //struct Statistics {
 //    float mean;
@@ -250,11 +273,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
             {
                 qDebug() << "No datasets selected";
+                _startComputationTriggerAction.setDisabled(false);
                 return;
             }
             if (pointsDataset->getSelectionIndices().size() <1)
             {
                 qDebug() << "No points selected";
+                _startComputationTriggerAction.setDisabled(false);
                 return;
             }
             if (_selectedPointsTSNEDataset.isValid())
@@ -269,6 +294,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (!isValid)
             {
                 qDebug() << "Datasets are not valid";
+                _startComputationTriggerAction.setDisabled(false);
                 return;
             }
             _selectedIndicesFromStorage.clear();
@@ -502,6 +528,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 if (perplexity < 5)
                                 {
                                     qDebug() << "Perplexity is less than 5";
+                                    _startComputationTriggerAction.setDisabled(false);
                                     return;
                                 }
                                 if (perplexity != _tsnePerplexity.getValue())
