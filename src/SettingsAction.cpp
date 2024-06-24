@@ -230,6 +230,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         });
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
+            _startComputationTriggerAction.setDisabled(true);
             startCodeTimer("UpdateGeneFilteringTrigger");
             startCodeTimer("Part1");
             
@@ -778,6 +779,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _removeRowSelection.setEnabled(false);
         }
         stopCodeTimer("UpdateGeneFilteringTrigger");
+        _startComputationTriggerAction.setDisabled(false);
         };
        
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
