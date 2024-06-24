@@ -375,8 +375,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     mainLayout->addLayout(fullSettingsLayout);
     mainLayout->addWidget(_tableView);
-    _settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    mainLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
+    //_settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    //mainLayout->addLayout(&_settingsAction._flowLayout);
+    mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
     // Set the layout for the widget
     getWidget().setLayout(mainLayout);

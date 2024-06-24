@@ -154,8 +154,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection(this, "Remove Selection"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
-    _usePreComputedTSNE(this, "Use Precomputed TSNE"),
-    _selectedCellClusterInfoBox(this, "Selected Cell Cluster Info")
+    _usePreComputedTSNE(this, "Use Precomputed TSNE")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -166,12 +165,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget->setSizeGripEnabled(false);
 
 
-    _selectedCellClusterInfoStatusBar = new QStatusBar();
-    _selectedCellClusterInfoStatusBar->setStatusTip("Status");
-    //_selectedCellClusterInfoStatusBar->setMinimumHeight(40);
-    //_selectedCellClusterInfoStatusBar->setMinimumWidth(100);
-    _selectedCellClusterInfoStatusBar->setAutoFillBackground(true);
-    _selectedCellClusterInfoStatusBar->setSizeGripEnabled(false);
+    _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
+
 
 
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -190,7 +185,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
-    _selectedCellClusterInfoBox.setSerializationName("CSCGDV:Selected Cell Cluster Info");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
     _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
@@ -247,7 +241,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             _selectedSpeciesVals.setString("");
             _geneNamesConnection.setString("");
-            _selectedCellClusterInfoBox.setString("");
             bool isValid = false;
             
             QString referenceTreedatasetId = "";
@@ -673,7 +666,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                             fullMean = speciesIter->second[geneName];
                                         }
                                     }
-                                    meanValue = fullMean - shortMean;
+                                    meanValue = shortMean;//fullMean - shortMean;
                                 }
 
                                 {
@@ -708,7 +701,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         if (!clusterValues.empty())
                         {
                             startCodeTimer("Part13");
-                            QString selectedClusterInfo = "<html><head/><body><p>Selected cell counts per "+ clusterDatasetName +": <br>";
+                            
+                            QLayoutItem* layoutItem;
+
+                            while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+                                delete layoutItem->widget();
+                                delete layoutItem;
+                            }
                             int clusterCounter = 0;
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
@@ -721,23 +720,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 // Choose text color based on luminance
                                 QString textColor = (luminance > 0.5) ? "black" : "white";
 
-                                // Use the background-color and color styles for the span
-                                selectedClusterInfo += QString(" <span style=\"background-color:%3; color:%4;\">%1: %2;</span> ")
-                                                           .arg(clusterName)
-                                                           .arg(clusterIndicesSize)
-                                                           .arg(clusterColor.name())
-                                                           .arg(textColor);
-                                ++clusterCounter;
-                                if (clusterCounter % 7 == 0) {
-                                    selectedClusterInfo += "<br>"; // Add a new line after every 7 clusters
-                                }
+                                // Convert QColor to hex string for stylesheet
+                                QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+                                // Add text color and background color to clusterLabel with padding and border for better styling
+                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 5px; border: 1px solid %3; }")
+                                    .arg(textColor).arg(backgroundColor).arg(textColor));
+                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
                             }
-                            if (clusterCounter % 7 != 0) { // Adjusted to match the new line break condition
-                                selectedClusterInfo.chop(2); // Remove the last "; " for formatting
-                            }
-                            selectedClusterInfo += "</p></body></html>";
-                            stopCodeTimer("Part13");
-                            _selectedCellClusterInfoBox.setString(selectedClusterInfo);
+
+
                         }
                         
                     }
@@ -977,8 +970,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_statusColorAction, &StringAction::stringChanged, this, updateStatus);
 
-    const auto updateSelectedCellClusterInfoBox = [this]() -> void {
+    /*const auto updateSelectedCellClusterInfoBox = [this]() -> void {
 
+        
         // Clear any previous message
         _selectedCellClusterInfoStatusBar->clearMessage();
 
@@ -995,12 +989,25 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         QString htmlText = string; 
         _currentCellSelectionClusterInfoLabel->setText(htmlText); 
         _selectedCellClusterInfoStatusBar->addWidget(_currentCellSelectionClusterInfoLabel); 
+        
+
+        QLayoutItem* layoutItem;
+
+        while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+            delete layoutItem->widget();
+            delete layoutItem;
+        }
+
+        for (cluster : clusters) {
+            auto clusterLabel = new QLabel(parent, clusterName);
+            clusterLabel->setStyleSheet("");
+            _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+        }
 
 
 
+        };*/
 
-        };
-    connect(&_selectedCellClusterInfoBox, &StringAction::stringChanged, this, updateSelectedCellClusterInfoBox);
     const auto updateEmbeddingDataset = [this]() -> void {
 
 
@@ -1579,7 +1586,6 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
-    _selectedCellClusterInfoBox.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1610,6 +1616,5 @@ QVariantMap SettingsAction::toVariantMap() const
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
-    _selectedCellClusterInfoBox.insertIntoVariantMap(variantMap);
     return variantMap;
 }
