@@ -703,12 +703,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             startCodeTimer("Part13");
                             
                             QLayoutItem* layoutItem;
-
                             while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
                                 delete layoutItem->widget();
                                 delete layoutItem;
                             }
-                            int clusterCounter = 0;
+                            
+                            // Create a description label
+                            auto descriptionLabel = new QLabel("Selected Cell Counts per "+ clusterDatasetName +" :");
+                            // Optionally, set a stylesheet for the description label for styling
+                            descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+                            // Add the description label to the layout
+                            _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
+
+
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
                                 auto clusterIndicesSize = cluster.getIndices().size();
@@ -725,7 +732,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                 auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
                                 // Add text color and background color to clusterLabel with padding and border for better styling
-                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 5px; border: 1px solid %3; }")
+                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
                                     .arg(textColor).arg(backgroundColor).arg(textColor));
                                 _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
                             }
