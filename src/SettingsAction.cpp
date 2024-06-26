@@ -58,19 +58,25 @@ float calculateMean(const std::vector<float>& v) {
     return sum / static_cast<float>(v.size());
 }
 
-float calculateMedian(std::vector<float> v) {
-    if (v.empty()) return 0.0f;
+float calculateMedian(const std::vector<float>& vec) {
+    if (vec.empty()) return 0.0f;
 
+    std::vector<float> v = vec; // Copy to avoid modifying the original vector
     size_t n = v.size() / 2;
-    std::nth_element(v.begin(), v.begin() + n, v.end());
+    std::nth_element(v.begin(), v.begin() + n, v.end()); // Partially sort to find the median
+
     if (v.size() % 2 == 1) {
+        // For odd-sized vectors, the median is the middle element
         return v[n];
     }
     else {
-        auto max_it = std::max_element(v.begin(), v.begin() + n);
-        return (*max_it + v[n]) / 2.0f;
+        // For even-sized vectors, copy the relevant part to avoid modifying the rest of the vector
+        std::vector<float> temp(v.begin(), v.begin() + n + 1);
+        std::nth_element(temp.begin(), temp.begin() + n - 1, temp.end()); // Find the element just before the median
+        return (temp[n - 1] + v[n]) / 2.0f; // Calculate the average of the two middle elements
     }
 }
+
 
 
 float calculateMeanLogTransformed(const std::vector<float>& v) {
