@@ -57,6 +57,22 @@ float calculateMean(const std::vector<float>& v) {
     float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
     return sum / static_cast<float>(v.size());
 }
+
+float calculateMedian(std::vector<float> v) {
+    if (v.empty()) return 0.0f;
+
+    size_t n = v.size() / 2;
+    std::nth_element(v.begin(), v.begin() + n, v.end());
+    if (v.size() % 2 == 1) {
+        return v[n];
+    }
+    else {
+        auto max_it = std::max_element(v.begin(), v.begin() + n);
+        return (*max_it + v[n]) / 2.0f;
+    }
+}
+
+
 float calculateMeanLogTransformed(const std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
