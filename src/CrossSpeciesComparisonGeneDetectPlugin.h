@@ -45,7 +45,7 @@ public:
     void selectedCellCountStatusBarAdd();
     void selectedCellCountStatusBarRemove();
     void selectedCellStatisticsStatusBarRemove();
-    void selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues);
+    void selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies);
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred

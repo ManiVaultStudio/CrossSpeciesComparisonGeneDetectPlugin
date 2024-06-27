@@ -361,17 +361,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     fullSettingsLayout->addLayout(mainOptionsLayout);
     mainLayout->addLayout(fullSettingsLayout);
 
-    auto infoLayout = new QVBoxLayout();
-    infoLayout->addLayout(_settingsAction.getSelectedCellSpeciesCountInfoLayout());
-    infoLayout->addLayout(_settingsAction.getSelectedCellStatisticsInfoLayout());
 
-    auto tableAndInfoLayout = new QHBoxLayout();
-    tableAndInfoLayout->addWidget(_settingsAction.getTableView());
-    tableAndInfoLayout->addLayout(infoLayout);
-    tableAndInfoLayout->setStretch(0, 1); // Adjusted stretch factor for table view
-    tableAndInfoLayout->setStretch(1, 2); // Adjusted stretch factor for info layout
+    auto tableLayout = new QHBoxLayout();
+    tableLayout->addWidget(_settingsAction.getTableView());
+    tableLayout->addWidget(_settingsAction.getSelectionDetailsTable());
+    tableLayout->setStretch(0, 1);
+    tableLayout->setStretch(1, 2);
 
-    mainLayout->addLayout(tableAndInfoLayout);
+    mainLayout->addLayout(tableLayout);
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
 
@@ -493,18 +490,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
-            else if (columnName == "Statistics")
-            {
-                std::map<QString, Statistics> statisticsValues= convertToStatisticsMap(data.toString());
-                speciesExpressionMap = statisticsValues;
-                selectedCellCountStatusBarRemove();
-                selectedCellStatisticsStatusBarAdd(statisticsValues);
+            else if (columnName == "Statistics") {
+                // Ensure finalsettingSpeciesNamesArray is populated before processing statistics
+                if (!finalsettingSpeciesNamesArray.isEmpty()) {
+                    std::map<QString, Statistics> statisticsValues = convertToStatisticsMap(data.toString());
+                    speciesExpressionMap = statisticsValues;
+                    selectedCellCountStatusBarRemove();
+                    selectedCellStatisticsStatusBarAdd(statisticsValues, finalsettingSpeciesNamesArray);
+                }
+                else {
+                    // Handle the case where finalsettingSpeciesNamesArray is empty
+                    // For example, log a warning or skip processing this column
+                    qDebug() << "Warning: Gene Appearance Species Names must be processed before Statistics.";
+                }
             }
-            //for all columns other than _settingsAction.getInitColumnNames().size(
- /*           if (i > initColumnNamesSize) {
-                speciesExpressionMap[columnName] = data.toFloat();
-            }*/
         }
+
 
 
         std::vector<std::seed_seq::result_type> selectedSpeciesIndices;
@@ -752,177 +753,112 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 {
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
+        // Create a new model for the table view
+        QStandardItemModel* model = new QStandardItemModel();
 
-        QLayoutItem* layoutItem;
-        while ((layoutItem = _settingsAction.getSelectedCellSpeciesCountInfoLayout()->takeAt(0)) != nullptr) {
-            delete layoutItem->widget();
-            delete layoutItem;
-        }
+        // Set headers
+        model->setHorizontalHeaderLabels({ "Species", "Count" });
 
-        // Create a description label
-        auto descriptionLabel = new QLabel("Selected Cell Counts: ");
-        // Optionally, set a stylesheet for the description label for styling
-        descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
-        // Add the description label to the layout
-        _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(descriptionLabel);
-        //iterate _settingsAction.getSelectedSpeciesCellCountMap()
-
-        // Convert map to a vector of pairs
+        // Convert map to a vector of pairs for sorting
         std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
             _settingsAction.getSelectedSpeciesCellCountMap().begin(),
             _settingsAction.getSelectedSpeciesCellCountMap().end());
 
-        // Sort the vector by counts (which is the first element of the pair inside the map value)
+        // Sort the vector by counts (descending order)
         std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
             [](const auto& a, const auto& b) {
-                return a.second.first > b.second.first; // Descending order
-                // Use < for ascending order
+                return a.second.first > b.second.first;
             });
 
-        // Iterate through the sorted vector
+        // Populate the model with sorted data
         for (const auto& [species, details] : sortedSpeciesDetails) {
-            auto clusterName = species;
-            auto clusterIndicesSize = details.first;
-            auto clusterColor = details.second;
-            // Calculate luminance
-            qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+            QList<QStandardItem*> rowItems;
+            rowItems << new QStandardItem(species);
+            rowItems << new QStandardItem(QString::number(details.first));
+ 
 
-            // Choose text color based on luminance
-            QString textColor = (luminance > 0.5) ? "black" : "white";
-
-            // Convert QColor to hex string for stylesheet
-            QString backgroundColor = clusterColor.name(QColor::HexArgb);
-
-            auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
-            // Add text color and background color to clusterLabel with padding and border for better styling
-            clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
-                .arg(textColor).arg(backgroundColor).arg(textColor));
-            _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(clusterLabel);
+            model->appendRow(rowItems);
         }
+        //sort by column 2
+        model->sort(1, Qt::DescendingOrder);
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        // Set the model to the table view
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
+    }
+}
 
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies)
+{
+    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
+    {
+        // Create a new model for the table view
+        QStandardItemModel* model = new QStandardItemModel();
+
+        // Set headers
+        model->setHorizontalHeaderLabels({ "Species", "Count", "Mean", "Median", "Mode", "Range" });
+
+        // Convert map to a vector of pairs for sorting
+        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
+            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
+            _settingsAction.getSelectedSpeciesCellCountMap().end());
+
+        // Sort the vector by counts (descending order)
+        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
+            [](const auto& a, const auto& b) {
+                return a.second.first > b.second.first;
+            });
+
+        // Populate the model with sorted data and statistics
+        for (const auto& [species, details] : sortedSpeciesDetails) {
+            QList<QStandardItem*> rowItems;
+            rowItems << new QStandardItem(species);
+            rowItems << new QStandardItem(QString::number(details.first));
+
+            // Find statistics for the species
+            auto it = statisticsValues.find(species);
+            if (it != statisticsValues.end()) {
+                rowItems << new QStandardItem(QString::number(it->second.mean, 'f', 2));
+                rowItems << new QStandardItem(QString::number(it->second.median, 'f', 2));
+                rowItems << new QStandardItem(QString::number(it->second.mode, 'f', 2));
+                rowItems << new QStandardItem(QString::number(it->second.range, 'f', 2));
+            }
+            else {
+                // Fill with placeholders if no statistics found
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+            }
+
+
+            // Check if the species is in the selectedSpecies list and color the row if it is
+            if (selectedSpecies.contains(species)) {
+                for (auto& item : rowItems) {
+                    item->setBackground(QBrush(Qt::yellow)); // Example: coloring the row yellow
+                }
+            }
+
+            model->appendRow(rowItems);
+        }
+        model->sort(1, Qt::DescendingOrder);
+        //remove row numbers vertical
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+
+        
+        // Set the model to the table view
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
     }
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
 {
-    QLayoutItem* layoutItem;
-    while ((layoutItem = _settingsAction.getSelectedCellSpeciesCountInfoLayout()->takeAt(0)) != nullptr) {
-        delete layoutItem->widget();
-        delete layoutItem;
-    }
-}
-
-
-
-void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues)
-{
-    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
-    {
-
-        QLayoutItem* layoutItem;
-        while ((layoutItem = _settingsAction.getSelectedCellStatisticsInfoLayout()->takeAt(0)) != nullptr) {
-            delete layoutItem->widget();
-            delete layoutItem;
-        }
-
-        // Create a description label
-        auto descriptionLabel = new QLabel("Selected Cell Statistics: ");
-        // Optionally, set a stylesheet for the description label for styling
-        descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
-        // Add the description label to the layout
-        _settingsAction.getSelectedCellStatisticsInfoLayout()->addWidget(descriptionLabel);
-        //iterate _settingsAction.getSelectedSpeciesCellCountMap()
-
-        // Convert map to a vector of pairs
-        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
-            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
-            _settingsAction.getSelectedSpeciesCellCountMap().end());
-
-        // Sort the vector by counts (which is the first element of the pair inside the map value)
-        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
-            [](const auto& a, const auto& b) {
-                return a.second.first > b.second.first; // Descending order
-                // Use < for ascending order
-            });
-
-        // Iterate through statisticsValues
-        /*
-        for (const auto& [species, statistics] : statisticsValues)
-        {
-            auto speciesName= species;
-            auto meanValue= statistics.mean;
-            auto medianValue = statistics.median;
-            auto modeValue= statistics.mode;
-            auto rangeValue= statistics.range;
-
-            int speciesCount = 0;
-            QColor speciesColor= QColor(Qt::gray);
-            //search for speciesNamekey in sortedSpeciesDetails and extract count and color
-
-
-
-        }
-        */
-
-
-     
-        for (const auto& [species, details] : sortedSpeciesDetails) {
-            auto clusterName = species;
-            auto clusterIndicesSize = details.first;
-            auto clusterColor = details.second;
-
-            // Initialize statistics values
-            auto meanValue = 0.0;
-            auto medianValue = 0.0;
-            auto modeValue = 0.0;
-            auto rangeValue = 0.0;
-            
-            // Find clusterName in statisticsValues and extract mean, median, mode, range
-            auto it = statisticsValues.find(clusterName);
-            if (it != statisticsValues.end()) {
-                meanValue = it->second.mean;
-                medianValue = it->second.median;
-                modeValue = it->second.mode;
-                rangeValue = it->second.range;
-            }
-
-            // Calculate luminance
-            qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
-
-            // Choose text color based on luminance
-            QString textColor = (luminance > 0.5) ? "black" : "white";
-
-            // Convert QColor to hex string for stylesheet
-            QString backgroundColor = clusterColor.name(QColor::HexArgb);
-
-            // Construct the label text to include mean, median, mode, and range
-            QString labelText = QString("%1: %2 | Mean: %3 | Median: %4 | Mode: %5 | Range: %6")
-                .arg(clusterName)
-                .arg(clusterIndicesSize)
-                .arg(meanValue, 0, 'f', 2) // Format floating point with 2 decimal places
-                .arg(medianValue, 0, 'f', 2)
-                .arg(modeValue, 0, 'f', 2)
-                .arg(rangeValue, 0, 'f', 2);
-
-            auto clusterLabel = new QLabel(labelText);
-            // Add text color and background color to clusterLabel with padding and border for better styling
-            clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
-                .arg(textColor).arg(backgroundColor).arg(textColor));
-            _settingsAction.getSelectedCellStatisticsInfoLayout()->addWidget(clusterLabel);
-        }
-        
-    }
+    _settingsAction.getSelectionDetailsTable()->setModel(new QStandardItemModel());
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemove()
 {
-    QLayoutItem* layoutItem;
-    while ((layoutItem = _settingsAction.getSelectedCellStatisticsInfoLayout()->takeAt(0)) != nullptr) {
-        delete layoutItem->widget();
-        delete layoutItem;
-    }
+    _settingsAction.getSelectionDetailsTable()->setModel(new QStandardItemModel());
 }
-
 
 
 void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {

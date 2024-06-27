@@ -248,6 +248,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _tableView = new QTableView();
+    _selectionDetailsTable = new QTableView();
 
 
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -289,6 +290,50 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //only highlight multiple rows if shiuft is pressed
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+
+
+    _selectionDetailsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _selectionDetailsTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    _selectionDetailsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _selectionDetailsTable->setAlternatingRowColors(true);
+    _selectionDetailsTable->setSortingEnabled(true);
+    _selectionDetailsTable->setShowGrid(true);
+    _selectionDetailsTable->setGridStyle(Qt::SolidLine);
+    _selectionDetailsTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _selectionDetailsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _selectionDetailsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _selectionDetailsTable->setCornerButtonEnabled(false);
+    _selectionDetailsTable->setWordWrap(false);
+    _selectionDetailsTable->setTabKeyNavigation(false);
+    _selectionDetailsTable->setAcceptDrops(false);
+    _selectionDetailsTable->setDropIndicatorShown(false);
+    _selectionDetailsTable->setDragEnabled(false);
+    _selectionDetailsTable->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _selectionDetailsTable->setDragDropOverwriteMode(false);
+    _selectionDetailsTable->setAutoScroll(false);
+    _selectionDetailsTable->setAutoScrollMargin(16);
+    _selectionDetailsTable->setAutoFillBackground(true);
+    _selectionDetailsTable->setFrameShape(QFrame::NoFrame);
+    _selectionDetailsTable->setFrameShadow(QFrame::Plain);
+    _selectionDetailsTable->setLineWidth(0);
+    _selectionDetailsTable->setMidLineWidth(0);
+    _selectionDetailsTable->setFocusPolicy(Qt::NoFocus);
+    _selectionDetailsTable->setContextMenuPolicy(Qt::NoContextMenu);
+    _selectionDetailsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _selectionDetailsTable->setMinimumSize(QSize(0, 0));
+    _selectionDetailsTable->setMaximumSize(QSize(16777215, 16777215));
+    _selectionDetailsTable->setBaseSize(QSize(0, 0));
+    _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
+    _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    //only highlight multiple rows if shiuft is pressed
+    _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+
+
+
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
     _statusBarActionWidget->setFixedWidth(100);
@@ -297,8 +342,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
-    _selectedCellSpeciesCountInfoLayout = new mv::gui::FlowLayout();
-    _selectedCellStatisticsInfoLayout = new mv::gui::FlowLayout();
 
 
     _tableModel.setSerializationName("CSCGDV:Table Model");
