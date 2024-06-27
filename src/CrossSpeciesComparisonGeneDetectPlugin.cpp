@@ -794,7 +794,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& v
 
     mv::util::variantMapMustContain(variantMap, "CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _settingsAction.fromVariantMap(variantMap["CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings"].toMap());
-
+    modifyTableData();
 
 }
 

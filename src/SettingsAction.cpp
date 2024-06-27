@@ -1578,7 +1578,28 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
 
 
 }
+void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap) {
+    // Check if the "name" key exists in the current node
+    if (node.contains("name")) {
+        QString nodeName = node["name"].toString();
+        auto it = speciesCountMap.find(nodeName);
+        // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
+        if (it != speciesCountMap.end()) {
+            node["cellCounts"] = it->second; // Use it->second to access the value in the map
+        }
+    }
 
+    // If the node has "children", recursively update them as well
+    if (node.contains("children")) {
+        QJsonArray children = node["children"].toArray();
+        for (int i = 0; i < children.size(); ++i) {
+            QJsonObject child = children[i].toObject();
+            updateSelectedSpeciesCounts(child, speciesCountMap); // Recursive call
+            children[i] = child; // Update the modified object back into the array
+        }
+        node["children"] = children; // Update the modified array back into the parent JSON object
+    }
+}
 
 QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames, std::map <QString, float> speciesMeanValues)
 {
@@ -1760,6 +1781,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
     _tableModel.fromParentVariantMap(variantMap);
+
 }
 
 QVariantMap SettingsAction::toVariantMap() const
