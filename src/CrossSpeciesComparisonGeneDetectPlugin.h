@@ -41,7 +41,7 @@ public:
     void init() override;
     void modifyTableData();
     void updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap);
-
+    void adjustTableWidths(const QString& value);
     void selectedCellCountStatusBarAdd();
     void selectedCellCountStatusBarRemove();
     void selectedCellStatisticsStatusBarRemove();
@@ -76,6 +76,7 @@ protected:
     Dataset<Points> _pointsDataset;
     Dataset<Clusters> _clusterDataset;
     Dataset<Points> _lowDimTSNEDataset;
+
 };
 
 /**

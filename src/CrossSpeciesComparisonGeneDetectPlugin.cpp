@@ -15,6 +15,7 @@
 #include <cmath>
 #include <algorithm>
 #include <execution>
+#include<QTooltip>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -361,14 +362,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     fullSettingsLayout->addLayout(mainOptionsLayout);
     mainLayout->addLayout(fullSettingsLayout);
 
+    connect(_settingsAction.getTableView(), &QTableView::entered, [this](const QModelIndex& index) {
+        if (index.isValid()) {
+            QString text = index.model()->data(index).toString();
+            QToolTip::showText(QCursor::pos(), text, _settingsAction.getTableView());
+        }
+        });
 
-    auto tableLayout = new QHBoxLayout();
-    tableLayout->addWidget(_settingsAction.getTableView());
-    tableLayout->addWidget(_settingsAction.getSelectionDetailsTable());
-    tableLayout->setStretch(0, 1);
-    tableLayout->setStretch(1, 2);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getTableView(),1.2);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable(),1.8);
 
-    mainLayout->addLayout(tableLayout);
+    // Add the splitter to the main layout
+    mainLayout->addLayout(_settingsAction.getTableSplitter());
+
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
 
@@ -378,6 +384,42 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::adjustTableWidths(const QString& value) {
+    // Assuming _settingsAction.getHorizontalLayout() returns your QHBoxLayout
+    QHBoxLayout* layout = _settingsAction.getTableSplitter();
+    if (!layout) return;
+
+    QWidget* parentWidget = layout->parentWidget();
+    if (!parentWidget) return;
+
+    int totalWidth = parentWidget->width();
+
+    double tableViewRatio = 1.2;
+    double selectionDetailsTableRatio = 2;
+
+    if (value == "small") {
+        tableViewRatio = 1.8;
+        selectionDetailsTableRatio = 1.2;
+    }
+
+    int tableViewWidth = static_cast<int>(totalWidth * tableViewRatio / (tableViewRatio + selectionDetailsTableRatio));
+    int selectionDetailsTableWidth = totalWidth - tableViewWidth;
+
+    // Assuming the first two widgets in the layout are the ones we want to adjust
+    if (layout->count() >= 2) {
+        QWidget* tableViewWidget = layout->itemAt(0)->widget();
+        QWidget* selectionDetailsTableWidget = layout->itemAt(1)->widget();
+
+        if (tableViewWidget && selectionDetailsTableWidget) {
+            tableViewWidget->setMinimumWidth(tableViewWidth);
+            tableViewWidget->setMaximumWidth(tableViewWidth);
+
+            selectionDetailsTableWidget->setMinimumWidth(selectionDetailsTableWidth);
+            selectionDetailsTableWidget->setMaximumWidth(selectionDetailsTableWidth);
+        }
+    }
 }
 
 
@@ -774,8 +816,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         for (const auto& [species, details] : sortedSpeciesDetails) {
             QList<QStandardItem*> rowItems;
             rowItems << new QStandardItem(species);
-            rowItems << new QStandardItem(QString::number(details.first));
- 
+            auto item = new QStandardItem();
+            item->setData(QVariant(details.first), Qt::EditRole);
+            rowItems << item;
+
+
 
             model->appendRow(rowItems);
         }
@@ -785,6 +830,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
     }
+    adjustTableWidths("small");
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies)
@@ -812,15 +858,34 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         for (const auto& [species, details] : sortedSpeciesDetails) {
             QList<QStandardItem*> rowItems;
             rowItems << new QStandardItem(species);
-            rowItems << new QStandardItem(QString::number(details.first));
+            auto item = new QStandardItem();
+            item->setData(QVariant(details.first), Qt::EditRole);
+            rowItems << item;
 
             // Find statistics for the species
             auto it = statisticsValues.find(species);
             if (it != statisticsValues.end()) {
-                rowItems << new QStandardItem(QString::number(it->second.mean, 'f', 2));
-                rowItems << new QStandardItem(QString::number(it->second.median, 'f', 2));
-                rowItems << new QStandardItem(QString::number(it->second.mode, 'f', 2));
-                rowItems << new QStandardItem(QString::number(it->second.range, 'f', 2));
+
+                QStandardItem* item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.mean), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.median), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.mode), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.range), Qt::EditRole);
+                rowItems << item;
+
+
+
             }
             else {
                 // Fill with placeholders if no statistics found
@@ -834,7 +899,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
                 for (auto& item : rowItems) {
-                    item->setBackground(QBrush(Qt::yellow)); // Example: coloring the row yellow
+                    item->setBackground(QBrush(QColor("#00A2ED")));
                 }
             }
 
@@ -847,6 +912,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
     }
+    adjustTableWidths("large");
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()

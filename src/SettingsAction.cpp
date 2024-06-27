@@ -249,7 +249,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget  = new QStatusBar();
     _tableView = new QTableView();
     _selectionDetailsTable = new QTableView();
-
+    _splitter = new QHBoxLayout();
 
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);

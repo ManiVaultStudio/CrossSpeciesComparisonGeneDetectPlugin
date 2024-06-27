@@ -32,6 +32,7 @@
 #include "actions/GroupAction.h"
 #include "QStatusBar"
 #include <widgets/FlowLayout.h>
+#include <QSplitter>
 
 using namespace mv::gui;
 class QMenu;
@@ -142,7 +143,7 @@ public: // Action getters
     QTableView* getTableView() const { return _tableView; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, std::pair<int, QColor>>& getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
-
+    QHBoxLayout* getTableSplitter() const { return _splitter; }
 
     void computeGeneMeanExpressionMap();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
@@ -219,5 +220,5 @@ protected:
 
     QTableView* _tableView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
-
+    QHBoxLayout* _splitter;
 };
