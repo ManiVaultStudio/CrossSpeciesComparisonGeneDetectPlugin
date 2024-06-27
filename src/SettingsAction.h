@@ -139,6 +139,8 @@ public: // Action getters
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
+    mv::gui::FlowLayout* getSelectedCellSpeciesCountInfoLayout() const { return _selectedCellSpeciesCountInfoLayout; }
+    mv::gui::FlowLayout* getSelectedCellStatisticsInfoLayout() const { return _selectedCellStatisticsInfoLayout; }
     QTableView* getTableView() const { return _tableView; }
     std::map<QString, std::pair<int, QColor>>& getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
 
@@ -210,6 +212,8 @@ protected:
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
     mv::gui::FlowLayout*            _selectedCellClusterInfoStatusBar;
+    mv::gui::FlowLayout*            _selectedCellSpeciesCountInfoLayout;
+    mv::gui::FlowLayout*            _selectedCellStatisticsInfoLayout;
     //mv::gui::FlowLayout     _clustersLayout;
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;

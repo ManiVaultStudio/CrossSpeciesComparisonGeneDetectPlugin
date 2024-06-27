@@ -364,7 +364,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //fullSettingsLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
 
     mainLayout->addLayout(fullSettingsLayout);
-    mainLayout->addWidget(_settingsAction.getTableView());
+
+    auto infoLayout = new QVBoxLayout();
+
+    infoLayout->addLayout(_settingsAction.getSelectedCellSpeciesCountInfoLayout());
+    infoLayout->addLayout(_settingsAction.getSelectedCellStatisticsInfoLayout());
+
+    auto tableAndInfoLayout = new QHBoxLayout();
+
+    tableAndInfoLayout->addWidget(_settingsAction.getTableView());
+    tableAndInfoLayout->addLayout(infoLayout);
+
+    mainLayout->addLayout(tableAndInfoLayout);
+    
+   
     //_settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     //mainLayout->addLayout(&_settingsAction._flowLayout);
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());

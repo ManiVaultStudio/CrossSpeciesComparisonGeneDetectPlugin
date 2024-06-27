@@ -297,7 +297,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
-
+    _selectedCellSpeciesCountInfoLayout = new mv::gui::FlowLayout();
+    _selectedCellStatisticsInfoLayout = new mv::gui::FlowLayout();
 
 
     _tableModel.setSerializationName("CSCGDV:Table Model");
