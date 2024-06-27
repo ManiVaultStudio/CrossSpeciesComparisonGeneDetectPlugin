@@ -770,7 +770,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             {
                                 std::lock_guard<std::mutex> lock(selectedSpeciesMapMutex);
                                 selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
-                                _selectedSpeciesCellCountMap[speciesName] = filteredIndices.size();
+                                _selectedSpeciesCellCountMap[speciesName] = std::make_pair(static_cast<int>(filteredIndices.size()), speciesColor);
+
                             }
 
                             std::vector<int> commonSelectedIndices;
@@ -1321,7 +1322,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
     _initColumnNames.clear();
-    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Mean Expression", "Species Appearance", "Gene Appearance Species Names" ,"Statistics"};
+    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Mean \nExpression", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
     model->setHorizontalHeaderLabels(_initColumnNames);
 
     QStringList headers = _initColumnNames;

@@ -409,10 +409,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         QAbstractItemModel* currentModel = _settingsAction.getTableView()->model();
         if (currentModel) {
             currentModel->removeRows(0, currentModel->rowCount());
-
-            QFontMetrics metrics(_settingsAction.getTableView()->horizontalHeader()->font());
-            int headerHeight = metrics.height() * 3; // Assuming 3 lines of text
-            _settingsAction.getTableView()->horizontalHeader()->setFixedHeight(headerHeight);
             _settingsAction.getTableView()->update();
         }
         else {
@@ -422,7 +418,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
 
     _settingsAction.getTableView()->setModel(model);
-
+    QFontMetrics metrics(_settingsAction.getTableView()->horizontalHeader()->font());
+    int headerHeight = metrics.height() * 3; // Assuming 3 lines of text
+    _settingsAction.getTableView()->horizontalHeader()->setFixedHeight(headerHeight);
 
     //QVector<int> columns = { 0,2, 3,4 };
     auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
@@ -434,6 +432,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     } 
     model->sort(1,Qt::DescendingOrder);
     //set column width
+    _settingsAction.getTableView()->resizeColumnsToContents();
 
 
 
