@@ -365,8 +365,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto tableAndInfoLayout = new QHBoxLayout();
     tableAndInfoLayout->addWidget(_settingsAction.getTableView());
     tableAndInfoLayout->addLayout(infoLayout);
-    tableAndInfoLayout->setStretch(0, 1.1); // Adjusted stretch factor for table view
-    tableAndInfoLayout->setStretch(1, 1.9); // Adjusted stretch factor for info layout
+    tableAndInfoLayout->setStretch(0, 1); // Adjusted stretch factor for table view
+    tableAndInfoLayout->setStretch(1, 2); // Adjusted stretch factor for info layout
 
     mainLayout->addLayout(tableAndInfoLayout);
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
