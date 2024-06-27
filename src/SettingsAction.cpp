@@ -1759,7 +1759,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 
     _geneNamesConnection.fromParentVariantMap(variantMap);
     _createRowMultiSelectTree.fromParentVariantMap(variantMap);
-
+    _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _embeddingDataset.fromParentVariantMap(variantMap);
@@ -1780,7 +1780,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
-    _tableModel.fromParentVariantMap(variantMap);
+ 
 
 }
 
