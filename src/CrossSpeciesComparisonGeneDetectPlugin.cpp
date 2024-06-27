@@ -743,6 +743,54 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
     emit model->layoutChanged();
 
+    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
+    {
+
+        QLayoutItem* layoutItem;
+        while ((layoutItem = _settingsAction.getSelectedCellSpeciesCountInfoLayout()->takeAt(0)) != nullptr) {
+            delete layoutItem->widget();
+            delete layoutItem;
+        }
+
+        // Create a description label
+        auto descriptionLabel = new QLabel("Selected Cell Counts: ");
+        // Optionally, set a stylesheet for the description label for styling
+        descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+        // Add the description label to the layout
+        _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(descriptionLabel);
+        //iterate _settingsAction.getSelectedSpeciesCellCountMap()
+
+        for (auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
+            auto clusterName = species;
+            auto clusterIndicesSize = details.first;
+            auto clusterColor = details.second;
+            // Calculate luminance
+            qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+            // Choose text color based on luminance
+            QString textColor = (luminance > 0.5) ? "black" : "white";
+
+            // Convert QColor to hex string for stylesheet
+            QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+            auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+            // Add text color and background color to clusterLabel with padding and border for better styling
+            clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                .arg(textColor).arg(backgroundColor).arg(textColor));
+            _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(clusterLabel);
+
+
+        }
+
+    }
+
+
+
+
+
+
+
+
 }
 void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
