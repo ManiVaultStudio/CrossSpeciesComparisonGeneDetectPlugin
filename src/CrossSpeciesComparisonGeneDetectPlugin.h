@@ -41,6 +41,11 @@ public:
     void init() override;
     void modifyTableData();
     void updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap);
+
+    void selectedCellCountStatusBarAdd();
+    void selectedCellCountStatusBarRemove();
+    void selectedCellStatisticsStatusBarRemove();
+    void selectedCellStatisticsStatusBarAdd();
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred

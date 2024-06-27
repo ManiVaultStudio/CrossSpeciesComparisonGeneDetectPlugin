@@ -187,7 +187,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
             _settingsAction.getRemoveRowSelection().setDisabled(true);
             _settingsAction.getStatusColorAction().setString(statusString);
-            
+            selectedCellStatisticsStatusBarRemove();
+            selectedCellCountStatusBarAdd();
 
         };
 
@@ -728,12 +729,26 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _settingsAction.getSelctedSpeciesVals().setString("");
         }
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
+        selectedCellCountStatusBarRemove();
+        selectedCellStatisticsStatusBarAdd();
         });
 
 
 
     emit model->layoutChanged();
 
+    
+
+    selectedCellStatisticsStatusBarRemove();
+    selectedCellCountStatusBarAdd();
+
+
+
+
+
+}
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
+{
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
 
@@ -785,15 +800,85 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
 
     }
-
-
-
-
-
-
-
-
 }
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
+{
+    QLayoutItem* layoutItem;
+    while ((layoutItem = _settingsAction.getSelectedCellSpeciesCountInfoLayout()->takeAt(0)) != nullptr) {
+        delete layoutItem->widget();
+        delete layoutItem;
+    }
+}
+
+
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd()
+{
+    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
+    {
+
+        QLayoutItem* layoutItem;
+        while ((layoutItem = _settingsAction.getSelectedCellStatisticsInfoLayout()->takeAt(0)) != nullptr) {
+            delete layoutItem->widget();
+            delete layoutItem;
+        }
+
+        // Create a description label
+        auto descriptionLabel = new QLabel("Selected Cell Statistics: ");
+        // Optionally, set a stylesheet for the description label for styling
+        descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+        // Add the description label to the layout
+        _settingsAction.getSelectedCellStatisticsInfoLayout()->addWidget(descriptionLabel);
+        //iterate _settingsAction.getSelectedSpeciesCellCountMap()
+
+        // Convert map to a vector of pairs
+        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
+            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
+            _settingsAction.getSelectedSpeciesCellCountMap().end());
+
+        // Sort the vector by counts (which is the first element of the pair inside the map value)
+        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
+            [](const auto& a, const auto& b) {
+                return a.second.first > b.second.first; // Descending order
+                // Use < for ascending order
+            });
+
+        // Iterate through the sorted vector
+        for (const auto& [species, details] : sortedSpeciesDetails) {
+            auto clusterName = species;
+            auto clusterIndicesSize = details.first;
+            auto clusterColor = details.second;
+            // Calculate luminance
+            qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+            // Choose text color based on luminance
+            QString textColor = (luminance > 0.5) ? "black" : "white";
+
+            // Convert QColor to hex string for stylesheet
+            QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+            auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+            // Add text color and background color to clusterLabel with padding and border for better styling
+            clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                .arg(textColor).arg(backgroundColor).arg(textColor));
+            _settingsAction.getSelectedCellStatisticsInfoLayout()->addWidget(clusterLabel);
+        }
+
+    }
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemove()
+{
+    QLayoutItem* layoutItem;
+    while ((layoutItem = _settingsAction.getSelectedCellStatisticsInfoLayout()->takeAt(0)) != nullptr) {
+        delete layoutItem->widget();
+        delete layoutItem;
+    }
+}
+
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
