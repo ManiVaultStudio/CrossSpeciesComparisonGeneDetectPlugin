@@ -1325,10 +1325,6 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
 
     QStringList headers = _initColumnNames;
-    headers.reserve(_initColumnNames.size() + map.size());
-    for (auto it = map.cbegin(); it != map.cend(); ++it) {
-        headers.push_back(it->first);
-    }
     _hiddenShowncolumns.setSelectedOptions({});
     _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
