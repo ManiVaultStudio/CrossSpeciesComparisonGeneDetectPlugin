@@ -132,7 +132,7 @@ public: // Action getters
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
-
+    QTableView* getTableView() const { return _tableView; }
 
 
 
@@ -207,4 +207,8 @@ protected:
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
+
+
+    QTableView* _tableView;                /** Table view for the data */
+
 };

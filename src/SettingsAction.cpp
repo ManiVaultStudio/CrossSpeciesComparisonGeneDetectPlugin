@@ -31,6 +31,55 @@ using namespace mv::gui;
 
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
+struct Statistics {
+    float mean;
+    float median;
+    float mode;
+    float range;
+};
+
+Statistics calculateStatistics(const std::vector<float>& data) {
+    if (data.empty()) {
+        return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+    }
+
+    // Calculate mean using std::reduce for better performance with parallel execution
+    float sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0f);
+    float mean = sum / data.size();
+
+    // Sort data to find median and range
+    std::vector<float> sortedData = data;
+    std::sort(sortedData.begin(), sortedData.end());
+    float median;
+    size_t size = sortedData.size();
+    if (size % 2 == 0) {
+        median = (sortedData[size / 2 - 1] + sortedData[size / 2]) / 2;
+    }
+    else {
+        median = sortedData[size / 2];
+    }
+
+    // Calculate mode
+    std::unordered_map<float, int> frequency;
+    for (float num : data) {
+        frequency[num]++;
+    }
+    int maxCount = 0;
+    float mode = std::numeric_limits<float>::quiet_NaN();
+    for (const auto& pair : frequency) {
+        if (pair.second > maxCount) {
+            maxCount = pair.second;
+            mode = pair.first;
+        }
+    }
+
+    // Calculate range
+    float range = sortedData.back() - sortedData.front();
+
+    return { mean, median, mode, range };
+}
+
 
 void startCodeTimer(const std::string& message) {
     timers[message] = std::chrono::high_resolution_clock::now();
@@ -70,10 +119,10 @@ float calculateMedian(const std::vector<float>& vec) {
         return v[n];
     }
     else {
-        // For even-sized vectors, copy the relevant part to avoid modifying the rest of the vector
+        // For even-sized vectors, find the average of the two middle elements
         std::vector<float> temp(v.begin(), v.begin() + n + 1);
-        std::nth_element(temp.begin(), temp.begin() + n - 1, temp.end()); // Find the element just before the median
-        return (temp[n - 1] + v[n]) / 2.0f; // Calculate the average of the two middle elements
+        std::nth_element(temp.begin(), temp.begin() + n - 1, temp.end());
+        return (temp[n - 1] + v[n]) / 2.0f;
     }
 }
 
@@ -203,6 +252,48 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
+    _tableView = new QTableView();
+
+
+    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    _tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _tableView->setAlternatingRowColors(true);
+    _tableView->setSortingEnabled(true);
+    _tableView->setShowGrid(true);
+    _tableView->setGridStyle(Qt::SolidLine);
+    _tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _tableView->setCornerButtonEnabled(false);
+    _tableView->setWordWrap(false);
+    _tableView->setTabKeyNavigation(false);
+    _tableView->setAcceptDrops(false);
+    _tableView->setDropIndicatorShown(false);
+    _tableView->setDragEnabled(false);
+    _tableView->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _tableView->setDragDropOverwriteMode(false);
+    _tableView->setAutoScroll(false);
+    _tableView->setAutoScrollMargin(16);
+    _tableView->setAutoFillBackground(true);
+    _tableView->setFrameShape(QFrame::NoFrame);
+    _tableView->setFrameShadow(QFrame::Plain);
+    _tableView->setLineWidth(0);
+    _tableView->setMidLineWidth(0);
+    _tableView->setFocusPolicy(Qt::NoFocus);
+    _tableView->setContextMenuPolicy(Qt::NoContextMenu);
+    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _tableView->setMinimumSize(QSize(0, 0));
+    _tableView->setMaximumSize(QSize(16777215, 16777215));
+    _tableView->setBaseSize(QSize(0, 0));
+    _tableView->setFocusPolicy(Qt::StrongFocus);
+    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    //only highlight multiple rows if shiuft is pressed
+    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
     _statusBarActionWidget->setFixedWidth(100);
@@ -1349,25 +1440,51 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
                 const char* string2 = modifiedNewick.c_str();
                 Tree t1;
                 Tree t2;
-                freopen("CON", "r", stdin);
-                FILE* file1;
-                FILE* file2;
-                fopen_s(&file1, "file1.txt", "w");
-                fputs(string1, file1);
-                if (file1 != nullptr) {
-                    fclose(file1);
+
+                // Fix for Problem 1: Check the return value of freopen
+                if (freopen("CON", "r", stdin) == nullptr) {
+                    std::cerr << "Failed to reopen stdin from CON." << std::endl;
                 }
 
-                fopen_s(&file2, "file2.txt", "w");
-                fputs(string2, file2);
-                if (file1 != nullptr) {
+                FILE* file1 = nullptr;
+                FILE* file2 = nullptr;
+
+                // Fix for Problem 2: Ensure file1 is not nullptr before using fputs
+                if (fopen_s(&file1, "file1.txt", "w") == 0 && file1 != nullptr) {
+                    fputs(string1, file1); // Ensure string1 is a std::string or converted to C-string
+                    fclose(file1);
+                }
+                else {
+                    std::cerr << "Failed to open file1.txt for writing." << std::endl;
+                }
+
+                // Fix for Problem 3: Ensure file2 is not nullptr before using fputs
+                if (fopen_s(&file2, "file2.txt", "w") == 0 && file2 != nullptr) {
+                    fputs(string2, file2); // Ensure string2 is a std::string or converted to C-string
                     fclose(file2);
                 }
-                freopen("file1.txt", "r", stdin);
-                t1.CreateTree();
-                freopen("file2.txt", "r", stdin);
-                t2.CreateTree();
-                int sim = Calculate(&t1, &t2); 
+                else {
+                    std::cerr << "Failed to open file2.txt for writing." << std::endl;
+                }
+
+                // Fix for Problem 4: Check the return value of freopen
+                if (freopen("file1.txt", "r", stdin) == nullptr) {
+                    std::cerr << "Failed to reopen stdin from file1.txt." << std::endl;
+                }
+                else {
+                    t1.CreateTree();
+                }
+
+                // Fix for Problem 5: Check the return value of freopen
+                if (freopen("file2.txt", "r", stdin) == nullptr) {
+                    std::cerr << "Failed to reopen stdin from file2.txt." << std::endl;
+                }
+                else {
+                    t2.CreateTree();
+                }
+
+                int sim = Calculate(&t1, &t2);
+
 
                 float similarity = 1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpecies); 
                 std::pair<QString, float>  temp;
@@ -1513,7 +1630,7 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
                     meanValue = "-1";
                 }
 
-                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"branchLength\": 1.0,\n\"mean\": "<< meanValue <<", \n\"name\": \"" << species << "\"\n}";
+                jsonStream << "{\n\"color\": \"#000000\",\n\"hastrait\": true,\n\"iscollapsed\": false,\n\"branchLength\": 1.0,\n\"cellCounts\": " << 0 << ",\n\"mean\": "<< meanValue <<", \n\"name\": \"" << species << "\"\n}";
                 i += skip;
             }
         }

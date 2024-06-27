@@ -28,7 +28,6 @@ void applyLogTransformation(std::vector<float>& values) {
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _tableView(),
     _settingsAction(*this)
 {
 
@@ -53,9 +52,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 if (selectedRows.size()==1)
                 {
                     int selectedRow = selectedRows[0];
-                    if (treeDataset.isValid() && _tableView && selectedRow >= 0)
+                    if (treeDataset.isValid() && _settingsAction.getTableView() && selectedRow >= 0)
                     {
-                        QString treeData = _tableView->model()->index(selectedRow, 2).data().toString();
+                        QString treeData = _settingsAction.getTableView()->model()->index(selectedRow, 2).data().toString();
                         //qDebug()<< "Tree data: " << treeData;
                         if (!treeData.isEmpty())
                         {
@@ -65,7 +64,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                             {
                                 treeDataset->setTreeData(valueStringReference);
                                 events().notifyDatasetDataChanged(treeDataset);
-                                //QString firstColumnValue = _tableView->model()->index(selectedRow, 0).data().toString();
+                                //QString firstColumnValue = _settingsAction.getTableView()->model()->index(selectedRow, 0).data().toString();
                                // _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
                             }
                         }
@@ -81,7 +80,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 }
                 QStringList firstColumnValues;
                 for (int row : selectedRows) {
-                    firstColumnValues << _tableView->model()->index(row, 0).data().toString();
+                    firstColumnValues << _settingsAction.getTableView()->model()->index(row, 0).data().toString();
                 }
                 QString firstColumnValue = firstColumnValues.join("*%$@*@$%*");
                 //_settingsAction.getGeneNamesConnection().setString(firstColumnValue);
@@ -104,21 +103,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     const auto removeRowSelectionTable = [this]() -> void
         {
             auto statusString = _settingsAction.getStatusColorAction().getString();
-            if (_tableView && _tableView->selectionModel()) {
+            if (_settingsAction.getTableView() && _settingsAction.getTableView()->selectionModel()) {
                 // Clear the current index if there's no selection
-                _tableView->clearSelection();
+                _settingsAction.getTableView()->clearSelection();
 
                 // Temporarily disable the selection mode to remove highlight
-                QAbstractItemView::SelectionMode oldMode = _tableView->selectionMode();
-                _tableView->setSelectionMode(QAbstractItemView::NoSelection);
+                QAbstractItemView::SelectionMode oldMode = _settingsAction.getTableView()->selectionMode();
+                _settingsAction.getTableView()->setSelectionMode(QAbstractItemView::NoSelection);
 
                 // Clear the current index
-                _tableView->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+                _settingsAction.getTableView()->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
 
                 // Restore the original selection mode
-                _tableView->setSelectionMode(oldMode);
+                _settingsAction.getTableView()->setSelectionMode(oldMode);
                 // Update the view to ensure changes are reflected
-                _tableView->update();
+                _settingsAction.getTableView()->update();
                 _settingsAction.getSelctedSpeciesVals().setString("");
 
 
@@ -178,16 +177,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
 
-        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_tableView->model());
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_settingsAction.getTableView()->model());
 
         if (model) {
             for (int i = 0; i < model->columnCount(); i++) {
                 if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
-                    _tableView->hideColumn(i);
+                    _settingsAction.getTableView()->hideColumn(i);
                 }
                 else
                 {
-                    _tableView->showColumn(i);
+                    _settingsAction.getTableView()->showColumn(i);
 
                 }
             }
@@ -198,76 +197,29 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
-    _tableView = new QTableView();
-    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    _tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    _tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _tableView->setAlternatingRowColors(true);
-    _tableView->setSortingEnabled(true);
-    _tableView->setShowGrid(true);
-    _tableView->setGridStyle(Qt::SolidLine);
-    _tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->setCornerButtonEnabled(false);
-    _tableView->setWordWrap(false);
-    _tableView->setTabKeyNavigation(false);
-    _tableView->setAcceptDrops(false);
-    _tableView->setDropIndicatorShown(false);
-    _tableView->setDragEnabled(false);
-    _tableView->setDragDropMode(QAbstractItemView::NoDragDrop);
-    _tableView->setDragDropOverwriteMode(false);
-    _tableView->setAutoScroll(false);
-    _tableView->setAutoScrollMargin(16);
-    _tableView->setAutoFillBackground(true);
-    _tableView->setFrameShape(QFrame::NoFrame);
-    _tableView->setFrameShadow(QFrame::Plain);
-    _tableView->setLineWidth(0);
-    _tableView->setMidLineWidth(0);
-    _tableView->setFocusPolicy(Qt::NoFocus);
-    _tableView->setContextMenuPolicy(Qt::NoContextMenu);
-    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _tableView->setMinimumSize(QSize(0, 0));
-    _tableView->setMaximumSize(QSize(16777215, 16777215));
-    _tableView->setBaseSize(QSize(0, 0));
-    _tableView->setFocusPolicy(Qt::StrongFocus);
-    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-
-    //only highlight multiple rows if shiuft is pressed
-    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-
-    //_make the headers two three lines so that they are fully visible
-    _tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-    _tableView->horizontalHeader()->setStretchLastSection(true);
-    _tableView->horizontalHeader()->setMinimumSectionSize(50);
-    _tableView->horizontalHeader()->setMaximumSectionSize(600);
-    _tableView->horizontalHeader()->setHighlightSections(false);
-    _tableView->horizontalHeader()->setSortIndicatorShown(true);
     //change height of headers
 
     
 
     //make long strings in the cells visible and not ...shortened
-    //_tableView->setTextElideMode(Qt::ElideNone);
-    //_tableView->setWordWrap(true);
-    //_tableView->setAlternatingRowColors(true);
-    //_tableView->setSortingEnabled(true);
+    //_settingsAction.getTableView()->setTextElideMode(Qt::ElideNone);
+    //_settingsAction.getTableView()->setWordWrap(true);
+    //_settingsAction.getTableView()->setAlternatingRowColors(true);
+    //_settingsAction.getTableView()->setSortingEnabled(true);
 
     //on hovering a cell, show the full text available in a tooltip
-    connect(_tableView, &QTableView::entered, [this](const QModelIndex& index) {
+    connect(_settingsAction.getTableView(), &QTableView::entered, [this](const QModelIndex& index) {
         if (index.isValid()) {
             QString text = index.data().toString();
             if (!text.isEmpty()) {
-                _tableView->setToolTip(text);
+                _settingsAction.getTableView()->setToolTip(text);
             }
         }
         });
 
 
     /*
-    connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
+    connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
         QModelIndex firstColumnIndex = index.sibling(index.row(), 0);
         auto gene = firstColumnIndex.data().toString();
         _settingsAction.getSelectedGeneAction().setString(gene);
@@ -276,16 +228,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         
         //{
             // If Shift is pressed, add the row to the selection
-          //  _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+          //  _settingsAction.getTableView()->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
         //}
         //else {
             // If Shift is not pressed, select only this row
-            //_tableView->selectionModel()->clearSelection();
-           // _tableView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+            //_settingsAction.getTableView()->selectionModel()->clearSelection();
+           // _settingsAction.getTableView()->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
        // }
 
         // Get the selected rows and convert them to a string list
-        //QModelIndexList selectedRows = _tableView->selectionModel()->selectedRows();
+        //QModelIndexList selectedRows = _settingsAction.getTableView()->selectionModel()->selectedRows();
         QStringList selectedRowsStrList;
         for (const QModelIndex& selectedIndex : selectedRows) {
             selectedRowsStrList << QString::number(selectedIndex.row());
@@ -298,19 +250,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
    */
 
 
-    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->sortByColumn(3, Qt::DescendingOrder);
+    _settingsAction.getTableView()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getTableView()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getTableView()->sortByColumn(3, Qt::DescendingOrder);
 
-    _tableView->verticalHeader()->hide();
-    _tableView->setMouseTracking(true);
-    _tableView->setToolTipDuration(10000);
-    QFont font = _tableView->horizontalHeader()->font();
+    _settingsAction.getTableView()->verticalHeader()->hide();
+    _settingsAction.getTableView()->setMouseTracking(true);
+    _settingsAction.getTableView()->setToolTipDuration(10000);
+    QFont font = _settingsAction.getTableView()->horizontalHeader()->font();
     font.setBold(true);
-    _tableView->horizontalHeader()->setFont(font);
-    _tableView->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
-    _tableView->horizontalHeader()->setHighlightSections(false);
-    _tableView->verticalHeader()->setHighlightSections(false);
+    _settingsAction.getTableView()->horizontalHeader()->setFont(font);
+    _settingsAction.getTableView()->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
+    _settingsAction.getTableView()->horizontalHeader()->setHighlightSections(false);
+    _settingsAction.getTableView()->verticalHeader()->setHighlightSections(false);
 
 
     auto mainLayout = new QVBoxLayout();
@@ -384,7 +336,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //fullSettingsLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
 
     mainLayout->addLayout(fullSettingsLayout);
-    mainLayout->addWidget(_tableView);
+    mainLayout->addWidget(_settingsAction.getTableView());
     //_settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     //mainLayout->addLayout(&_settingsAction._flowLayout);
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
@@ -419,16 +371,26 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     auto variant = _settingsAction.getTableModelAction().getVariant();
     QStandardItemModel* model = variant.value<QStandardItemModel*>();
 
-    if (_tableView == nullptr) {
-        qDebug() << "_tableView is null";
+    if (_settingsAction.getTableView() == nullptr) {
+        qDebug() << "_settingsAction.getTableView() is null";
         return;
     }
 
     if (model == nullptr) {
         qDebug() << "Model is null";
-        if (_tableView->model() != nullptr) {
-            _tableView->model()->removeRows(0, _tableView->model()->rowCount());
-            _tableView->update();
+        if (_settingsAction.getTableView()->model() != nullptr) {
+            _settingsAction.getTableView()->model()->removeRows(0, _settingsAction.getTableView()->model()->rowCount());
+            _settingsAction.getTableView()->update();
+
+            //_make the headers two three lines so that they are fully visible
+            _settingsAction.getTableView()->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+            _settingsAction.getTableView()->horizontalHeader()->setStretchLastSection(true);
+            _settingsAction.getTableView()->horizontalHeader()->setMinimumSectionSize(50);
+            _settingsAction.getTableView()->horizontalHeader()->setMaximumSectionSize(600);
+            _settingsAction.getTableView()->horizontalHeader()->setHighlightSections(false);
+            _settingsAction.getTableView()->horizontalHeader()->setSortIndicatorShown(true);
+
+
         }
         else {
             qDebug() << "TableView model is null";
@@ -436,44 +398,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         return;
     }
 
-    _tableView->setModel(model);
+    _settingsAction.getTableView()->setModel(model);
 
 
     //QVector<int> columns = { 0,2, 3,4 };
     auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
 
-    for (int i = 0; i < _tableView->model()->columnCount(); i++) {
+    for (int i = 0; i < _settingsAction.getTableView()->model()->columnCount(); i++) {
         if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
-            _tableView->hideColumn(i);
+            _settingsAction.getTableView()->hideColumn(i);
         }
     } 
     model->sort(3,Qt::DescendingOrder);
 
 
-    //connect(_tableView, &QTableView::clicked, [this](const QModelIndex& index) {
+    //connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
     //    // Check if the clicked row is already selected
-    //    if (_tableView->selectionModel()->isSelected(index)) {
+    //    if (_settingsAction.getTableView()->selectionModel()->isSelected(index)) {
     //        // Clear the current index if there's no selection
-    //        _tableView->clearSelection();
+    //        _settingsAction.getTableView()->clearSelection();
 
     //        // Temporarily disable the selection mode to remove highlight
-    //        QAbstractItemView::SelectionMode oldMode = _tableView->selectionMode();
-    //        _tableView->setSelectionMode(QAbstractItemView::NoSelection);
+    //        QAbstractItemView::SelectionMode oldMode = _settingsAction.getTableView()->selectionMode();
+    //        _settingsAction.getTableView()->setSelectionMode(QAbstractItemView::NoSelection);
 
     //        // Clear the current index
-    //        _tableView->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+    //        _settingsAction.getTableView()->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
 
     //        // Restore the original selection mode
-    //        _tableView->setSelectionMode(oldMode);
+    //        _settingsAction.getTableView()->setSelectionMode(oldMode);
     //        // Update the view to ensure changes are reflected
-    //        _tableView->update();
+    //        _settingsAction.getTableView()->update();
     //        _settingsAction.getSelctedSpeciesVals().setString("");
     //    }
     //    });
 
 
 
-    connect(_tableView->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
+    connect(_settingsAction.getTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) return;
 
         QString gene = current.siblingAtColumn(0).data().toString();
