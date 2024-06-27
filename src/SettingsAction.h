@@ -32,6 +32,7 @@
 #include "actions/GroupAction.h"
 #include "QStatusBar"
 #include <widgets/FlowLayout.h>
+#include <QSplitter>
 
 using namespace mv::gui;
 class QMenu;
@@ -42,6 +43,13 @@ namespace mv
 {
     class CoreInterface;
 }
+
+struct Statistics {
+    float mean;
+    float median;
+    float mode;
+    float range;
+};
 
 class SettingsAction : public WidgetAction
 {
@@ -133,8 +141,9 @@ public: // Action getters
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getTableView() const { return _tableView; }
-
-
+    QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
+    std::map<QString, std::pair<int, QColor>>& getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
+    QHBoxLayout* getTableSplitter() const { return _splitter; }
 
     void computeGeneMeanExpressionMap();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
@@ -143,10 +152,10 @@ public: // Action getters
 
     double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
-    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, float> speciesMeanValues);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Statistics> speciesMeanValues);
 private:
-    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
-    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
+    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
 public: // Serialization
 
@@ -176,7 +185,7 @@ protected:
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _clusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
-    std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
+    std::map<QString, std::map<QString, Statistics>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;
     StringAction           _geneNamesConnection;
@@ -207,8 +216,9 @@ protected:
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
-
+    std::map<QString,std::pair<int,QColor>>       _selectedSpeciesCellCountMap;
 
     QTableView* _tableView;                /** Table view for the data */
-
+    QTableView* _selectionDetailsTable;    /** Table view for the selection details */
+    QHBoxLayout* _splitter;
 };

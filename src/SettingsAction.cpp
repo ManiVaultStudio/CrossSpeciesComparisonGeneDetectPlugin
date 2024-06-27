@@ -31,12 +31,7 @@ using namespace mv::gui;
 
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
-struct Statistics {
-    float mean;
-    float median;
-    float mode;
-    float range;
-};
+
 
 Statistics calculateStatistics(const std::vector<float>& data) {
     if (data.empty()) {
@@ -253,7 +248,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _tableView = new QTableView();
-
+    _selectionDetailsTable = new QTableView();
+    _splitter = new QHBoxLayout();
 
     _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -294,6 +290,50 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //only highlight multiple rows if shiuft is pressed
     _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+
+
+    _selectionDetailsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _selectionDetailsTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    _selectionDetailsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _selectionDetailsTable->setAlternatingRowColors(true);
+    _selectionDetailsTable->setSortingEnabled(true);
+    _selectionDetailsTable->setShowGrid(true);
+    _selectionDetailsTable->setGridStyle(Qt::SolidLine);
+    _selectionDetailsTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _selectionDetailsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _selectionDetailsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _selectionDetailsTable->setCornerButtonEnabled(false);
+    _selectionDetailsTable->setWordWrap(false);
+    _selectionDetailsTable->setTabKeyNavigation(false);
+    _selectionDetailsTable->setAcceptDrops(false);
+    _selectionDetailsTable->setDropIndicatorShown(false);
+    _selectionDetailsTable->setDragEnabled(false);
+    _selectionDetailsTable->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _selectionDetailsTable->setDragDropOverwriteMode(false);
+    _selectionDetailsTable->setAutoScroll(false);
+    _selectionDetailsTable->setAutoScrollMargin(16);
+    _selectionDetailsTable->setAutoFillBackground(true);
+    _selectionDetailsTable->setFrameShape(QFrame::NoFrame);
+    _selectionDetailsTable->setFrameShadow(QFrame::Plain);
+    _selectionDetailsTable->setLineWidth(0);
+    _selectionDetailsTable->setMidLineWidth(0);
+    _selectionDetailsTable->setFocusPolicy(Qt::NoFocus);
+    _selectionDetailsTable->setContextMenuPolicy(Qt::NoContextMenu);
+    _selectionDetailsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _selectionDetailsTable->setMinimumSize(QSize(0, 0));
+    _selectionDetailsTable->setMaximumSize(QSize(16777215, 16777215));
+    _selectionDetailsTable->setBaseSize(QSize(0, 0));
+    _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
+    _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    //only highlight multiple rows if shiuft is pressed
+    _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+
+
+
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
     _statusBarActionWidget->setFixedWidth(100);
@@ -302,7 +342,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
-
 
 
     _tableModel.setSerializationName("CSCGDV:Table Model");
@@ -775,6 +814,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             {
                                 std::lock_guard<std::mutex> lock(selectedSpeciesMapMutex);
                                 selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
+                                _selectedSpeciesCellCountMap[speciesName] = std::make_pair(static_cast<int>(filteredIndices.size()), speciesColor);
+
                             }
 
                             std::vector<int> commonSelectedIndices;
@@ -788,10 +829,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                 float fullMean = 0.0f; // Initialize meanValue to prevent using uninitialized memory
                                 float meanValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                float medianValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                float modeValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                float rangeValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    float shortMean = calculateMean(resultContainerShort);
+                                    //float shortMean = calculateMean(resultContainerShort);
+                                    Statistics calculateStatisticsShort = calculateStatistics(resultContainerShort);
+                                    float shortMean = calculateStatisticsShort.mean;
+                                    medianValue = calculateStatisticsShort.median;
+                                    modeValue = calculateStatisticsShort.mode;
+                                    rangeValue = calculateStatisticsShort.range;
+
 
                                     {
                                         std::lock_guard<std::mutex> lock(clusterGeneMeanExpressionMapMutex);
@@ -811,7 +861,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                 {
                                     std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = meanValue;
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].mean = meanValue;
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].median = medianValue;
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].mode = modeValue;
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].range = rangeValue;
                                 }
                             }
                             }));
@@ -1206,7 +1259,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 }
 
-QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore) {
+QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore) {
 
     if (map.empty() || n <= 0) {
         return QVariant();
@@ -1230,175 +1283,183 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     }
 
     QSet<QString> geneList;
-    QStringList returnGeneList;
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
 
     for (const auto& outerPair : map) {
         std::vector<std::pair<QString, float>> geneExpressionVec;
-        // Reserve space to avoid reallocations
         geneExpressionVec.reserve(outerPair.second.size());
+        for (const auto& innerPair : outerPair.second) {
 
-        // Filter based on the selection option to avoid unnecessary sorting
-        if (option == SelectionOption::NegativeTopN) {
-            std::copy_if(outerPair.second.begin(), outerPair.second.end(), std::back_inserter(geneExpressionVec),
-                [](const auto& pair) { return pair.second < 0; });
-        }
-        else {
-            geneExpressionVec.assign(outerPair.second.begin(), outerPair.second.end());
-        }
+            auto geneName = innerPair.first;
+            auto meanValue = innerPair.second.mean;
+            geneExpressionVec.push_back(std::make_pair(geneName, meanValue));
 
-        // Lambda for sorting based on the selection option
-        auto sortLambda = [&option](const auto& a, const auto& b) {
-            if (option == SelectionOption::AbsoluteTopN) {
+        }
+        // Sort the geneExpressionVec based on the mean value from highest to lowest
+        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+            return a.second > b.second;
+            });
+
+        // Select the top n genes based on sorted list. If Positive then top n genes with highest mean value, if Negative then top n genes with lowest mean value, if Mixed then top n/2 genes with highest mean value and n/2 genes with lowest mean value, if Absolute then top n genes with highest absolute mean value.
+        switch (option) {
+        case SelectionOption::AbsoluteTopN: {
+            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                 return std::abs(a.second) > std::abs(b.second);
+                });
+            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
             }
-            else if (option == SelectionOption::PositiveTopN || option == SelectionOption::MixedTopN) {
-                return a.second > b.second;
-            }
-            else { // NegativeTopN
-                return a.second < b.second;
-            }
-            };
-
-        // Sort once for all options
-        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), sortLambda);
-
-        // Determine the limit for selection based on the option
-        int limit = n;
-        if (option == SelectionOption::MixedTopN) {
-            limit = std::min(n / 2, static_cast<int>(geneExpressionVec.size()));
+            break;
         }
-        else {
-            limit = std::min(n, static_cast<int>(geneExpressionVec.size()));
-        }
-
-        // Select top elements based on the selection option
-        for (int i = 0; i < limit; ++i) {
-            const auto& gene = geneExpressionVec[i].first;
-            geneList.insert(gene);
-            geneAppearanceCounter[gene].push_back(outerPair.first);
-        }
-
-        // Additional loop for MixedTopN to select negative values
-        if (option == SelectionOption::MixedTopN) {
-            int negativeStart = std::max(static_cast<int>(geneExpressionVec.size()) - n / 2, 0);
-            for (int i = negativeStart; i < geneExpressionVec.size(); ++i) {
-                const auto& gene = geneExpressionVec[i].first;
-                geneList.insert(gene);
-                geneAppearanceCounter[gene].push_back(outerPair.first);
+        case SelectionOption::PositiveTopN: {
+            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
             }
+            break;
+        }
+        case SelectionOption::NegativeTopN: {
+            std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
+            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+            }
+            break;
+        }
+        case SelectionOption::MixedTopN: {
+            int halfN = n / 2;
+            for (int i = 0; i < halfN; ++i) { // Top halfN genes with highest mean value
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+            }
+            if (n % 2 != 0) { // If n is odd, add one more from the top half
+                geneList.insert(geneExpressionVec[halfN].first);
+                geneAppearanceCounter[geneExpressionVec[halfN].first].push_back(outerPair.first);
+                halfN++;
+            }
+            for (int i = geneExpressionVec.size() - halfN; i < geneExpressionVec.size(); ++i) { // Bottom halfN genes with lowest mean value
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+            }
+            break;
+        }
         }
     }
 
-
-    returnGeneList = QStringList(geneList.begin(), geneList.end());
-
-
-
-
-    QVariant returnValue = createModelFromData(returnGeneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, n);
-
-    return returnValue;
+    return createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, n);
 }
 
-QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n) {
+QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n) {
 
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
     }
 
+    const std::unordered_map<std::string, int> clusteringTypeMap = {
+    {"Complete", HCLUST_METHOD_COMPLETE},
+    {"Average", HCLUST_METHOD_AVERAGE},
+    {"Median", HCLUST_METHOD_MEDIAN},
+    {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
+    };
+
     QStandardItemModel* model = new QStandardItemModel();
     int numOfSpecies = map.size();
     _initColumnNames.clear();
-    _initColumnNames = { "ID", "Newick tree", "Similarity with Reference Tree", "Mean Differential Expression", "Gene Appearances /" + QString::number(numOfSpecies) + " Species", "Gene Appearance Species Names" };
+    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Mean \nExpression", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
     model->setHorizontalHeaderLabels(_initColumnNames);
 
-    for (auto it = map.cbegin(); it != map.cend(); ++it) {
-        QString headerTitle = it->first;
-        model->setHorizontalHeaderItem(_initColumnNames.size() + std::distance(map.cbegin(), it), new QStandardItem(headerTitle));
-    }
-
     QStringList headers = _initColumnNames;
-    headers.reserve(_initColumnNames.size() + map.size());
-    for (auto it = map.cbegin(); it != map.cend(); ++it) {
-        headers.push_back(it->first);
-    }
+    _hiddenShowncolumns.setSelectedOptions({});
+    _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[2], headers[3], headers[4] };
+    QStringList selectedHeaders = { headers[0], headers[1], headers[2] };//{ headers[0], headers[2], headers[3], headers[4] };
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
 
-    std::map<QString, std::pair<QString, std::map<QString, float>>> newickTrees;
+    std::map<QString, std::pair<QString, std::map<QString, Statistics>>> newickTrees;
 
-    // Precompute the clusteringTypeMap outside of the loop to avoid redundant computations
-    const std::unordered_map<std::string, int> clusteringTypeMap = {
-        {"Complete", HCLUST_METHOD_COMPLETE},
-        {"Average", HCLUST_METHOD_AVERAGE},
-        {"Median", HCLUST_METHOD_MEDIAN},
-        {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
-    };
     std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
     int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); 
 
     for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
-        std::map<QString, float> meanValuesForSpeciesMap;
+        std::map<QString, Statistics> statisticsValuesForSpeciesMap;
 
         for (const auto& outerPair : map) {
-            QString outerKey = outerPair.first;
-            const std::map<QString, float>& innerMap = outerPair.second;
+            QString speciesName = outerPair.first;
+
+            const std::map<QString, Statistics>& innerMap = outerPair.second;
             auto it = innerMap.find(gene);
-            float value = (it != innerMap.end()) ? it->second : 0.0f;
+            float value = 0.0;
+           // QString typeCal = "Mean";
+            //if (typeCal == "Median")
+            //{
+                //value = it->second.median;
+            //}
+            //else //Mean
+            //{
+                value = it->second.mean;
+            //}
             numbers.push_back(value);
-            meanValuesForSpeciesMap[outerKey] = value;
+            statisticsValuesForSpeciesMap[speciesName] = it->second;
         }
 
         auto numOfLeaves = static_cast<int>(numOfSpecies);
         std::unique_ptr<double[]> distmat(condensedDistanceMatrix(numbers));
-
         std::unique_ptr<int[]> merge(new int[2 * (numOfLeaves - 1)]);
         std::unique_ptr<double[]> height(new double[numOfLeaves - 1]);
         hclust_fast(numOfLeaves, distmat.get(), opt_method, merge.get(), height.get());
         std::string newick = mergeToNewick(merge.get(), numOfLeaves);
+        newickTrees.insert({ gene, {QString::fromStdString(newick), statisticsValuesForSpeciesMap} });
 
-        newickTrees.insert({ gene, {QString::fromStdString(newick), meanValuesForSpeciesMap} });
+        row.push_back(new QStandardItem(gene)); //0 ID
+        //row.push_back(new QStandardItem(""));  //1 Newick tree
+        //row.push_back(new QStandardItem(QString::number(-1.0)));  //2 Similarity with Reference Tree
 
-        row.push_back(new QStandardItem(gene)); //0
-        row.push_back(new QStandardItem(""));  //1
-        row.push_back(new QStandardItem(QString::number(-1.0)));  //2
-
-        float meanV = calculateMean(numbers);
-        // make meanV into 2 decimal places
-        meanV = std::round(meanV * 100) / 100;
-        row.push_back(new QStandardItem(QString::number(meanV)));//3
+        float meanV = 0.0;
+        //iterate statisticsValuesForSpeciesMap
+        for (const auto& pair : statisticsValuesForSpeciesMap) {
+            meanV += pair.second.mean;
+        }
+        meanV= meanV / statisticsValuesForSpeciesMap.size();
+        row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
 
         auto it = geneCounter.find(gene);
-        int count = (it != geneCounter.end()) ? it->second.size() : -1;
-        row.push_back(new QStandardItem(QString::number(count)));//4
-
         QString speciesGeneAppearancesComb;
+        int count = 0;
         if (it != geneCounter.end()) {
-            for (const auto& str : it->second) {
-                if (!speciesGeneAppearancesComb.isEmpty()) {
-                    speciesGeneAppearancesComb += ";";
-                }
-                speciesGeneAppearancesComb += str;
-            }
+            count = it->second.size();
+            speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
+        }
+        else
+        {
+            qDebug() << "Gene not found in geneCounter";
+        }
+        row.push_back(new QStandardItem(QString::number(count))); // 4 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 5 Gene Appearance Species Names
+
+        QString formattedStatistics;
+        for (const auto& pair : statisticsValuesForSpeciesMap) {
+            const auto& species = pair.first;
+            const auto& stats = pair.second;
+            formattedStatistics += QString("Species: %1, Mean: %2, Median: %3, Mode: %4, Range: %5;\n")
+                .arg(species)
+                .arg(stats.mean, 0, 'f', 2)
+                .arg(stats.median, 0, 'f', 2)
+                .arg(stats.mode, 0, 'f', 2)
+                .arg(stats.range, 0, 'f', 2);
         }
 
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb));//5
-
-        for (auto numb : numbers) {
-            row.push_back(new QStandardItem(QString::number(numb)));
-        }
+        row.push_back(new QStandardItem(formattedStatistics)); //6 Statistics
 
         model->appendRow(row);
     }
 
 
-    QString targetColor = "#fdb900";
+    /*
     std::string targetNewick = "";
     QStringList fullTreeNames;
 
@@ -1434,7 +1495,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             for (auto& pair : newickTrees) {//need to change
 
                 std::string modifiedNewick = pair.second.first.toStdString();
-                std::map <QString,float> speciesMeanMaps = pair.second.second;
+                std::map <QString, Statistics> speciesStatisticsMaps = pair.second.second;
 
                 const char* string1 = targetNewick.c_str();
                 const char* string2 = modifiedNewick.c_str();
@@ -1488,7 +1549,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
 
                 float similarity = 1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpecies); 
                 std::pair<QString, float>  temp;
-                temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames, speciesMeanMaps);
+                temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames, speciesStatisticsMaps);
                 temp.second = similarity;
                 treeSimilarities.insert(std::make_pair(pair.first, temp));
 
@@ -1511,7 +1572,7 @@ QVariant SettingsAction::createModelFromData(const QStringList& returnGeneList, 
             item2->setData(similarity, Qt::UserRole);
         }
     }
-
+    */
 
 
     return QVariant::fromValue(model);
@@ -1601,7 +1662,7 @@ void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::m
     }
 }
 
-QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames, std::map <QString, float> speciesMeanValues)
+QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames, std::map <QString, Statistics> speciesMeanValues)
 {
     int i = 0;
     std::string jsonString = "";
@@ -1644,7 +1705,7 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
                 std::string meanValue;
                 if (it != speciesMeanValues.end()) {
                     // Key found, use the corresponding value
-                    meanValue = std::to_string(it->second);
+                    meanValue = std::to_string(it->second.mean);
                 }
                 else {
                     // Key not found, assign -1
@@ -1759,7 +1820,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 
     _geneNamesConnection.fromParentVariantMap(variantMap);
     _createRowMultiSelectTree.fromParentVariantMap(variantMap);
-
+    _tableModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _embeddingDataset.fromParentVariantMap(variantMap);
@@ -1780,7 +1841,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
-    _tableModel.fromParentVariantMap(variantMap);
+ 
 
 }
 

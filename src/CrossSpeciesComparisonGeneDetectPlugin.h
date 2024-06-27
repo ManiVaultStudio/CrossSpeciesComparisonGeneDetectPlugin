@@ -40,7 +40,12 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
     void modifyTableData();
-    void updateSpeciesData(QJsonObject& node, const std::map<QString, float>& speciesExpressionMap);
+    void updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap);
+    void adjustTableWidths(const QString& value);
+    void selectedCellCountStatusBarAdd();
+    void selectedCellCountStatusBarRemove();
+    void selectedCellStatisticsStatusBarRemove();
+    void selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies);
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
@@ -71,6 +76,7 @@ protected:
     Dataset<Points> _pointsDataset;
     Dataset<Clusters> _clusterDataset;
     Dataset<Points> _lowDimTSNEDataset;
+
 };
 
 /**

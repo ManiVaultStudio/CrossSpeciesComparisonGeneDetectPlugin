@@ -15,6 +15,7 @@
 #include <cmath>
 #include <algorithm>
 #include <execution>
+#include<QTooltip>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -25,6 +26,34 @@ void applyLogTransformation(std::vector<float>& values) {
         [](float value) { return std::log(value + 1); });
 }
 
+std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedStatistics) {
+    std::map<QString, Statistics> statisticsMap;
+
+    // Split the QString into individual species statistics using ";" as a delimiter
+    // For compatibility with Qt versions before 5.14, use QString::SplitBehavior enum
+    QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
+    // For Qt versions before 5.14, use the following line instead:
+    // QStringList speciesStatsList = formattedStatistics.split(";", QString::SkipEmptyParts); // Before Qt 5.14
+
+    // Regular expression to match the pattern of each statistic
+    QRegularExpression regex("Species: (.*), Mean: ([\\d.]+), Median: ([\\d.]+), Mode: ([\\d.]+), Range: ([\\d.]+)");
+
+    for (const QString& speciesStats : speciesStatsList) {
+        QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
+        if (match.hasMatch()) {
+            QString species = match.captured(1);
+            Statistics stats = {
+                match.captured(2).toFloat(),
+                match.captured(3).toFloat(),
+                match.captured(4).toFloat(),
+                match.captured(5).toFloat()
+            };
+            statisticsMap[species] = stats;
+        }
+    }
+
+    return statisticsMap;
+}
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
@@ -159,7 +188,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
             _settingsAction.getRemoveRowSelection().setDisabled(true);
             _settingsAction.getStatusColorAction().setString(statusString);
-            
+            selectedCellStatisticsStatusBarRemove();
+            selectedCellCountStatusBarAdd();
 
         };
 
@@ -272,8 +302,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsLayout = new QHBoxLayout();
     mainOptionsLayout->setSpacing(0);
     mainOptionsLayout->setContentsMargins(0, 0, 0, 0);
-    auto extraOptionsGroup= new VerticalGroupAction(this,"Settings");
 
+    auto extraOptionsGroup = new VerticalGroupAction(this, "Settings");
     extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
     extraOptionsGroup->addAction(&_settingsAction.getTableModelAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
@@ -283,9 +313,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
-    
-
-
 
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
@@ -297,11 +324,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
-    
-    auto tsneOptionsGroup= new VerticalGroupAction(this,"Options");
+
+    auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
@@ -309,45 +337,89 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotReembedColorOption());
+
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
-    auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
+    
+
+    auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(460);
     mainOptionsGroupLayout->addWidget(group1Widget);
+
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
     group2Widget->setMaximumWidth(500);
-    mainOptionsGroupLayout->addWidget(group2Widget);  
-
-
+    mainOptionsGroupLayout->addWidget(group2Widget);
 
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
-    
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
 
     auto fullSettingsLayout = new QVBoxLayout();
     fullSettingsLayout->addLayout(mainOptionsLayout);
-
-    //fullSettingsLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
-
     mainLayout->addLayout(fullSettingsLayout);
-    mainLayout->addWidget(_settingsAction.getTableView());
-    //_settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    //mainLayout->addLayout(&_settingsAction._flowLayout);
+
+    connect(_settingsAction.getTableView(), &QTableView::entered, [this](const QModelIndex& index) {
+        if (index.isValid()) {
+            QString text = index.model()->data(index).toString();
+            QToolTip::showText(QCursor::pos(), text, _settingsAction.getTableView());
+        }
+        });
+
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getTableView(),1.2);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable(),1.8);
+
+    // Add the splitter to the main layout
+    mainLayout->addLayout(_settingsAction.getTableSplitter());
+
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
-    // Set the layout for the widget
+
     getWidget().setLayout(mainLayout);
 
 
 
 
 
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::adjustTableWidths(const QString& value) {
+    // Assuming _settingsAction.getHorizontalLayout() returns your QHBoxLayout
+    QHBoxLayout* layout = _settingsAction.getTableSplitter();
+    if (!layout) return;
+
+    QWidget* parentWidget = layout->parentWidget();
+    if (!parentWidget) return;
+
+    int totalWidth = parentWidget->width();
+
+    double tableViewRatio = 1.2;
+    double selectionDetailsTableRatio = 2;
+
+    if (value == "small") {
+        tableViewRatio = 1.8;
+        selectionDetailsTableRatio = 1.2;
+    }
+
+    int tableViewWidth = static_cast<int>(totalWidth * tableViewRatio / (tableViewRatio + selectionDetailsTableRatio));
+    int selectionDetailsTableWidth = totalWidth - tableViewWidth;
+
+    // Assuming the first two widgets in the layout are the ones we want to adjust
+    if (layout->count() >= 2) {
+        QWidget* tableViewWidget = layout->itemAt(0)->widget();
+        QWidget* selectionDetailsTableWidget = layout->itemAt(1)->widget();
+
+        if (tableViewWidget && selectionDetailsTableWidget) {
+            tableViewWidget->setMinimumWidth(tableViewWidth);
+            tableViewWidget->setMaximumWidth(tableViewWidth);
+
+            selectionDetailsTableWidget->setMinimumWidth(selectionDetailsTableWidth);
+            selectionDetailsTableWidget->setMaximumWidth(selectionDetailsTableWidth);
+        }
+    }
 }
 
 
@@ -369,28 +441,19 @@ QColor getColorFromValue(int value, int min, int max) {
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
     auto variant = _settingsAction.getTableModelAction().getVariant();
-    QStandardItemModel* model = variant.value<QStandardItemModel*>();
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
-    if (_settingsAction.getTableView() == nullptr) {
+    if (!_settingsAction.getTableView()) {
         qDebug() << "_settingsAction.getTableView() is null";
         return;
     }
 
-    if (model == nullptr) {
+    if (!model) {
         qDebug() << "Model is null";
-        if (_settingsAction.getTableView()->model() != nullptr) {
-            _settingsAction.getTableView()->model()->removeRows(0, _settingsAction.getTableView()->model()->rowCount());
+        QAbstractItemModel* currentModel = _settingsAction.getTableView()->model();
+        if (currentModel) {
+            currentModel->removeRows(0, currentModel->rowCount());
             _settingsAction.getTableView()->update();
-
-            //_make the headers two three lines so that they are fully visible
-            _settingsAction.getTableView()->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-            _settingsAction.getTableView()->horizontalHeader()->setStretchLastSection(true);
-            _settingsAction.getTableView()->horizontalHeader()->setMinimumSectionSize(50);
-            _settingsAction.getTableView()->horizontalHeader()->setMaximumSectionSize(600);
-            _settingsAction.getTableView()->horizontalHeader()->setHighlightSections(false);
-            _settingsAction.getTableView()->horizontalHeader()->setSortIndicatorShown(true);
-
-
         }
         else {
             qDebug() << "TableView model is null";
@@ -399,7 +462,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     }
 
     _settingsAction.getTableView()->setModel(model);
-
+    QFontMetrics metrics(_settingsAction.getTableView()->horizontalHeader()->font());
+    int headerHeight = metrics.height() * 3; // Assuming 3 lines of text
+    _settingsAction.getTableView()->horizontalHeader()->setFixedHeight(headerHeight);
 
     //QVector<int> columns = { 0,2, 3,4 };
     auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
@@ -409,7 +474,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _settingsAction.getTableView()->hideColumn(i);
         }
     } 
-    model->sort(3,Qt::DescendingOrder);
+    model->sort(1,Qt::DescendingOrder);
+    //set column width
+    _settingsAction.getTableView()->resizeColumnsToContents();
+
 
 
     //connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
@@ -443,7 +511,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
 
-        std::map<QString, float> speciesExpressionMap;
+        std::map<QString, Statistics> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
         QJsonObject valueStringReference;
@@ -464,11 +532,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
-            //for all columns other than _settingsAction.getInitColumnNames().size(
-            if (i > initColumnNamesSize) {
-                speciesExpressionMap[columnName] = data.toFloat();
+            else if (columnName == "Statistics") {
+                // Ensure finalsettingSpeciesNamesArray is populated before processing statistics
+                if (!finalsettingSpeciesNamesArray.isEmpty()) {
+                    std::map<QString, Statistics> statisticsValues = convertToStatisticsMap(data.toString());
+                    speciesExpressionMap = statisticsValues;
+                    selectedCellCountStatusBarRemove();
+                    selectedCellStatisticsStatusBarAdd(statisticsValues, finalsettingSpeciesNamesArray);
+                }
+                else {
+                    // Handle the case where finalsettingSpeciesNamesArray is empty
+                    // For example, log a warning or skip processing this column
+                    qDebug() << "Warning: Gene Appearance Species Names must be processed before Statistics.";
+                }
             }
         }
+
 
 
         std::vector<std::seed_seq::result_type> selectedSpeciesIndices;
@@ -689,22 +768,173 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
             }
         }
+        //_settingsAction.getSelctedSpeciesVals().setString("");
+        if (_settingsAction.getSelctedSpeciesVals().getString() == finalSpeciesNameString)
+        {
+            _settingsAction.getSelctedSpeciesVals().setString("");
+        }
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
+
         });
 
 
 
     emit model->layoutChanged();
 
+    
+
+    selectedCellStatisticsStatusBarRemove();
+    selectedCellCountStatusBarAdd();
+
+
+
+
+
 }
-void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, float>& speciesExpressionMap) {
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
+{
+    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
+    {
+        // Create a new model for the table view
+        QStandardItemModel* model = new QStandardItemModel();
+
+        // Set headers
+        model->setHorizontalHeaderLabels({ "Species", "Count" });
+
+        // Convert map to a vector of pairs for sorting
+        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
+            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
+            _settingsAction.getSelectedSpeciesCellCountMap().end());
+
+        // Sort the vector by counts (descending order)
+        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
+            [](const auto& a, const auto& b) {
+                return a.second.first > b.second.first;
+            });
+
+        // Populate the model with sorted data
+        for (const auto& [species, details] : sortedSpeciesDetails) {
+            QList<QStandardItem*> rowItems;
+            rowItems << new QStandardItem(species);
+            auto item = new QStandardItem();
+            item->setData(QVariant(details.first), Qt::EditRole);
+            rowItems << item;
+
+
+
+            model->appendRow(rowItems);
+        }
+        model->sort(1, Qt::DescendingOrder);
+
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+    }
+    adjustTableWidths("small");
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies)
+{
+    if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
+    {
+        // Create a new model for the table view
+        QStandardItemModel* model = new QStandardItemModel();
+
+        // Set headers
+        model->setHorizontalHeaderLabels({ "Species", "Count", "Mean", "Median", "Mode", "Range" });
+
+        // Convert map to a vector of pairs for sorting
+        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
+            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
+            _settingsAction.getSelectedSpeciesCellCountMap().end());
+
+        // Sort the vector by counts (descending order)
+        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
+            [](const auto& a, const auto& b) {
+                return a.second.first > b.second.first;
+            });
+
+        // Populate the model with sorted data and statistics
+        for (const auto& [species, details] : sortedSpeciesDetails) {
+            QList<QStandardItem*> rowItems;
+            rowItems << new QStandardItem(species);
+            auto item = new QStandardItem();
+            item->setData(QVariant(details.first), Qt::EditRole);
+            rowItems << item;
+
+            // Find statistics for the species
+            auto it = statisticsValues.find(species);
+            if (it != statisticsValues.end()) {
+
+                QStandardItem* item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.mean), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.median), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.mode), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.range), Qt::EditRole);
+                rowItems << item;
+
+
+
+            }
+            else {
+                // Fill with placeholders if no statistics found
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+            }
+
+
+            // Check if the species is in the selectedSpecies list and color the row if it is
+            if (selectedSpecies.contains(species)) {
+                for (auto& item : rowItems) {
+                    item->setBackground(QBrush(QColor("#00A2ED")));
+                }
+            }
+
+            model->appendRow(rowItems);
+        }
+
+        model->sort(1, Qt::DescendingOrder);
+        
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+    }
+    adjustTableWidths("large");
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
+{
+    _settingsAction.getSelectionDetailsTable()->setModel(new QStandardItemModel());
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemove()
+{
+    _settingsAction.getSelectionDetailsTable()->setModel(new QStandardItemModel());
+}
+
+
+void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
         QString nodeName = node["name"].toString();
         auto it = speciesExpressionMap.find(nodeName);
         // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
         if (it != speciesExpressionMap.end()) {
-            node["mean"] = it->second; // Use it->second to access the value in the map
+            node["mean"] = std::round(it->second.mean * 100.0) / 100.0; // Round to 2 decimal places
+
         }
     }
 
@@ -794,7 +1024,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& v
 
     mv::util::variantMapMustContain(variantMap, "CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _settingsAction.fromVariantMap(variantMap["CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings"].toMap());
-    modifyTableData();
+   // modifyTableData();
+    _settingsAction.getStartComputationTriggerAction().trigger();
 
 }
 
