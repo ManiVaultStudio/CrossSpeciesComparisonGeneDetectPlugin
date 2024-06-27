@@ -232,7 +232,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
-    _startComputationTriggerAction.setSerializationName("CSCGDV:Start Computation");
     _createRowMultiSelectTree.setSerializationName("CSCGDV:Create Row MultiSelect Tree");
     _performGeneTableTsneAction.setSerializationName("CSCGDV:Perform Gene Table TSNE");
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
@@ -1621,9 +1620,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     WidgetAction::fromVariantMap(variantMap);
 
     _geneNamesConnection.fromParentVariantMap(variantMap);
-    _startComputationTriggerAction.fromParentVariantMap(variantMap);
     _createRowMultiSelectTree.fromParentVariantMap(variantMap);
-    _tableModel.fromParentVariantMap(variantMap);
+
     _selectedGene.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _embeddingDataset.fromParentVariantMap(variantMap);
@@ -1644,6 +1642,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
+    _tableModel.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
@@ -1651,7 +1650,6 @@ QVariantMap SettingsAction::toVariantMap() const
     QVariantMap variantMap = WidgetAction::toVariantMap();
 
     _geneNamesConnection.insertIntoVariantMap(variantMap);
-    _startComputationTriggerAction.insertIntoVariantMap(variantMap);
     _createRowMultiSelectTree.insertIntoVariantMap(variantMap);
     _tableModel.insertIntoVariantMap(variantMap);
     _selectedGene.insertIntoVariantMap(variantMap);
