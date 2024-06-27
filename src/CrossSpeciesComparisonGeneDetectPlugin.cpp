@@ -370,10 +370,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     infoLayout->addLayout(_settingsAction.getSelectedCellSpeciesCountInfoLayout());
     infoLayout->addLayout(_settingsAction.getSelectedCellStatisticsInfoLayout());
 
+
+
+
+
     auto tableAndInfoLayout = new QHBoxLayout();
 
+    // Add the table view to the layout
     tableAndInfoLayout->addWidget(_settingsAction.getTableView());
+    // Add the info layout to the layout
     tableAndInfoLayout->addLayout(infoLayout);
+
+    // Set the stretch factors
+    // Assuming you want the table view to take up twice as much space as the infoLayout
+    tableAndInfoLayout->setStretch(0, 1.16); // First parameter is the index, second is the stretch factor
+    tableAndInfoLayout->setStretch(1, 2); 
+
 
     mainLayout->addLayout(tableAndInfoLayout);
     
