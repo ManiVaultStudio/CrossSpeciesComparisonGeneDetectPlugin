@@ -31,6 +31,8 @@
 #include "actions/VariantAction.h"
 #include "actions/GroupAction.h"
 #include "QStatusBar"
+#include <widgets/FlowLayout.h>
+
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -84,7 +86,7 @@ public: // Action getters
     VariantAction& getTableModelAction() { return _tableModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
-    DatasetPickerAction& getFilteringTreeDatasetAction() { return _filteringTreeDataset; }
+    DatasetPickerAction& getFilteringEditTreeDatasetAction() { return _filteringEditTreeDataset; }
     OptionSelectionAction& getOptionSelectionAction() { return _optionSelectionAction; }
     TriggerAction& getStartComputationTriggerAction() { return _startComputationTriggerAction; }
     DatasetPickerAction& getReferenceTreeDatasetAction() { return _referenceTreeDataset; }
@@ -99,13 +101,13 @@ public: // Action getters
     ToggleAction& getPerformGeneTableTsneAction() { return _performGeneTableTsneAction; }
     IntegralAction& getTsnePerplexity() { return _tsnePerplexity; }
     OptionsAction& getHiddenShowncolumns() { return _hiddenShowncolumns; }
-    DatasetPickerAction& getScatterplotEmbeddingColorOption() { return _scatterplotEmbeddingColorOption; }
     DatasetPickerAction& getScatterplotEmbeddingPointsUMAPOption() { return _scatterplotEmbeddingPointsUMAPOption; }
     OptionAction& getScatterplotReembedColorOption() { return _scatterplotReembedColorOption; }
     StringAction& getSelctedSpeciesVals() { return _selectedSpeciesVals; }
     TriggerAction& getRemoveRowSelection() { return _removeRowSelection; }
     StringAction& getStatusColorAction() { return _statusColorAction; }
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
+    ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -129,12 +131,13 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
-
+    mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
+    QTableView* getTableView() const { return _tableView; }
 
 
 
     void computeGeneMeanExpressionMap();
-
+    void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
 
@@ -144,7 +147,7 @@ public: // Action getters
 private:
     QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
-
+    void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
 public: // Serialization
 
     /**
@@ -163,7 +166,7 @@ protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
     VariantAction                 _tableModel;
     StringAction                  _selectedGene;
-    DatasetPickerAction          _filteringTreeDataset;
+    DatasetPickerAction          _filteringEditTreeDataset;
     StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;
@@ -194,12 +197,18 @@ protected:
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
     TriggerAction          _removeRowSelection;
-    DatasetPickerAction           _scatterplotEmbeddingColorOption;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
     OptionAction           _scatterplotReembedColorOption;
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
+    mv::gui::FlowLayout*            _selectedCellClusterInfoStatusBar;
+    //mv::gui::FlowLayout     _clustersLayout;
     QStringList _initColumnNames;
+    ToggleAction                  _usePreComputedTSNE;
+    QLabel* _currentCellSelectionClusterInfoLabel;
+
+
+    QTableView* _tableView;                /** Table view for the data */
 
 };
