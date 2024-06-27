@@ -779,11 +779,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
-        //sort by column 2
         model->sort(1, Qt::DescendingOrder);
-        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
-        // Set the model to the table view
+
         _settingsAction.getSelectionDetailsTable()->setModel(model);
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
     }
 }
 
@@ -840,13 +840,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
             model->appendRow(rowItems);
         }
-        model->sort(1, Qt::DescendingOrder);
-        //remove row numbers vertical
-        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
 
+        model->sort(1, Qt::DescendingOrder);
         
-        // Set the model to the table view
         _settingsAction.getSelectionDetailsTable()->setModel(model);
+        _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
     }
 }
 
