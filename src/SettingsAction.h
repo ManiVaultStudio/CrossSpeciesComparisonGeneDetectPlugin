@@ -140,7 +140,7 @@ public: // Action getters
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getTableView() const { return _tableView; }
-
+    std::map<QString, int>& getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
 
 
     void computeGeneMeanExpressionMap();
@@ -214,7 +214,7 @@ protected:
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
-
+    std::map<QString,int>       _selectedSpeciesCellCountMap;
 
     QTableView* _tableView;                /** Table view for the data */
 

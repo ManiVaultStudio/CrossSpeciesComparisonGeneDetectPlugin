@@ -397,28 +397,23 @@ QColor getColorFromValue(int value, int min, int max) {
 void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 {
     auto variant = _settingsAction.getTableModelAction().getVariant();
-    QStandardItemModel* model = variant.value<QStandardItemModel*>();
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
-    if (_settingsAction.getTableView() == nullptr) {
+    if (!_settingsAction.getTableView()) {
         qDebug() << "_settingsAction.getTableView() is null";
         return;
     }
 
-    if (model == nullptr) {
+    if (!model) {
         qDebug() << "Model is null";
-        if (_settingsAction.getTableView()->model() != nullptr) {
-            _settingsAction.getTableView()->model()->removeRows(0, _settingsAction.getTableView()->model()->rowCount());
+        QAbstractItemModel* currentModel = _settingsAction.getTableView()->model();
+        if (currentModel) {
+            currentModel->removeRows(0, currentModel->rowCount());
+
+            QFontMetrics metrics(_settingsAction.getTableView()->horizontalHeader()->font());
+            int headerHeight = metrics.height() * 3; // Assuming 3 lines of text
+            _settingsAction.getTableView()->horizontalHeader()->setFixedHeight(headerHeight);
             _settingsAction.getTableView()->update();
-
-            //_make the headers two three lines so that they are fully visible
-            _settingsAction.getTableView()->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-            _settingsAction.getTableView()->horizontalHeader()->setStretchLastSection(true);
-            _settingsAction.getTableView()->horizontalHeader()->setMinimumSectionSize(50);
-            _settingsAction.getTableView()->horizontalHeader()->setMaximumSectionSize(600);
-            _settingsAction.getTableView()->horizontalHeader()->setHighlightSections(false);
-            _settingsAction.getTableView()->horizontalHeader()->setSortIndicatorShown(true);
-
-
         }
         else {
             qDebug() << "TableView model is null";
@@ -438,6 +433,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
     } 
     model->sort(1,Qt::DescendingOrder);
+    //set column width
+
 
 
     //connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
