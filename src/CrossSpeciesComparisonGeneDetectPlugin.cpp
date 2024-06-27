@@ -25,6 +25,34 @@ void applyLogTransformation(std::vector<float>& values) {
         [](float value) { return std::log(value + 1); });
 }
 
+std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedStatistics) {
+    std::map<QString, Statistics> statisticsMap;
+
+    // Split the QString into individual species statistics using ";" as a delimiter
+    // For compatibility with Qt versions before 5.14, use QString::SplitBehavior enum
+    QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
+    // For Qt versions before 5.14, use the following line instead:
+    // QStringList speciesStatsList = formattedStatistics.split(";", QString::SkipEmptyParts); // Before Qt 5.14
+
+    // Regular expression to match the pattern of each statistic
+    QRegularExpression regex("Species: (.*), Mean: ([\\d.]+), Median: ([\\d.]+), Mode: ([\\d.]+), Range: ([\\d.]+)");
+
+    for (const QString& speciesStats : speciesStatsList) {
+        QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
+        if (match.hasMatch()) {
+            QString species = match.captured(1);
+            Statistics stats = {
+                match.captured(2).toFloat(),
+                match.captured(3).toFloat(),
+                match.captured(4).toFloat(),
+                match.captured(5).toFloat()
+            };
+            statisticsMap[species] = stats;
+        }
+    }
+
+    return statisticsMap;
+}
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
@@ -409,7 +437,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _settingsAction.getTableView()->hideColumn(i);
         }
     } 
-    model->sort(3,Qt::DescendingOrder);
+    model->sort(1,Qt::DescendingOrder);
 
 
     //connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
@@ -443,7 +471,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
 
-        std::map<QString, float> speciesExpressionMap;
+        std::map<QString, Statistics> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
         QJsonObject valueStringReference;
@@ -464,10 +492,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
-            //for all columns other than _settingsAction.getInitColumnNames().size(
-            if (i > initColumnNamesSize) {
-                speciesExpressionMap[columnName] = data.toFloat();
+            else if (columnName == "Statistics")
+            {
+                std::map<QString, Statistics> statisticsValues= convertToStatisticsMap(data.toString());
+                speciesExpressionMap = statisticsValues;
             }
+            //for all columns other than _settingsAction.getInitColumnNames().size(
+ /*           if (i > initColumnNamesSize) {
+                speciesExpressionMap[columnName] = data.toFloat();
+            }*/
         }
 
 
@@ -689,6 +722,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
 
             }
         }
+        //_settingsAction.getSelctedSpeciesVals().setString("");
+        if (_settingsAction.getSelctedSpeciesVals().getString() == finalSpeciesNameString)
+        {
+            _settingsAction.getSelctedSpeciesVals().setString("");
+        }
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
         });
 
@@ -697,14 +735,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
     emit model->layoutChanged();
 
 }
-void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, float>& speciesExpressionMap) {
+void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
         QString nodeName = node["name"].toString();
         auto it = speciesExpressionMap.find(nodeName);
         // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
         if (it != speciesExpressionMap.end()) {
-            node["mean"] = std::round(it->second * 100.0) / 100.0; // Round to 2 decimal places
+            node["mean"] = std::round(it->second.mean * 100.0) / 100.0; // Round to 2 decimal places
 
         }
     }

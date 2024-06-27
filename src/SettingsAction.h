@@ -152,7 +152,7 @@ public: // Action getters
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Statistics> speciesMeanValues);
 private:
-    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
 public: // Serialization
