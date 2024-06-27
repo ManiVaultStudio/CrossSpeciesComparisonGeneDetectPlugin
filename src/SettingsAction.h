@@ -43,6 +43,13 @@ namespace mv
     class CoreInterface;
 }
 
+struct Statistics {
+    float mean;
+    float median;
+    float mode;
+    float range;
+};
+
 class SettingsAction : public WidgetAction
 {
 public:
@@ -143,10 +150,10 @@ public: // Action getters
 
     double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
-    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, float> speciesMeanValues);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Statistics> speciesMeanValues);
 private:
-    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, float>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
-    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, float>>& map, int n, QString datasetId, float treeSimilarityScore);
+    QVariant createModelFromData(const QStringList& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
 public: // Serialization
 
@@ -176,7 +183,7 @@ protected:
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _clusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
-    std::map<QString, std::map<QString, float>> _clusterNameToGeneNameToExpressionValue;
+    std::map<QString, std::map<QString, Statistics>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;
     StringAction           _geneNamesConnection;
