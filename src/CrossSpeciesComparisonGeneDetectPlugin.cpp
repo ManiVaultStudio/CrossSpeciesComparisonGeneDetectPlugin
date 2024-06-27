@@ -497,6 +497,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             {
                 std::map<QString, Statistics> statisticsValues= convertToStatisticsMap(data.toString());
                 speciesExpressionMap = statisticsValues;
+                selectedCellCountStatusBarRemove();
+                selectedCellStatisticsStatusBarAdd(statisticsValues);
             }
             //for all columns other than _settingsAction.getInitColumnNames().size(
  /*           if (i > initColumnNamesSize) {
@@ -729,8 +731,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             _settingsAction.getSelctedSpeciesVals().setString("");
         }
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
-        selectedCellCountStatusBarRemove();
-        selectedCellStatisticsStatusBarAdd();
+
         });
 
 
@@ -813,7 +814,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
 
 
 
-void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd()
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues)
 {
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
@@ -844,11 +845,47 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 // Use < for ascending order
             });
 
-        // Iterate through the sorted vector
+        // Iterate through statisticsValues
+        /*
+        for (const auto& [species, statistics] : statisticsValues)
+        {
+            auto speciesName= species;
+            auto meanValue= statistics.mean;
+            auto medianValue = statistics.median;
+            auto modeValue= statistics.mode;
+            auto rangeValue= statistics.range;
+
+            int speciesCount = 0;
+            QColor speciesColor= QColor(Qt::gray);
+            //search for speciesNamekey in sortedSpeciesDetails and extract count and color
+
+
+
+        }
+        */
+
+
+     
         for (const auto& [species, details] : sortedSpeciesDetails) {
             auto clusterName = species;
             auto clusterIndicesSize = details.first;
             auto clusterColor = details.second;
+
+            // Initialize statistics values
+            auto meanValue = 0.0;
+            auto medianValue = 0.0;
+            auto modeValue = 0.0;
+            auto rangeValue = 0.0;
+            
+            // Find clusterName in statisticsValues and extract mean, median, mode, range
+            auto it = statisticsValues.find(clusterName);
+            if (it != statisticsValues.end()) {
+                meanValue = it->second.mean;
+                medianValue = it->second.median;
+                modeValue = it->second.mode;
+                rangeValue = it->second.range;
+            }
+
             // Calculate luminance
             qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
 
@@ -858,13 +895,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             // Convert QColor to hex string for stylesheet
             QString backgroundColor = clusterColor.name(QColor::HexArgb);
 
-            auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+            // Construct the label text to include mean, median, mode, and range
+            QString labelText = QString("%1: %2 | Mean: %3 | Median: %4 | Mode: %5 | Range: %6")
+                .arg(clusterName)
+                .arg(clusterIndicesSize)
+                .arg(meanValue, 0, 'f', 2) // Format floating point with 2 decimal places
+                .arg(medianValue, 0, 'f', 2)
+                .arg(modeValue, 0, 'f', 2)
+                .arg(rangeValue, 0, 'f', 2);
+
+            auto clusterLabel = new QLabel(labelText);
             // Add text color and background color to clusterLabel with padding and border for better styling
             clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
                 .arg(textColor).arg(backgroundColor).arg(textColor));
             _settingsAction.getSelectedCellStatisticsInfoLayout()->addWidget(clusterLabel);
         }
-
+        
     }
 }
 
