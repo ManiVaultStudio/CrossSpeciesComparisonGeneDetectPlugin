@@ -704,7 +704,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
         auto it = speciesExpressionMap.find(nodeName);
         // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
         if (it != speciesExpressionMap.end()) {
-            node["mean"] = it->second; // Use it->second to access the value in the map
+            node["mean"] = std::round(it->second * 100.0) / 100.0; // Round to 2 decimal places
+
         }
     }
 
