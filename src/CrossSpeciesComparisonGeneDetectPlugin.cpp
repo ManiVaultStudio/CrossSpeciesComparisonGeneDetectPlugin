@@ -300,8 +300,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsLayout = new QHBoxLayout();
     mainOptionsLayout->setSpacing(0);
     mainOptionsLayout->setContentsMargins(0, 0, 0, 0);
-    auto extraOptionsGroup= new VerticalGroupAction(this,"Settings");
 
+    auto extraOptionsGroup = new VerticalGroupAction(this, "Settings");
     extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
     extraOptionsGroup->addAction(&_settingsAction.getTableModelAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
@@ -311,9 +311,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
-    
-
-
 
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
@@ -325,8 +322,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
-    
-    auto tsneOptionsGroup= new VerticalGroupAction(this,"Options");
+
+    auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
@@ -337,64 +334,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
     mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
-    auto group1Widget= mainOptionsGroup1->createWidget(&getWidget());
+
+    auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(460);
     mainOptionsGroupLayout->addWidget(group1Widget);
+
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
     group2Widget->setMaximumWidth(500);
-    mainOptionsGroupLayout->addWidget(group2Widget);  
-
-
+    mainOptionsGroupLayout->addWidget(group2Widget);
 
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
-    
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
 
     auto fullSettingsLayout = new QVBoxLayout();
     fullSettingsLayout->addLayout(mainOptionsLayout);
-
-    //fullSettingsLayout->addWidget(_settingsAction.getSelectedCellClusterInfoStatusBar());
-
     mainLayout->addLayout(fullSettingsLayout);
 
     auto infoLayout = new QVBoxLayout();
-
     infoLayout->addLayout(_settingsAction.getSelectedCellSpeciesCountInfoLayout());
     infoLayout->addLayout(_settingsAction.getSelectedCellStatisticsInfoLayout());
 
-
-
-
-
     auto tableAndInfoLayout = new QHBoxLayout();
-
-    // Add the table view to the layout
     tableAndInfoLayout->addWidget(_settingsAction.getTableView());
-    // Add the info layout to the layout
     tableAndInfoLayout->addLayout(infoLayout);
-
-    // Set the stretch factors
-    // Assuming you want the table view to take up twice as much space as the infoLayout
-    tableAndInfoLayout->setStretch(0, 1.16); // First parameter is the index, second is the stretch factor
-    tableAndInfoLayout->setStretch(1, 2); 
-
+    tableAndInfoLayout->setStretch(0, 1.1); // Adjusted stretch factor for table view
+    tableAndInfoLayout->setStretch(1, 1.9); // Adjusted stretch factor for info layout
 
     mainLayout->addLayout(tableAndInfoLayout);
-    
-   
-    //_settingsAction.getSelectedCellClusterInfoStatusBar()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    //mainLayout->addLayout(&_settingsAction._flowLayout);
     mainLayout->addLayout(_settingsAction.getSelectedCellClusterInfoStatusBar());
     _settingsAction.getStatusColorAction().setString("M");
-    // Set the layout for the widget
+
     getWidget().setLayout(mainLayout);
 
 
@@ -772,7 +749,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(descriptionLabel);
         //iterate _settingsAction.getSelectedSpeciesCellCountMap()
 
-        for (auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
+        // Convert map to a vector of pairs
+        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
+            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
+            _settingsAction.getSelectedSpeciesCellCountMap().end());
+
+        // Sort the vector by counts (which is the first element of the pair inside the map value)
+        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
+            [](const auto& a, const auto& b) {
+                return a.second.first > b.second.first; // Descending order
+                // Use < for ascending order
+            });
+
+        // Iterate through the sorted vector
+        for (const auto& [species, details] : sortedSpeciesDetails) {
             auto clusterName = species;
             auto clusterIndicesSize = details.first;
             auto clusterColor = details.second;
@@ -790,8 +780,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
             clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
                 .arg(textColor).arg(backgroundColor).arg(textColor));
             _settingsAction.getSelectedCellSpeciesCountInfoLayout()->addWidget(clusterLabel);
-
-
         }
 
     }
