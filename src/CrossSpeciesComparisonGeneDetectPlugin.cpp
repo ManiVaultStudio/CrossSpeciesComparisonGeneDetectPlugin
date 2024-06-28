@@ -36,7 +36,8 @@ std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedSta
     // QStringList speciesStatsList = formattedStatistics.split(";", QString::SkipEmptyParts); // Before Qt 5.14
 
     // Regular expression to match the pattern of each statistic
-    QRegularExpression regex("Species: (.*), Mean: ([\\d.]+), Median: ([\\d.]+), Mode: ([\\d.]+), Range: ([\\d.]+)");
+    QRegularExpression regex("Species: (.*), MeanSelected: ([\\d.]+), MedianSelected: ([\\d.]+), ModeSelected: ([\\d.]+), RangeSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), MedianNotSelected: ([\\d.]+), ModeNotSelected: ([\\d.]+), RangeNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
@@ -46,7 +47,13 @@ std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedSta
                 match.captured(2).toFloat(),
                 match.captured(3).toFloat(),
                 match.captured(4).toFloat(),
-                match.captured(5).toFloat()
+                match.captured(5).toFloat(),
+                match.captured(6).toInt(),
+                match.captured(7).toFloat(),
+                match.captured(8).toFloat(),
+                match.captured(9).toFloat(),
+                match.captured(10).toFloat(),
+                match.captured(11).toInt()
             };
             statisticsMap[species] = stats;
         }
@@ -799,36 +806,41 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species", "Count" });
+        model->setHorizontalHeaderLabels({ "Species", "Count\nSelected","Count\nNon\nSelected" });
 
-        // Convert map to a vector of pairs for sorting
-        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
-            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
-            _settingsAction.getSelectedSpeciesCellCountMap().end());
+        for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
+            QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
 
-        // Sort the vector by counts (descending order)
-        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
-            [](const auto& a, const auto& b) {
-                return a.second.first > b.second.first;
-            });
+            // Calculate the brightness of the background color
+            qreal brightness = backgroundColor.lightnessF();
 
-        // Populate the model with sorted data
-        for (const auto& [species, details] : sortedSpeciesDetails) {
+            // Choose text color based on the brightness of the background color
+            QColor textColor = (brightness > 0.5) ? Qt::black : Qt::white;
+
             QList<QStandardItem*> rowItems;
-            rowItems << new QStandardItem(species);
-            auto item = new QStandardItem();
-            item->setData(QVariant(details.first), Qt::EditRole);
+            QStandardItem* speciesItem = new QStandardItem(species);
+            speciesItem->setBackground(backgroundColor);
+            speciesItem->setForeground(textColor); // Set text color
+            rowItems << speciesItem;
+
+            QStandardItem* item;
+            item = new QStandardItem();
+            item->setData(QVariant(details.selectedCellsCount), Qt::EditRole);
             rowItems << item;
 
-
+            item = new QStandardItem();
+            item->setData(QVariant(details.nonSelectedCellsCount), Qt::EditRole);
+            rowItems << item;
 
             model->appendRow(rowItems);
         }
         model->sort(1, Qt::DescendingOrder);
-
+        _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        emit model->layoutChanged();
+
     }
     adjustTableWidths("small");
 }
@@ -841,26 +853,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species", "Count", "Mean", "Median", "Mode", "Range" });
-
-        // Convert map to a vector of pairs for sorting
-        std::vector<std::pair<QString, std::pair<int, QColor>>> sortedSpeciesDetails(
-            _settingsAction.getSelectedSpeciesCellCountMap().begin(),
-            _settingsAction.getSelectedSpeciesCellCountMap().end());
-
-        // Sort the vector by counts (descending order)
-        std::sort(sortedSpeciesDetails.begin(), sortedSpeciesDetails.end(),
-            [](const auto& a, const auto& b) {
-                return a.second.first > b.second.first;
-            });
+        model->setHorizontalHeaderLabels({ "Species", "Count\nSelected","Count\nNon\nSelected", "Mean\nSelected", "Mean\nNon\nSelected","Mean\nDifference","Median\nSelected", "Median\nNon\nSelected","Mode\nSelected", "Mode\nNon\nSelected","Range\nSelected", "Range\nNon\nSelected"});
 
         // Populate the model with sorted data and statistics
-        for (const auto& [species, details] : sortedSpeciesDetails) {
+        for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
+            QColor backgroundColor = QColor(details.color);
+
+            // Calculate the brightness of the background color
+            qreal brightness = backgroundColor.lightnessF();
+
+            // Choose text color based on the brightness of the background color
+            QColor textColor = (brightness > 0.5) ? Qt::black : Qt::white;
+
             QList<QStandardItem*> rowItems;
-            rowItems << new QStandardItem(species);
-            auto item = new QStandardItem();
-            item->setData(QVariant(details.first), Qt::EditRole);
+            QStandardItem* item = new QStandardItem(species);
+            item->setBackground(backgroundColor);
+            item->setForeground(textColor); // Set text color
             rowItems << item;
+
 
             // Find statistics for the species
             auto it = statisticsValues.find(species);
@@ -869,19 +879,48 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QStandardItem* item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.mean), Qt::EditRole);
+                item->setData(QVariant(it->second.countSelected), Qt::EditRole);
                 rowItems << item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.median), Qt::EditRole);
+                item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
                 rowItems << item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.mode), Qt::EditRole);
+                item->setData(QVariant(it->second.meanSelected), Qt::EditRole);
                 rowItems << item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.range), Qt::EditRole);
+                item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                float difference = (it->second.meanSelected - it->second.meanNonSelected);
+                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.medianSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.medianNonSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.modeSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.modeNonSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.rangeSelected), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.rangeNonSelected), Qt::EditRole);
                 rowItems << item;
 
 
@@ -893,24 +932,33 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
             }
 
 
             // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
-                for (auto& item : rowItems) {
-                    item->setBackground(QBrush(QColor("#00A2ED")));
+                for (int i = 1; i < rowItems.size(); ++i) { // Start from 1 to skip the first column
+                    rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
                 }
             }
+
+
 
             model->appendRow(rowItems);
         }
 
-        model->sort(1, Qt::DescendingOrder);
-        
+        model->sort(5, Qt::DescendingOrder);
+        _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
+
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        emit model->layoutChanged();
     }
     adjustTableWidths("large");
 }
@@ -933,7 +981,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
         auto it = speciesExpressionMap.find(nodeName);
         // If the "name" is found in the speciesExpressionMap, update "mean" if it exists or add "mean" if it doesn't exist
         if (it != speciesExpressionMap.end()) {
-            node["mean"] = std::round(it->second.mean * 100.0) / 100.0; // Round to 2 decimal places
+            node["mean"] = std::round(it->second.meanSelected * 100.0) / 100.0; // Round to 2 decimal places
 
         }
     }

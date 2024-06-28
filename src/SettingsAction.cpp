@@ -32,13 +32,28 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
+Statistics combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected) {
+    Statistics combinedStats;
+    combinedStats.meanSelected = selected.meanVal;
+    combinedStats.medianSelected = selected.medianVal;
+    combinedStats.modeSelected = selected.modeVal;
+    combinedStats.rangeSelected = selected.rangeVal;
+    combinedStats.countSelected = selected.countVal;
 
-Statistics calculateStatistics(const std::vector<float>& data) {
+    combinedStats.meanNonSelected = nonSelected.meanVal; // Note the change here to meanSelected from nonSelected
+    combinedStats.medianNonSelected = nonSelected.medianVal; // Same as above
+    combinedStats.modeNonSelected = nonSelected.modeVal; // Same as above
+    combinedStats.rangeNonSelected = nonSelected.rangeVal; // Same as above
+    combinedStats.countNonSelected = nonSelected.countVal; // Same as above
+
+    return combinedStats;
+}
+StatisticsSingle calculateStatistics(const std::vector<float>& data) {
     if (data.empty()) {
         return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
                  std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
     }
-
+    int count = data.size();
     // Calculate mean using std::reduce for better performance with parallel execution
     float sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0f);
     float mean = sum / data.size();
@@ -71,8 +86,8 @@ Statistics calculateStatistics(const std::vector<float>& data) {
 
     // Calculate range
     float range = sortedData.back() - sortedData.front();
-
-    return { mean, median, mode, range };
+    
+    return { mean, median, mode, range, count };
 }
 
 
@@ -145,25 +160,6 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
 }
 
 
-
-//struct Statistics {
-//    float mean;
-//    float variance;
-//    float stdDeviation;
-//};
-//Statistics calculateStatistics(const std::vector<float>& numbers) {
-//    if (numbers.empty()) {
-//        return { 0.0, 0.0, 0.0 };
-//    }
-//
-//    float sum = std::accumulate(numbers.begin(), numbers.end(), 0.0);
-//    float mean = sum / numbers.size();
-//    float sq_sum = std::inner_product(numbers.begin(), numbers.end(), numbers.begin(), 0.0);
-//    float variance = sq_sum / numbers.size() - mean * mean;
-//    float stdDeviation = std::sqrt(variance);
-//
-//    return { mean, variance, stdDeviation };
-//}
 std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>& species) {
     std::string newick;
     if (node.contains("children")) {
@@ -791,14 +787,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-                    std::mutex selectedSpeciesMapMutex;
+
                     std::mutex clusterGeneMeanExpressionMapMutex;
                     std::mutex clusterNameToGeneNameToExpressionValueMutex;
+                    std::mutex nonselectedClusterMeanExpressionMapMutex;
 
                     std::vector<std::future<void>> futures;
 
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(std::async(std::launch::async, [&]() {
+                        futures.push_back(std::async(std::launch::async, [&, species]() { // Fixed Problem 7 by capturing species by value
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
                             auto speciesColor = species.getColor();
@@ -811,60 +808,45 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 }
                             }
 
-                            {
-                                std::lock_guard<std::mutex> lock(selectedSpeciesMapMutex);
-                                selectedSpeciesMap[speciesName] = { speciesColor, filteredIndices };
-                                _selectedSpeciesCellCountMap[speciesName] = std::make_pair(static_cast<int>(filteredIndices.size()), speciesColor);
-
-                            }
-
                             std::vector<int> commonSelectedIndices;
+                            std::vector<int> commonNotSelectedIndices;
                             std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+                            std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
-                                auto geneIndex = { i };
+                                std::vector<int> geneIndex = { i }; // Fixed Problem 3 by changing auto to std::vector<int>
 
                                 float fullMean = 0.0f; // Initialize meanValue to prevent using uninitialized memory
-                                float meanValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
-                                float medianValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
-                                float modeValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
-                                float rangeValue = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                StatisticsSingle calculateStatisticsShort;
+                                StatisticsSingle calculateStatisticsNot;
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    //float shortMean = calculateMean(resultContainerShort);
-                                    Statistics calculateStatisticsShort = calculateStatistics(resultContainerShort);
-                                    float shortMean = calculateStatisticsShort.mean;
-                                    medianValue = calculateStatisticsShort.median;
-                                    modeValue = calculateStatisticsShort.mode;
-                                    rangeValue = calculateStatisticsShort.range;
 
+                                    calculateStatisticsShort = calculateStatistics(resultContainerShort);
+                                    float selectedMean = calculateStatisticsShort.meanVal;
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
 
-                                    {
-                                        std::lock_guard<std::mutex> lock(clusterGeneMeanExpressionMapMutex);
-                                        auto speciesIter = _clusterGeneMeanExpressionMap.find(speciesName);
-                                        if (speciesIter == _clusterGeneMeanExpressionMap.end() || speciesIter->second.find(geneName) == speciesIter->second.end()) {
-                                            std::vector<float> resultContainerFull(speciesIndices.size());
-                                            pointsDatasetRaw->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
-                                            fullMean = calculateMean(resultContainerFull);
-                                            _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
-                                        }
-                                        else {
-                                            fullMean = speciesIter->second[geneName];
-                                        }
-                                    }
-                                    meanValue = shortMean;//fullMean - shortMean;
+                                    // Removed problematic code block related to _clusterGeneMeanExpressionMap
                                 }
+
+                                if (!commonNotSelectedIndices.empty()) {
+                                    std::vector<float> resultContainerShortNot(commonNotSelectedIndices.size());
+                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShortNot, geneIndex, commonNotSelectedIndices);
+
+                                    calculateStatisticsNot = calculateStatistics(resultContainerShortNot);
+                                    _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
+                                }
+                                Statistics combinedValue;
+                                // Fixed Problem 1 by removing the problematic if condition
+                                combinedValue = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
 
                                 {
                                     std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].mean = meanValue;
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].median = medianValue;
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].mode = modeValue;
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName].range = rangeValue;
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = combinedValue; // Fixed Problem 2, 4, 5, 6, 8, 9, 10 by correcting the structure and usage of combinedValue
                                 }
                             }
                             }));
@@ -874,6 +856,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     for (auto& future : futures) {
                         future.get();
                     }
+
 
 
                     stopCodeTimer("Part12.2");
@@ -1064,6 +1047,29 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateSpeciesNameDataset = [this]() -> void {
 
+        if (_speciesNamesDataset.getCurrentDataset().isValid())
+        {
+            auto clusterFullDataset=mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+            auto clusterValuesData = clusterFullDataset->getClusters();
+            if (!clusterValuesData.isEmpty())
+            {
+                for (auto clusters : clusterValuesData)
+                {
+                    {
+                        auto name = clusters.getName();
+                        auto color = clusters.getColor();
+                        _selectedSpeciesCellCountMap[name].color = color;
+                        _selectedSpeciesCellCountMap[name].selectedCellsCount = 0;
+                        _selectedSpeciesCellCountMap[name].nonSelectedCellsCount = 0;
+
+                    }
+
+                }
+
+            }
+
+        }
+        
         
         computeGeneMeanExpressionMap();
         };
@@ -1291,7 +1297,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         for (const auto& innerPair : outerPair.second) {
 
             auto geneName = innerPair.first;
-            auto meanValue = innerPair.second.mean;
+            auto meanValue = innerPair.second.meanSelected;
             geneExpressionVec.push_back(std::make_pair(geneName, meanValue));
 
         }
@@ -1401,7 +1407,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             //}
             //else //Mean
             //{
-                value = it->second.mean;
+                value = it->second.meanSelected;
             //}
             numbers.push_back(value);
             statisticsValuesForSpeciesMap[speciesName] = it->second;
@@ -1422,7 +1428,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         float meanV = 0.0;
         //iterate statisticsValuesForSpeciesMap
         for (const auto& pair : statisticsValuesForSpeciesMap) {
-            meanV += pair.second.mean;
+            meanV += pair.second.meanSelected;
         }
         meanV= meanV / statisticsValuesForSpeciesMap.size();
         row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
@@ -1445,12 +1451,18 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         for (const auto& pair : statisticsValuesForSpeciesMap) {
             const auto& species = pair.first;
             const auto& stats = pair.second;
-            formattedStatistics += QString("Species: %1, Mean: %2, Median: %3, Mode: %4, Range: %5;\n")
+            formattedStatistics += QString("Species: %1, MeanSelected: %2, MedianSelected: %3, ModeSelected: %4, RangeSelected: %5, CountSelected: %6, MeanNotSelected: %7, MedianNotSelected: %8, ModeNotSelected: %9, RangeNotSelected: %10, CountNotSelected: %11;\n")
                 .arg(species)
-                .arg(stats.mean, 0, 'f', 2)
-                .arg(stats.median, 0, 'f', 2)
-                .arg(stats.mode, 0, 'f', 2)
-                .arg(stats.range, 0, 'f', 2);
+                .arg(stats.meanSelected, 0, 'f', 2)
+                .arg(stats.medianSelected, 0, 'f', 2)
+                .arg(stats.modeSelected, 0, 'f', 2)
+                .arg(stats.rangeSelected, 0, 'f', 2)
+                .arg(stats.countSelected)
+                .arg(stats.meanNonSelected, 0, 'f', 2)
+                .arg(stats.medianNonSelected, 0, 'f', 2)
+                .arg(stats.modeNonSelected, 0, 'f', 2)
+                .arg(stats.rangeNonSelected, 0, 'f', 2)
+                .arg(stats.countNonSelected);
         }
 
         row.push_back(new QStandardItem(formattedStatistics)); //6 Statistics
@@ -1705,7 +1717,7 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
                 std::string meanValue;
                 if (it != speciesMeanValues.end()) {
                     // Key found, use the corresponding value
-                    meanValue = std::to_string(it->second.mean);
+                    meanValue = std::to_string(it->second.meanSelected);
                 }
                 else {
                     // Key not found, assign -1

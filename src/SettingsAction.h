@@ -45,10 +45,31 @@ namespace mv
 }
 
 struct Statistics {
-    float mean;
-    float median;
-    float mode;
-    float range;
+    float meanSelected;
+    float medianSelected;
+    float modeSelected;
+    float rangeSelected;
+    int countSelected;
+    float meanNonSelected;
+    float medianNonSelected;
+    float modeNonSelected;
+    float rangeNonSelected;
+    int countNonSelected;
+
+};
+struct SpeciesColorCountStorage {
+    QColor color;
+    int selectedCellsCount;
+    int nonSelectedCellsCount;
+};
+
+struct StatisticsSingle {
+    float meanVal;
+    float medianVal;
+    float modeVal;
+    float rangeVal;
+    int countVal;
+
 };
 
 class SettingsAction : public WidgetAction
@@ -142,7 +163,7 @@ public: // Action getters
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getTableView() const { return _tableView; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
-    std::map<QString, std::pair<int, QColor>>& getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
+    std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
 
     void computeGeneMeanExpressionMap();
@@ -216,9 +237,10 @@ protected:
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
-    std::map<QString,std::pair<int,QColor>>       _selectedSpeciesCellCountMap;
+    std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
 
     QTableView* _tableView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
+
 };
