@@ -14,18 +14,16 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
-#include <execution>
 #include<QTooltip>
+#include <vector>
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
 
-
 void applyLogTransformation(std::vector<float>& values) {
-    std::transform(std::execution::par, values.begin(), values.end(), values.begin(),
+    std::transform(values.begin(), values.end(), values.begin(),
         [](float value) { return std::log(value + 1); });
 }
-
 std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedStatistics) {
     std::map<QString, Statistics> statisticsMap;
 

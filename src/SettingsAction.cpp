@@ -12,7 +12,7 @@
 #include <QtConcurrent>
 #include "lib/JSONnlohmann/json.hpp"
 #include "lib/Clustering/fastcluster.h"
-#include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
+//#include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
 #include <sstream>
 #include <stack>
 #include <algorithm> // for std::find
@@ -55,7 +55,7 @@ StatisticsSingle calculateStatistics(const std::vector<float>& data) {
     }
     int count = data.size();
     // Calculate mean using std::reduce for better performance with parallel execution
-    float sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0f);
+    float sum = std::reduce(data.begin(), data.end(), 0.0f);
     float mean = sum / data.size();
 
     // Sort data to find median and range
@@ -113,7 +113,7 @@ float calculateMean(const std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
 
-    float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+    float sum = std::reduce(v.begin(), v.end(), 0.0f);
     return sum / static_cast<float>(v.size());
 }
 
@@ -154,7 +154,7 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
     if (positiveCount == 0)
         return 0.0f;
 
-    float sum = std::transform_reduce(std::execution::par, v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
+    float sum = std::transform_reduce( v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
 
     return sum / static_cast<float>(positiveCount);
 }
