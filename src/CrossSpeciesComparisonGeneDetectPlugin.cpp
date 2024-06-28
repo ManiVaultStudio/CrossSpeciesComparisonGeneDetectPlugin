@@ -376,8 +376,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         }
         });
 
-    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getTableView(),1.2);
-    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable(),1.8);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getTableView(),1.1);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable(),2);
 
     // Add the splitter to the main layout
     mainLayout->addLayout(_settingsAction.getTableSplitter());
@@ -403,12 +403,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::adjustTableWidths(const QString& va
 
     int totalWidth = parentWidget->width();
 
-    double tableViewRatio = 1.2;
+    double tableViewRatio = 1.1;
     double selectionDetailsTableRatio = 2;
 
     if (value == "small") {
-        tableViewRatio = 1.8;
-        selectionDetailsTableRatio = 1.2;
+        tableViewRatio = 1.3;
+        selectionDetailsTableRatio = 1.3;
     }
 
     int tableViewWidth = static_cast<int>(totalWidth * tableViewRatio / (tableViewRatio + selectionDetailsTableRatio));
