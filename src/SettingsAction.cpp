@@ -795,18 +795,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     std::vector<std::future<void>> futures;
 
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(std::async(std::launch::async, [&, species]() { // Fixed Problem 7 by capturing species by value
+                        futures.push_back(std::async(std::launch::async, [&, species]() { 
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
                             auto speciesColor = species.getColor();
-
-                            std::vector<int> filteredIndices;
-                            for (int i = 0; i < speciesIndices.size(); i++) {
-                                int indexVal = findIndex(_selectedIndicesFromStorage, speciesIndices[i]);
-                                if (indexVal != -1) {
-                                    filteredIndices.push_back(indexVal);
-                                }
-                            }
 
                             std::vector<int> commonSelectedIndices;
                             std::vector<int> commonNotSelectedIndices;
@@ -817,9 +809,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
-                                std::vector<int> geneIndex = { i }; // Fixed Problem 3 by changing auto to std::vector<int>
+                                std::vector<int> geneIndex = { i };
 
-                                float fullMean = 0.0f; // Initialize meanValue to prevent using uninitialized memory
+                                float fullMean = 0.0f; 
                                 StatisticsSingle calculateStatisticsShort;
                                 StatisticsSingle calculateStatisticsNot;
                                 if (!commonSelectedIndices.empty()) {
@@ -830,7 +822,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     float selectedMean = calculateStatisticsShort.meanVal;
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
 
-                                    // Removed problematic code block related to _clusterGeneMeanExpressionMap
                                 }
 
                                 if (!commonNotSelectedIndices.empty()) {
@@ -841,12 +832,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
                                 }
                                 Statistics combinedValue;
-                                // Fixed Problem 1 by removing the problematic if condition
+
                                 combinedValue = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
 
                                 {
                                     std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = combinedValue; // Fixed Problem 2, 4, 5, 6, 8, 9, 10 by correcting the structure and usage of combinedValue
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = combinedValue; 
                                 }
                             }
                             }));
