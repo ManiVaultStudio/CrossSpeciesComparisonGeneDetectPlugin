@@ -1292,13 +1292,15 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
 
     for (const auto& outerPair : map) {
+        
+        auto speciesName=outerPair.first;        
         std::vector<std::pair<QString, float>> geneExpressionVec;
         geneExpressionVec.reserve(outerPair.second.size());
         for (const auto& innerPair : outerPair.second) {
 
             auto geneName = innerPair.first;
-            auto meanValue = innerPair.second.meanSelected;
-            geneExpressionVec.push_back(std::make_pair(geneName, meanValue));
+            auto differenceMeanValue = innerPair.second.meanSelected-innerPair.second.meanNonSelected;
+            geneExpressionVec.push_back(std::make_pair(geneName, differenceMeanValue));
 
         }
         // Sort the geneExpressionVec based on the mean value from highest to lowest
