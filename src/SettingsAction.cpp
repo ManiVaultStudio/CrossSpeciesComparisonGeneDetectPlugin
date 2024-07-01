@@ -375,7 +375,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
-    _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Absolute");
+    _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
    
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
