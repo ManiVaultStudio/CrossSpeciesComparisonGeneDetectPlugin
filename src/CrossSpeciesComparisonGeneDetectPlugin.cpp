@@ -34,26 +34,28 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
-std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedStatistics) {
-    std::map<QString, Statistics> statisticsMap;
+std::map<QString, SpeciesDetails> convertToStatisticsMap(const QString& formattedStatistics) {
+    std::map<QString, SpeciesDetails> statisticsMap;
 
 
 
     QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
 
-
-    QRegularExpression regex("Species: (.*), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    //qdebud speciesStatsList
+    //qDebug() << speciesStatsList;
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
 
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
         if (match.hasMatch()) {
             QString species = match.captured(1);
-            Statistics stats = {
-                match.captured(2).toFloat(),
-                match.captured(3).toInt(),
-                match.captured(4).toFloat(),
-                match.captured(5).toInt()
+            SpeciesDetails stats = {
+                match.captured(2).toInt(),
+                match.captured(3).toFloat(),
+                match.captured(4).toInt(),
+                match.captured(5).toFloat(),
+                match.captured(6).toInt()
             };
             statisticsMap[species] = stats;
         }
@@ -258,7 +260,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     _settingsAction.getListView()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _settingsAction.getListView()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _settingsAction.getListView()->sortByColumn(3, Qt::DescendingOrder);
+    _settingsAction.getListView()->sortByColumn(1, Qt::DescendingOrder);
 
     _settingsAction.getListView()->verticalHeader()->hide();
     _settingsAction.getListView()->setMouseTracking(true);
@@ -464,7 +466,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
 
-        std::map<QString, Statistics> speciesExpressionMap;
+        std::map<QString, SpeciesDetails> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
         QJsonObject valueStringReference;
@@ -488,7 +490,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             else if (columnName == "Statistics") {
 
                 if (!finalsettingSpeciesNamesArray.isEmpty()) {
-                    std::map<QString, Statistics> statisticsValues = convertToStatisticsMap(data.toString());
+                    std::map<QString, SpeciesDetails> statisticsValues = convertToStatisticsMap(data.toString());
                     speciesExpressionMap = statisticsValues;
                     selectedCellCountStatusBarRemove();
                     selectedCellStatisticsStatusBarAdd(statisticsValues, finalsettingSpeciesNamesArray);
@@ -776,7 +778,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
-        model->sort(1, Qt::DescendingOrder);
+        model->sort(2, Qt::DescendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
@@ -788,7 +790,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
     adjustTableWidths("small");
 }
 
-void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, Statistics> statisticsValues, QStringList selectedSpecies)
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetails> statisticsValues, QStringList selectedSpecies)
 {
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
@@ -827,7 +829,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << item; //1 Mean\nDifference
 
                 item = new QStandardItem();
-                item->setData(QVariant(2), Qt::EditRole);
+                item->setData(QVariant(it->second.rank), Qt::EditRole);
                 rowItems << item; //2 Appearance\nRank
 
                 item = new QStandardItem();
@@ -875,7 +877,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
 
-        model->sort(1, Qt::DescendingOrder);
+        model->sort(2, Qt::DescendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
 
         _settingsAction.getSelectionDetailsTable()->setModel(model);
@@ -898,7 +900,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemo
 }
 
 
-void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap) {
+void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, SpeciesDetails>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
         QString nodeName = node["name"].toString();

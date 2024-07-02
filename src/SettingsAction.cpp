@@ -1255,26 +1255,23 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     }
 
     QSet<QString> geneList;
-    std::map<QString, std::vector<QString>> geneAppearanceCounter;
+    std::map<QString, std::vector<std::pair<QString,int>>> geneAppearanceCounter;
 
     for (const auto& outerPair : map) {
-        
-        auto speciesName=outerPair.first;        
+        auto speciesName = outerPair.first;
         std::vector<std::pair<QString, float>> geneExpressionVec;
         geneExpressionVec.reserve(outerPair.second.size());
         for (const auto& innerPair : outerPair.second) {
-
             auto geneName = innerPair.first;
-            auto differenceMeanValue = innerPair.second.meanSelected-innerPair.second.meanNonSelected;
+            auto differenceMeanValue = innerPair.second.meanSelected - innerPair.second.meanNonSelected;
             geneExpressionVec.push_back(std::make_pair(geneName, differenceMeanValue));
-
         }
+
         // Sort the geneExpressionVec based on the mean value from highest to lowest
         std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
             return a.second > b.second;
             });
 
-        // Select the top n genes based on sorted list. If Positive then top n genes with highest mean value, if Negative then top n genes with lowest mean value, if Mixed then top n/2 genes with highest mean value and n/2 genes with lowest mean value, if Absolute then top n genes with highest absolute mean value.
         switch (option) {
         case SelectionOption::AbsoluteTopN: {
             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
@@ -1282,14 +1279,14 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
                 });
             for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
             }
             break;
         }
         case SelectionOption::PositiveTopN: {
             for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
             }
             break;
         }
@@ -1297,7 +1294,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
             for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, geneExpressionVec.size() - i); // Correcting rank to start from 1
             }
             break;
         }
@@ -1305,26 +1302,28 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             int halfN = n / 2;
             for (int i = 0; i < halfN; ++i) { // Top halfN genes with highest mean value
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
             }
             if (n % 2 != 0) { // If n is odd, add one more from the top half
                 geneList.insert(geneExpressionVec[halfN].first);
-                geneAppearanceCounter[geneExpressionVec[halfN].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[halfN].first].emplace_back(outerPair.first, halfN + 1); // Adding rank, incremented by 1
                 halfN++;
             }
             for (int i = geneExpressionVec.size() - halfN; i < geneExpressionVec.size(); ++i) { // Bottom halfN genes with lowest mean value
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(outerPair.first);
+                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, geneExpressionVec.size() - i + halfN); // Correcting rank to start from 1
             }
             break;
         }
         }
     }
 
+
+
     return createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, n);
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n) {
+QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<std::pair<QString, int>>>& geneCounter, const int& n) {
 
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
@@ -1342,7 +1341,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[1] };
+    QStringList selectedHeaders = { headers[0], headers[1]};
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
 
@@ -1370,25 +1369,34 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
 
 
-
+        std::map<QString, int> rankcounter;
         auto it = geneCounter.find(gene);
         QString speciesGeneAppearancesComb;
         int count = 0;
         if (it != geneCounter.end()) {
-            count = it->second.size();
-            speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
-        }
+            auto speciesDetails = it->second;
 
-        int countV = 0;
-
-        for (const auto& pair : statisticsValuesForSpeciesMap) {
-            if (speciesGeneAppearancesComb.contains(pair.first))
-            {
- 
-                countV++;
+            count = speciesDetails.size();
+            
+            for (auto speciesDetail : speciesDetails) {
+                auto speciesName = speciesDetail.first;
+                auto speciesRank = speciesDetail.second;
+                rankcounter[speciesName] = speciesRank;
+                speciesGeneAppearancesComb += speciesName + ";";
+                //speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
             }
-           
         }
+
+        //int countV = 0;
+
+        //for (const auto& pair : statisticsValuesForSpeciesMap) {
+            //if (speciesGeneAppearancesComb.contains(pair.first))
+            //{
+ 
+                //countV++;
+            //}
+           
+        //}
 
         row.push_back(new QStandardItem(QString::number(count))); // 1 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
         row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 2 Gene Appearance Species Names
@@ -1397,8 +1405,9 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         for (const auto& pair : statisticsValuesForSpeciesMap) {
             const auto& species = pair.first;
             const auto& stats = pair.second;
-            formattedStatistics += QString("Species: %1, MeanSelected: %2, CountSelected: %3, MeanNotSelected: %4, CountNotSelected: %5;\n")
+            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")
                 .arg(species)
+                .arg(rankcounter[species])
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
