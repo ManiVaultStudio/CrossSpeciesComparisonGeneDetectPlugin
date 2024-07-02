@@ -790,38 +790,37 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                     std::mutex clusterGeneMeanExpressionMapMutex;
                     std::mutex clusterNameToGeneNameToExpressionValueMutex;
-                    std::mutex nonselectedClusterMeanExpressionMapMutex;
-
+    
                     std::vector<std::future<void>> futures;
 
+                    // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
+                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
+
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(std::async(std::launch::async, [&, species]() { 
+                        futures.push_back(std::async(std::launch::async, [&, species]() {
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
-                            auto speciesColor = species.getColor();
 
                             std::vector<int> commonSelectedIndices;
                             std::vector<int> commonNotSelectedIndices;
-                            std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
                             std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
+
+                            // Use a local map to aggregate results
+                            std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
 
-                                float fullMean = 0.0f; 
-                                StatisticsSingle calculateStatisticsShort;
-                                StatisticsSingle calculateStatisticsNot;
+                                StatisticsSingle calculateStatisticsShort, calculateStatisticsNot;
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
 
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
-                                    float selectedMean = calculateStatisticsShort.meanVal;
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
-
                                 }
 
                                 if (!commonNotSelectedIndices.empty()) {
@@ -831,13 +830,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     calculateStatisticsNot = calculateStatistics(resultContainerShortNot);
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
                                 }
-                                Statistics combinedValue;
 
-                                combinedValue = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                            }
 
-                                {
-                                    std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][geneName] = combinedValue; 
+                            // Lock and update the shared structure once per species
+                            {
+                                std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
+                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 }
                             }
                             }));
@@ -847,6 +848,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     for (auto& future : futures) {
                         future.get();
                     }
+
 
 
 
@@ -1355,15 +1357,15 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         return QVariant();
     }
 
-    const std::unordered_map<std::string, int> clusteringTypeMap = {
+    /*const std::unordered_map<std::string, int> clusteringTypeMap = {
     {"Complete", HCLUST_METHOD_COMPLETE},
     {"Average", HCLUST_METHOD_AVERAGE},
     {"Median", HCLUST_METHOD_MEDIAN},
     {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
     };
-
+    */
     QStandardItemModel* model = new QStandardItemModel();
-    int numOfSpecies = map.size();
+    //int numOfSpecies = map.size();
     _initColumnNames.clear();
     _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Mean \nExpression", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
     model->setHorizontalHeaderLabels(_initColumnNames);
@@ -1377,10 +1379,10 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
 
-    std::map<QString, std::pair<QString, std::map<QString, Statistics>>> newickTrees;
+    //std::map<QString, std::pair<QString, std::map<QString, Statistics>>> newickTrees;
 
-    std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
-    int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); 
+    //std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
+    //int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); 
 
     for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
@@ -1406,25 +1408,19 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             statisticsValuesForSpeciesMap[speciesName] = it->second;
         }
 
-        auto numOfLeaves = static_cast<int>(numOfSpecies);
-        std::unique_ptr<double[]> distmat(condensedDistanceMatrix(numbers));
-        std::unique_ptr<int[]> merge(new int[2 * (numOfLeaves - 1)]);
-        std::unique_ptr<double[]> height(new double[numOfLeaves - 1]);
-        hclust_fast(numOfLeaves, distmat.get(), opt_method, merge.get(), height.get());
-        std::string newick = mergeToNewick(merge.get(), numOfLeaves);
-        newickTrees.insert({ gene, {QString::fromStdString(newick), statisticsValuesForSpeciesMap} });
+        //auto numOfLeaves = static_cast<int>(numOfSpecies);
+       // std::unique_ptr<double[]> distmat(condensedDistanceMatrix(numbers));
+        //std::unique_ptr<int[]> merge(new int[2 * (numOfLeaves - 1)]);
+        //std::unique_ptr<double[]> height(new double[numOfLeaves - 1]);
+       // hclust_fast(numOfLeaves, distmat.get(), opt_method, merge.get(), height.get());
+        //std::string newick = mergeToNewick(merge.get(), numOfLeaves);
+       // newickTrees.insert({ gene, {QString::fromStdString(newick), statisticsValuesForSpeciesMap} });
 
         row.push_back(new QStandardItem(gene)); //0 ID
         //row.push_back(new QStandardItem(""));  //1 Newick tree
         //row.push_back(new QStandardItem(QString::number(-1.0)));  //2 Similarity with Reference Tree
 
-        float meanV = 0.0;
-        //iterate statisticsValuesForSpeciesMap
-        for (const auto& pair : statisticsValuesForSpeciesMap) {
-            meanV += pair.second.meanSelected;
-        }
-        meanV= meanV / statisticsValuesForSpeciesMap.size();
-        row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
+
 
         auto it = geneCounter.find(gene);
         QString speciesGeneAppearancesComb;
@@ -1433,10 +1429,27 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             count = it->second.size();
             speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
         }
-        else
-        {
-            qDebug() << "Gene not found in geneCounter";
+
+        float meanV = 0.0;
+        int countV = 0;
+        //iterate statisticsValuesForSpeciesMap
+        for (const auto& pair : statisticsValuesForSpeciesMap) {
+            if (speciesGeneAppearancesComb.contains(pair.first))
+            {
+                meanV += pair.second.meanSelected;
+                countV++;
+            }
+           
         }
+        //meanV = meanV / statisticsValuesForSpeciesMap.size();
+        if (countV > 0)
+        {
+            meanV = meanV / countV;
+        }
+  
+        
+        row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
+
         row.push_back(new QStandardItem(QString::number(count))); // 4 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
         row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 5 Gene Appearance Species Names
 

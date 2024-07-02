@@ -336,7 +336,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
+    //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
@@ -349,7 +349,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    
+    mainOptionsGroup2->addAction(&_settingsAction.getTypeofTopNGenes());
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(460);
