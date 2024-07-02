@@ -265,12 +265,58 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     _settingsAction.getListView()->verticalHeader()->hide();
     _settingsAction.getListView()->setMouseTracking(true);
     _settingsAction.getListView()->setToolTipDuration(10000);
-    QFont font = _settingsAction.getListView()->horizontalHeader()->font();
-    font.setBold(true);
-    _settingsAction.getListView()->horizontalHeader()->setFont(font);
+    QFont fontLs = _settingsAction.getListView()->horizontalHeader()->font();
+    fontLs.setBold(true);
+    _settingsAction.getListView()->horizontalHeader()->setFont(fontLs);
     _settingsAction.getListView()->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
     _settingsAction.getListView()->horizontalHeader()->setHighlightSections(false);
     _settingsAction.getListView()->verticalHeader()->setHighlightSections(false);
+
+
+
+
+
+
+    _settingsAction.getSelectionDetailsTable()->setTextElideMode(Qt::ElideNone);
+    _settingsAction.getSelectionDetailsTable()->setWordWrap(true);
+    _settingsAction.getSelectionDetailsTable()->setAlternatingRowColors(true);
+    _settingsAction.getSelectionDetailsTable()->setSortingEnabled(true);
+
+    //on hovering a cell, show the full text available in a tooltip
+    connect(_settingsAction.getSelectionDetailsTable(), &QTableView::entered, [this](const QModelIndex& index) {
+        if (index.isValid()) {
+            QString text = index.data().toString();
+            if (!text.isEmpty()) {
+                _settingsAction.getSelectionDetailsTable()->setToolTip(text);
+            }
+        }
+        });
+
+
+
+    _settingsAction.getSelectionDetailsTable()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getSelectionDetailsTable()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getSelectionDetailsTable()->sortByColumn(2, Qt::AscendingOrder);
+
+    _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+    _settingsAction.getSelectionDetailsTable()->setMouseTracking(true);
+    _settingsAction.getSelectionDetailsTable()->setToolTipDuration(10000);
+    QFont fontTbl = _settingsAction.getSelectionDetailsTable()->horizontalHeader()->font();
+    fontTbl.setBold(true);
+    _settingsAction.getSelectionDetailsTable()->horizontalHeader()->setFont(fontTbl);
+    _settingsAction.getSelectionDetailsTable()->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
+    _settingsAction.getSelectionDetailsTable()->horizontalHeader()->setHighlightSections(false);
+    _settingsAction.getSelectionDetailsTable()->verticalHeader()->setHighlightSections(false);
+
+
+
+
+
+
+
+
+
+
 
 
     auto mainLayout = new QVBoxLayout();
@@ -783,7 +829,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
-        model->sort(2, Qt::DescendingOrder);
+        model->sort(2, Qt::AscendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
@@ -882,7 +928,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
 
-        model->sort(2, Qt::DescendingOrder);
+        model->sort(2, Qt::AscendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
 
         _settingsAction.getSelectionDetailsTable()->setModel(model);

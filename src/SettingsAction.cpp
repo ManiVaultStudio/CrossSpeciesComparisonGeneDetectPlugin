@@ -1232,10 +1232,11 @@ void SettingsAction::computeGeneMeanExpressionMap()
 }
 
 QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore) {
-
+    
     if (map.empty() || n <= 0) {
         return QVariant();
     }
+    startCodeTimer("findTopNGenesPerCluster");
     enum class SelectionOption {
         AbsoluteTopN,
         PositiveTopN,
@@ -1255,7 +1256,8 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     }
 
     QSet<QString> geneList;
-    std::map<QString, std::vector<std::pair<QString,int>>> geneAppearanceCounter;
+    std::map<QString, std::vector<QString>> geneAppearanceCounter;
+    std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
 
     for (const auto& outerPair : map) {
         auto speciesName = outerPair.first;
@@ -1277,41 +1279,50 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                 return std::abs(a.second) > std::abs(b.second);
                 });
-            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    geneList.insert(geneExpressionVec[i].first);
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
+
             }
+
+
             break;
         }
         case SelectionOption::PositiveTopN: {
-            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    geneList.insert(geneExpressionVec[i].first);
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1
             }
             break;
         }
         case SelectionOption::NegativeTopN: {
             std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
-            for (int i = 0; i < std::min(n, static_cast<int>(geneExpressionVec.size())); ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, geneExpressionVec.size() - i); // Correcting rank to start from 1
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    geneList.insert(geneExpressionVec[i].first);
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, geneExpressionVec.size() - i); // Corrected rank calculation
             }
             break;
         }
         case SelectionOption::MixedTopN: {
             int halfN = n / 2;
-            for (int i = 0; i < halfN; ++i) { // Top halfN genes with highest mean value
-                geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, i + 1); // Adding rank, incremented by 1
-            }
-            if (n % 2 != 0) { // If n is odd, add one more from the top half
-                geneList.insert(geneExpressionVec[halfN].first);
-                geneAppearanceCounter[geneExpressionVec[halfN].first].emplace_back(outerPair.first, halfN + 1); // Adding rank, incremented by 1
-                halfN++;
-            }
-            for (int i = geneExpressionVec.size() - halfN; i < geneExpressionVec.size(); ++i) { // Bottom halfN genes with lowest mean value
-                geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].emplace_back(outerPair.first, geneExpressionVec.size() - i + halfN); // Correcting rank to start from 1
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < halfN || i >= geneExpressionVec.size() - halfN) { // Top halfN genes with highest mean value and Bottom halfN genes with lowest mean value
+                    geneList.insert(geneExpressionVec[i].first);
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+                if (i < halfN || (n % 2 != 0 && i == halfN) || i >= geneExpressionVec.size() - halfN) {
+                    rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1 for top half and correcting rank for bottom half
+                }
             }
             break;
         }
@@ -1320,10 +1331,12 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
 
 
 
-    return createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, n);
+    stopCodeTimer("findTopNGenesPerCluster");
+
+    return createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap,n);
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<std::pair<QString, int>>>& geneCounter, const int& n) {
+QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
@@ -1370,6 +1383,15 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
 
         std::map<QString, int> rankcounter;
+        auto rankit=rankingMap.find(gene);
+        if (rankit != rankingMap.end()) {
+            for (const auto& pair : rankit->second) {
+                const auto& species = pair.first;
+                rankcounter[species] = pair.second;
+            }
+        }
+
+
         auto it = geneCounter.find(gene);
         QString speciesGeneAppearancesComb;
         int count = 0;
@@ -1379,24 +1401,12 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             count = speciesDetails.size();
             
             for (auto speciesDetail : speciesDetails) {
-                auto speciesName = speciesDetail.first;
-                auto speciesRank = speciesDetail.second;
-                rankcounter[speciesName] = speciesRank;
+                auto speciesName = speciesDetail;
                 speciesGeneAppearancesComb += speciesName + ";";
                 //speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
             }
         }
 
-        //int countV = 0;
-
-        //for (const auto& pair : statisticsValuesForSpeciesMap) {
-            //if (speciesGeneAppearancesComb.contains(pair.first))
-            //{
- 
-                //countV++;
-            //}
-           
-        //}
 
         row.push_back(new QStandardItem(QString::number(count))); // 1 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
         row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 2 Gene Appearance Species Names
