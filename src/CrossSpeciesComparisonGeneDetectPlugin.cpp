@@ -22,8 +22,16 @@ using namespace mv;
 
 
 void applyLogTransformation(std::vector<float>& values) {
+    
+
+#ifdef _WIN32
     std::transform(std::execution::par, values.begin(), values.end(), values.begin(),
         [](float value) { return std::log(value + 1); });
+#else
+    std::transform(values.begin(), values.end(), values.begin(),
+        [](float value) { return std::log(value + 1); });
+#endif
+
 }
 
 std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedStatistics) {

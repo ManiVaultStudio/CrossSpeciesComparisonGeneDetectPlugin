@@ -23,6 +23,12 @@
 #include <string>
 #include <chrono>
 #include <cmath> // Include for std::log
+#include <cmath> // Include for std::isnan and std::isinf
+#include <limits>
+#include <vector>
+
+#include <unordered_map>
+
 
 using namespace mv;
 using namespace mv::gui;
@@ -48,31 +54,45 @@ Statistics combineStatisticsSingle(const StatisticsSingle& selected, const Stati
 
     return combinedStats;
 }
+
 StatisticsSingle calculateStatistics(const std::vector<float>& data) {
     if (data.empty()) {
         return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
-                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), 0 };
     }
-    int count = data.size();
-    // Calculate mean using std::reduce for better performance with parallel execution
-    float sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0f);
-    float mean = sum / data.size();
 
-    // Sort data to find median and range
-    std::vector<float> sortedData = data;
+    // Remove NaN and Inf values
+    std::vector<float> filteredData;
+    std::copy_if(data.begin(), data.end(), std::back_inserter(filteredData),
+        [](float value) { return !std::isnan(value) && !std::isinf(value); });
+
+    if (filteredData.empty()) {
+        return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), 0 };
+    }
+
+    int count = filteredData.size();
+    #ifdef _WIN32
+        float sum = std::reduce(std::execution::par, filteredData.begin(), filteredData.end(), 0.0f);
+    #else
+        float sum = std::reduce(filteredData.begin(), filteredData.end(), 0.0f);
+    #endif
+
+    float mean = std::round((sum / count) * 100.0f) / 100.0f;
+
+    std::vector<float> sortedData = filteredData;
     std::sort(sortedData.begin(), sortedData.end());
     float median;
     size_t size = sortedData.size();
     if (size % 2 == 0) {
-        median = (sortedData[size / 2 - 1] + sortedData[size / 2]) / 2;
+        median = std::round(((sortedData[size / 2 - 1] + sortedData[size / 2]) / 2) * 100.0f) / 100.0f;
     }
     else {
-        median = sortedData[size / 2];
+        median = std::round(sortedData[size / 2] * 100.0f) / 100.0f;
     }
 
-    // Calculate mode
     std::unordered_map<float, int> frequency;
-    for (float num : data) {
+    for (float num : filteredData) {
         frequency[num]++;
     }
     int maxCount = 0;
@@ -83,10 +103,10 @@ StatisticsSingle calculateStatistics(const std::vector<float>& data) {
             mode = pair.first;
         }
     }
+    mode = std::round(mode * 100.0f) / 100.0f; // Round mode to two decimal places
 
-    // Calculate range
-    float range = sortedData.back() - sortedData.front();
-    
+    float range = std::round((sortedData.back() - sortedData.front()) * 100.0f) / 100.0f;
+
     return { mean, median, mode, range, count };
 }
 
@@ -113,7 +133,14 @@ float calculateMean(const std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
 
-    float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+    
+    #ifdef _WIN32
+        float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+    #else
+        float sum = std::reduce(v.begin(), v.end(), 0.0f);
+    #endif
+
+
     return sum / static_cast<float>(v.size());
 }
 
@@ -154,7 +181,13 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
     if (positiveCount == 0)
         return 0.0f;
 
+    
+
+    #ifdef _WIN32
     float sum = std::transform_reduce(std::execution::par, v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
+    #else
+    float sum = std::transform_reduce(v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
+    #endif
 
     return sum / static_cast<float>(positiveCount);
 }
@@ -1430,7 +1463,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
         }
 
-        float meanV = 0.0;
+        float meanV = 0.0f;
         int countV = 0;
         //iterate statisticsValuesForSpeciesMap
         for (const auto& pair : statisticsValuesForSpeciesMap) {
@@ -1444,7 +1477,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         //meanV = meanV / statisticsValuesForSpeciesMap.size();
         if (countV > 0)
         {
-            meanV = meanV / countV;
+            meanV = std::round(meanV / countV * 100.0) / 100.0;
         }
   
         
