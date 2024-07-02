@@ -796,7 +796,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference", "Count\nSelected","Count\nNon\nSelected", "Mean\nSelected", "Mean\nNon\nSelected"});
+        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"});
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -812,7 +812,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             QStandardItem* item = new QStandardItem(species);
             item->setBackground(backgroundColor);
             item->setForeground(textColor); // Set text color
-            rowItems << item;
+            rowItems << item; //0 Species
 
 
             // Find statistics for the species
@@ -824,23 +824,28 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item = new QStandardItem();
                 float difference = (it->second.meanSelected - it->second.meanNonSelected);
                 item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
-                rowItems << item;
+                rowItems << item; //1 Mean\nDifference
+
+                item = new QStandardItem();
+                item->setData(QVariant(2), Qt::EditRole);
+                rowItems << item; //2 Appearance\nRank
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.countSelected), Qt::EditRole);
-                rowItems << item;
+                rowItems << item; //3 Count\nSelected
 
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
-                rowItems << item;
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanSelected), Qt::EditRole);
-                rowItems << item;
+                rowItems << item; //4 Mean\nSelected
+
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
+                rowItems << item;  //5 Count\nNon\nSelected
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
-                rowItems << item;
+                rowItems << item; //6 Mean\nNon\nSelected
 
 
 
@@ -849,11 +854,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
             else {
                 // Fill with placeholders if no statistics found
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A"); //1
+                rowItems << new QStandardItem("N/A"); //2
+                rowItems << new QStandardItem("N/A"); //3
+                rowItems << new QStandardItem("N/A"); //4
+                rowItems << new QStandardItem("N/A"); //5
+                rowItems << new QStandardItem("N/A"); //6
             }
 
 
