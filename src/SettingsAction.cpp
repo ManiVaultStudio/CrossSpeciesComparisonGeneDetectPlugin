@@ -41,73 +41,45 @@ std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 Statistics combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected) {
     Statistics combinedStats;
     combinedStats.meanSelected = selected.meanVal;
-    combinedStats.medianSelected = selected.medianVal;
-    combinedStats.modeSelected = selected.modeVal;
-    combinedStats.rangeSelected = selected.rangeVal;
     combinedStats.countSelected = selected.countVal;
 
-    combinedStats.meanNonSelected = nonSelected.meanVal; // Note the change here to meanSelected from nonSelected
-    combinedStats.medianNonSelected = nonSelected.medianVal; // Same as above
-    combinedStats.modeNonSelected = nonSelected.modeVal; // Same as above
-    combinedStats.rangeNonSelected = nonSelected.rangeVal; // Same as above
-    combinedStats.countNonSelected = nonSelected.countVal; // Same as above
+    combinedStats.meanNonSelected = nonSelected.meanVal; 
+    combinedStats.countNonSelected = nonSelected.countVal; 
 
     return combinedStats;
 }
 
 StatisticsSingle calculateStatistics(const std::vector<float>& data) {
-    if (data.empty()) {
-        return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
-                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), 0 };
+    const int count = data.size();
+    if (count == 0) {
+        return { 0.0f, 0 }; // Return early if data is empty to avoid division by zero
     }
 
-    // Remove NaN and Inf values
-    std::vector<float> filteredData;
-    std::copy_if(data.begin(), data.end(), std::back_inserter(filteredData),
-        [](float value) { return !std::isnan(value) && !std::isinf(value); });
-
-    if (filteredData.empty()) {
-        return { std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
-                 std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), 0 };
-    }
-
-    int count = filteredData.size();
-    #ifdef _WIN32
-        float sum = std::reduce(std::execution::par, filteredData.begin(), filteredData.end(), 0.0f);
-    #else
-        float sum = std::reduce(filteredData.begin(), filteredData.end(), 0.0f);
-    #endif
+    float sum = 0.0;
+#ifdef _WIN32
+    sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0f);
+#else
+    sum = std::reduce(data.begin(), data.end(), 0.0f);
+#endif
 
     float mean = std::round((sum / count) * 100.0f) / 100.0f;
 
-    std::vector<float> sortedData = filteredData;
-    std::sort(sortedData.begin(), sortedData.end());
-    float median;
-    size_t size = sortedData.size();
-    if (size % 2 == 0) {
-        median = std::round(((sortedData[size / 2 - 1] + sortedData[size / 2]) / 2) * 100.0f) / 100.0f;
-    }
-    else {
-        median = std::round(sortedData[size / 2] * 100.0f) / 100.0f;
-    }
-
-    std::unordered_map<float, int> frequency;
-    for (float num : filteredData) {
-        frequency[num]++;
-    }
-    int maxCount = 0;
-    float mode = std::numeric_limits<float>::quiet_NaN();
-    for (const auto& pair : frequency) {
-        if (pair.second > maxCount) {
-            maxCount = pair.second;
-            mode = pair.first;
-        }
-    }
-    mode = std::round(mode * 100.0f) / 100.0f; // Round mode to two decimal places
-
-    float range = std::round((sortedData.back() - sortedData.front()) * 100.0f) / 100.0f;
-
-    return { mean, median, mode, range, count };
+    return { mean, count };
+}
+ float calculateMean(const std::vector<float>&v) {
+    if (v.empty())
+         return 0.0f;
+    
+        
+        #ifdef _WIN32
+         float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+    #else
+         float sum = std::reduce(v.begin(), v.end(), 0.0f);
+    #endif
+        
+        
+        return sum / static_cast<float>(v.size());
+    
 }
 
 
@@ -129,42 +101,8 @@ void stopCodeTimer(const std::string& message) {
     }
 }
 
-float calculateMean(const std::vector<float>& v) {
-    if (v.empty())
-        return 0.0f;
 
-    
-    #ifdef _WIN32
-        float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
-    #else
-        float sum = std::reduce(v.begin(), v.end(), 0.0f);
-    #endif
-
-
-    return sum / static_cast<float>(v.size());
-}
-
-float calculateMedian(const std::vector<float>& vec) {
-    if (vec.empty()) return 0.0f;
-
-    std::vector<float> v = vec; // Copy to avoid modifying the original vector
-    size_t n = v.size() / 2;
-    std::nth_element(v.begin(), v.begin() + n, v.end()); // Partially sort to find the median
-
-    if (v.size() % 2 == 1) {
-        // For odd-sized vectors, the median is the middle element
-        return v[n];
-    }
-    else {
-        // For even-sized vectors, find the average of the two middle elements
-        std::vector<float> temp(v.begin(), v.begin() + n + 1);
-        std::nth_element(temp.begin(), temp.begin() + n - 1, temp.end());
-        return (temp[n - 1] + v[n]) / 2.0f;
-    }
-}
-
-
-
+/*
 float calculateMeanLogTransformed(const std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
@@ -191,7 +129,7 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
 
     return sum / static_cast<float>(positiveCount);
 }
-
+*/
 /*
 std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>& species) {
     std::string newick;
@@ -1402,7 +1340,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     QStandardItemModel* model = new QStandardItemModel();
     //int numOfSpecies = map.size();
     _initColumnNames.clear();
-    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Mean \nExpression", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
+    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
     model->setHorizontalHeaderLabels(_initColumnNames);
 
     QStringList headers = _initColumnNames;
@@ -1410,7 +1348,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[1], headers[2] };//{ headers[0], headers[2], headers[3], headers[4] };
+    QStringList selectedHeaders = { headers[0], headers[1] };//{ headers[0], headers[2], headers[3], headers[4] };
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
 
@@ -1465,25 +1403,25 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
         }
 
-        float meanV = 0.0f;
+        //float meanV = 0.0f;
         int countV = 0;
         //iterate statisticsValuesForSpeciesMap
         for (const auto& pair : statisticsValuesForSpeciesMap) {
             if (speciesGeneAppearancesComb.contains(pair.first))
             {
-                meanV += pair.second.meanSelected;
+                //meanV += pair.second.meanSelected;
                 countV++;
             }
            
         }
         //meanV = meanV / statisticsValuesForSpeciesMap.size();
-        if (countV > 0)
-        {
-            meanV = std::round(meanV / countV * 100.0) / 100.0;
-        }
+        //if (countV > 0)
+       // {
+            //meanV = std::round(meanV / countV * 100.0) / 100.0;
+        //}
   
         
-        row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
+        //row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
 
         row.push_back(new QStandardItem(QString::number(count))); // 4 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
         row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 5 Gene Appearance Species Names
@@ -1492,17 +1430,11 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         for (const auto& pair : statisticsValuesForSpeciesMap) {
             const auto& species = pair.first;
             const auto& stats = pair.second;
-            formattedStatistics += QString("Species: %1, MeanSelected: %2, MedianSelected: %3, ModeSelected: %4, RangeSelected: %5, CountSelected: %6, MeanNotSelected: %7, MedianNotSelected: %8, ModeNotSelected: %9, RangeNotSelected: %10, CountNotSelected: %11;\n")
+            formattedStatistics += QString("Species: %1, MeanSelected: %2, CountSelected: %3, MeanNotSelected: %4, CountNotSelected: %5;\n")
                 .arg(species)
                 .arg(stats.meanSelected, 0, 'f', 2)
-                .arg(stats.medianSelected, 0, 'f', 2)
-                .arg(stats.modeSelected, 0, 'f', 2)
-                .arg(stats.rangeSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
-                .arg(stats.medianNonSelected, 0, 'f', 2)
-                .arg(stats.modeNonSelected, 0, 'f', 2)
-                .arg(stats.rangeNonSelected, 0, 'f', 2)
                 .arg(stats.countNonSelected);
         }
 

@@ -44,7 +44,7 @@ std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedSta
     // QStringList speciesStatsList = formattedStatistics.split(";", QString::SkipEmptyParts); // Before Qt 5.14
 
     // Regular expression to match the pattern of each statistic
-    QRegularExpression regex("Species: (.*), MeanSelected: ([\\d.]+), MedianSelected: ([\\d.]+), ModeSelected: ([\\d.]+), RangeSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), MedianNotSelected: ([\\d.]+), ModeNotSelected: ([\\d.]+), RangeNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    QRegularExpression regex("Species: (.*), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
 
 
     for (const QString& speciesStats : speciesStatsList) {
@@ -53,15 +53,9 @@ std::map<QString, Statistics> convertToStatisticsMap(const QString& formattedSta
             QString species = match.captured(1);
             Statistics stats = {
                 match.captured(2).toFloat(),
-                match.captured(3).toFloat(),
+                match.captured(3).toInt(),
                 match.captured(4).toFloat(),
-                match.captured(5).toFloat(),
-                match.captured(6).toInt(),
-                match.captured(7).toFloat(),
-                match.captured(8).toFloat(),
-                match.captured(9).toFloat(),
-                match.captured(10).toFloat(),
-                match.captured(11).toInt()
+                match.captured(5).toInt()
             };
             statisticsMap[species] = stats;
         }
@@ -490,9 +484,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyTableData()
         }
     } 
     model->sort(1,Qt::DescendingOrder);
-    //set column width
     _settingsAction.getTableView()->resizeColumnsToContents();
-
+    _settingsAction.getTableView()->update();
 
 
     //connect(_settingsAction.getTableView(), &QTableView::clicked, [this](const QModelIndex& index) {
@@ -847,6 +840,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        _settingsAction.getSelectionDetailsTable()->update();
         emit model->layoutChanged();
 
     }
@@ -861,7 +855,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species", "Count\nSelected","Count\nNon\nSelected", "Mean\nSelected", "Mean\nNon\nSelected","Mean\nDifference","Median\nSelected", "Median\nNon\nSelected","Mode\nSelected", "Mode\nNon\nSelected","Range\nSelected", "Range\nNon\nSelected"});
+        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference", "Count\nSelected","Count\nNon\nSelected", "Mean\nSelected", "Mean\nNon\nSelected"});
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -887,6 +881,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QStandardItem* item;
 
                 item = new QStandardItem();
+                float difference = (it->second.meanSelected - it->second.meanNonSelected);
+                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
+                rowItems << item;
+
+                item = new QStandardItem();
                 item->setData(QVariant(it->second.countSelected), Qt::EditRole);
                 rowItems << item;
 
@@ -902,44 +901,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
                 rowItems << item;
 
-                item = new QStandardItem();
-                float difference = (it->second.meanSelected - it->second.meanNonSelected);
-                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
-                rowItems << item;
 
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.medianSelected), Qt::EditRole);
-                rowItems << item;
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.medianNonSelected), Qt::EditRole);
-                rowItems << item;
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.modeSelected), Qt::EditRole);
-                rowItems << item;
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.modeNonSelected), Qt::EditRole);
-                rowItems << item;
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.rangeSelected), Qt::EditRole);
-                rowItems << item;
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.rangeNonSelected), Qt::EditRole);
-                rowItems << item;
 
 
 
             }
             else {
                 // Fill with placeholders if no statistics found
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
-                rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
@@ -960,12 +928,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
 
-        model->sort(5, Qt::DescendingOrder);
+        model->sort(1, Qt::DescendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
 
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        _settingsAction.getSelectionDetailsTable()->update();
         emit model->layoutChanged();
     }
     adjustTableWidths("large");

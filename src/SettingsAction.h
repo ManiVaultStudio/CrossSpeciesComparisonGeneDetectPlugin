@@ -46,14 +46,8 @@ namespace mv
 
 struct Statistics {
     float meanSelected;
-    float medianSelected;
-    float modeSelected;
-    float rangeSelected;
     int countSelected;
     float meanNonSelected;
-    float medianNonSelected;
-    float modeNonSelected;
-    float rangeNonSelected;
     int countNonSelected;
 
 };
@@ -65,9 +59,6 @@ struct SpeciesColorCountStorage {
 
 struct StatisticsSingle {
     float meanVal;
-    float medianVal;
-    float modeVal;
-    float rangeVal;
     int countVal;
 
 };
