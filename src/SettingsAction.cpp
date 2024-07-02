@@ -183,7 +183,7 @@ int findIndex(const std::vector<std::seed_seq::result_type>& vec, int value) {
 SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpeciesComparisonGeneDetectPlugin) :
     WidgetAction(&CrossSpeciesComparisonGeneDetectPlugin, "CrossSpeciesComparisonGeneDetectPlugin Settings"),
     _crossSpeciesComparisonGeneDetectPlugin(CrossSpeciesComparisonGeneDetectPlugin),
-    _tableModel(this, "Table Model"),
+    _listModel(this, "List Model"),
     _selectedGene(this, "Selected Gene"),
     _filteringEditTreeDataset(this, "Filtering Tree Dataset"),
     _selectedRowIndex(this, "Selected Row Index"),
@@ -215,48 +215,48 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
-    _tableView = new QTableView();
+    _listView = new QTableView();
     _selectionDetailsTable = new QTableView();
     _splitter = new QHBoxLayout();
 
-    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    _tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    _tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _tableView->setAlternatingRowColors(true);
-    _tableView->setSortingEnabled(true);
-    _tableView->setShowGrid(true);
-    _tableView->setGridStyle(Qt::SolidLine);
-    _tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _tableView->setCornerButtonEnabled(false);
-    _tableView->setWordWrap(false);
-    _tableView->setTabKeyNavigation(false);
-    _tableView->setAcceptDrops(false);
-    _tableView->setDropIndicatorShown(false);
-    _tableView->setDragEnabled(false);
-    _tableView->setDragDropMode(QAbstractItemView::NoDragDrop);
-    _tableView->setDragDropOverwriteMode(false);
-    _tableView->setAutoScroll(false);
-    _tableView->setAutoScrollMargin(16);
-    _tableView->setAutoFillBackground(true);
-    _tableView->setFrameShape(QFrame::NoFrame);
-    _tableView->setFrameShadow(QFrame::Plain);
-    _tableView->setLineWidth(0);
-    _tableView->setMidLineWidth(0);
-    _tableView->setFocusPolicy(Qt::NoFocus);
-    _tableView->setContextMenuPolicy(Qt::NoContextMenu);
-    _tableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _tableView->setMinimumSize(QSize(0, 0));
-    _tableView->setMaximumSize(QSize(16777215, 16777215));
-    _tableView->setBaseSize(QSize(0, 0));
-    _tableView->setFocusPolicy(Qt::StrongFocus);
-    _tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _listView->setSelectionMode(QAbstractItemView::SingleSelection);
+    _listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _listView->setAlternatingRowColors(true);
+    _listView->setSortingEnabled(true);
+    _listView->setShowGrid(true);
+    _listView->setGridStyle(Qt::SolidLine);
+    _listView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _listView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _listView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _listView->setCornerButtonEnabled(false);
+    _listView->setWordWrap(false);
+    _listView->setTabKeyNavigation(false);
+    _listView->setAcceptDrops(false);
+    _listView->setDropIndicatorShown(false);
+    _listView->setDragEnabled(false);
+    _listView->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _listView->setDragDropOverwriteMode(false);
+    _listView->setAutoScroll(false);
+    _listView->setAutoScrollMargin(16);
+    _listView->setAutoFillBackground(true);
+    _listView->setFrameShape(QFrame::NoFrame);
+    _listView->setFrameShadow(QFrame::Plain);
+    _listView->setLineWidth(0);
+    _listView->setMidLineWidth(0);
+    _listView->setFocusPolicy(Qt::NoFocus);
+    _listView->setContextMenuPolicy(Qt::NoContextMenu);
+    _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _listView->setMinimumSize(QSize(0, 0));
+    _listView->setMaximumSize(QSize(16777215, 16777215));
+    _listView->setBaseSize(QSize(0, 0));
+    _listView->setFocusPolicy(Qt::StrongFocus);
+    _listView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     //only highlight multiple rows if shiuft is pressed
-    _tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
 
@@ -312,7 +312,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
 
 
-    _tableModel.setSerializationName("CSCGDV:Table Model");
+    _listModel.setSerializationName("CSCGDV:List Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
     _embeddingDataset.setSerializationName("CSCGDV:Embedding Dataset");
@@ -891,7 +891,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     {
                         startCodeTimer("Part15");
                         //_filteredGeneNamesVariant.setVariant(geneListTable);
-                        _tableModel.setVariant(geneListTable);
+                        _listModel.setVariant(geneListTable);
                         stopCodeTimer("Part15");
 
                     }
@@ -1330,17 +1330,11 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         return QVariant();
     }
 
-    /*const std::unordered_map<std::string, int> clusteringTypeMap = {
-    {"Complete", HCLUST_METHOD_COMPLETE},
-    {"Average", HCLUST_METHOD_AVERAGE},
-    {"Median", HCLUST_METHOD_MEDIAN},
-    {"Single", HCLUST_METHOD_SINGLE} // Added "Single" to the map for consistency
-    };
-    */
+
     QStandardItemModel* model = new QStandardItemModel();
-    //int numOfSpecies = map.size();
+
     _initColumnNames.clear();
-    _initColumnNames = { "ID", /*"Newick tree", "Similarity with Reference Tree",*/ "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
+    _initColumnNames = { "ID", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
     model->setHorizontalHeaderLabels(_initColumnNames);
 
     QStringList headers = _initColumnNames;
@@ -1348,14 +1342,9 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
 
-    QStringList selectedHeaders = { headers[0], headers[1] };//{ headers[0], headers[2], headers[3], headers[4] };
+    QStringList selectedHeaders = { headers[0], headers[1] };
     _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
 
-
-    //std::map<QString, std::pair<QString, std::map<QString, Statistics>>> newickTrees;
-
-    //std::string clusteringTypecurrentText = "Single";  // "Single", "Complete", "Average", "Median"
-    //int opt_method = clusteringTypeMap.at(clusteringTypecurrentText); 
 
     for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
@@ -1368,30 +1357,17 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             const std::map<QString, Statistics>& innerMap = outerPair.second;
             auto it = innerMap.find(gene);
             float value = 0.0;
-           // QString typeCal = "Mean";
-            //if (typeCal == "Median")
-            //{
-                //value = it->second.median;
-            //}
-            //else //Mean
-            //{
+
                 value = it->second.meanSelected;
-            //}
+
             numbers.push_back(value);
             statisticsValuesForSpeciesMap[speciesName] = it->second;
         }
 
-        //auto numOfLeaves = static_cast<int>(numOfSpecies);
-       // std::unique_ptr<double[]> distmat(condensedDistanceMatrix(numbers));
-        //std::unique_ptr<int[]> merge(new int[2 * (numOfLeaves - 1)]);
-        //std::unique_ptr<double[]> height(new double[numOfLeaves - 1]);
-       // hclust_fast(numOfLeaves, distmat.get(), opt_method, merge.get(), height.get());
-        //std::string newick = mergeToNewick(merge.get(), numOfLeaves);
-       // newickTrees.insert({ gene, {QString::fromStdString(newick), statisticsValuesForSpeciesMap} });
+
 
         row.push_back(new QStandardItem(gene)); //0 ID
-        //row.push_back(new QStandardItem(""));  //1 Newick tree
-        //row.push_back(new QStandardItem(QString::number(-1.0)));  //2 Similarity with Reference Tree
+
 
 
 
@@ -1403,28 +1379,19 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
         }
 
-        //float meanV = 0.0f;
         int countV = 0;
-        //iterate statisticsValuesForSpeciesMap
+
         for (const auto& pair : statisticsValuesForSpeciesMap) {
             if (speciesGeneAppearancesComb.contains(pair.first))
             {
-                //meanV += pair.second.meanSelected;
+ 
                 countV++;
             }
            
         }
-        //meanV = meanV / statisticsValuesForSpeciesMap.size();
-        //if (countV > 0)
-       // {
-            //meanV = std::round(meanV / countV * 100.0) / 100.0;
-        //}
-  
-        
-        //row.push_back(new QStandardItem(QString::number(meanV)));//3 Mean Expression
 
-        row.push_back(new QStandardItem(QString::number(count))); // 4 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 5 Gene Appearance Species Names
+        row.push_back(new QStandardItem(QString::number(count))); // 1 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 2 Gene Appearance Species Names
 
         QString formattedStatistics;
         for (const auto& pair : statisticsValuesForSpeciesMap) {
@@ -1438,126 +1405,12 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
                 .arg(stats.countNonSelected);
         }
 
-        row.push_back(new QStandardItem(formattedStatistics)); //6 Statistics
+        row.push_back(new QStandardItem(formattedStatistics)); //3 Statistics
 
         model->appendRow(row);
     }
 
 
-    /*
-    std::string targetNewick = "";
-    QStringList fullTreeNames;
-
-    std::vector<QString> leafnames;
-    leafnames.reserve(map.size());
-    for (const auto& outerPair : map) {
-        leafnames.push_back(outerPair.first);
-    }
-
-    std::map<QString, std::pair<QString, float>> treeSimilarities;
-    if (!treeDatasetId.isEmpty()) 
-    {
-        auto fullTreeData = mv::data().getDataset<CrossSpeciesComparisonTree>(treeDatasetId);
-        if (fullTreeData.isValid())
-        {
-            fullTreeNames = fullTreeData->getTreeLeafNames();
-            auto treeData = fullTreeData->getTreeData();
-            auto jsonTree = nlohmann::json::parse(QJsonDocument(treeData).toJson(QJsonDocument::Compact).toStdString());
-            targetNewick = jsonToNewick(jsonTree, leafnames);
-            targetNewick += ";";  // End of Newick string
-        }
-    }
-
-
-
-    if (fullTreeNames.size() > 0 && leafnames.size() > 0 && targetNewick != "")
-    {
-
-        QStringList copyleafNames = QStringList(leafnames.begin(), leafnames.end());
-
-        if (areSameIgnoreOrder(fullTreeNames, copyleafNames)) {
-  
-            for (auto& pair : newickTrees) {//need to change
-
-                std::string modifiedNewick = pair.second.first.toStdString();
-                std::map <QString, Statistics> speciesStatisticsMaps = pair.second.second;
-
-                const char* string1 = targetNewick.c_str();
-                const char* string2 = modifiedNewick.c_str();
-                Tree t1;
-                Tree t2;
-
-                // Fix for Problem 1: Check the return value of freopen
-                if (freopen("CON", "r", stdin) == nullptr) {
-                    std::cerr << "Failed to reopen stdin from CON." << std::endl;
-                }
-
-                FILE* file1 = nullptr;
-                FILE* file2 = nullptr;
-
-                // Fix for Problem 2: Ensure file1 is not nullptr before using fputs
-                if (fopen_s(&file1, "file1.txt", "w") == 0 && file1 != nullptr) {
-                    fputs(string1, file1); // Ensure string1 is a std::string or converted to C-string
-                    fclose(file1);
-                }
-                else {
-                    std::cerr << "Failed to open file1.txt for writing." << std::endl;
-                }
-
-                // Fix for Problem 3: Ensure file2 is not nullptr before using fputs
-                if (fopen_s(&file2, "file2.txt", "w") == 0 && file2 != nullptr) {
-                    fputs(string2, file2); // Ensure string2 is a std::string or converted to C-string
-                    fclose(file2);
-                }
-                else {
-                    std::cerr << "Failed to open file2.txt for writing." << std::endl;
-                }
-
-                // Fix for Problem 4: Check the return value of freopen
-                if (freopen("file1.txt", "r", stdin) == nullptr) {
-                    std::cerr << "Failed to reopen stdin from file1.txt." << std::endl;
-                }
-                else {
-                    t1.CreateTree();
-                }
-
-                // Fix for Problem 5: Check the return value of freopen
-                if (freopen("file2.txt", "r", stdin) == nullptr) {
-                    std::cerr << "Failed to reopen stdin from file2.txt." << std::endl;
-                }
-                else {
-                    t2.CreateTree();
-                }
-
-                int sim = Calculate(&t1, &t2);
-
-
-                float similarity = 1.0 - static_cast<float>(sim) / static_cast<float>(numOfSpecies); 
-                std::pair<QString, float>  temp;
-                temp.first = createJsonTreeFromNewick(QString::fromStdString(modifiedNewick), leafnames, speciesStatisticsMaps);
-                temp.second = similarity;
-                treeSimilarities.insert(std::make_pair(pair.first, temp));
-
-            }
-
-        }
-    }
-
-    for (int i = 0; i < model->rowCount(); ++i) {
-        QString gene = model->item(i, 0)->text();
-
-        auto it = treeSimilarities.find(gene);
-        if (it != treeSimilarities.end()) {
-            const auto& [newick, similarity] = it->second;
-
-            model->item(i, 1)->setText(newick);
-
-            auto item2 = model->item(i, 2);
-            item2->setData(similarity, Qt::DisplayRole);
-            item2->setData(similarity, Qt::UserRole);
-        }
-    }
-    */
 
 
     return QVariant::fromValue(model);
@@ -1806,7 +1659,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 
     _geneNamesConnection.fromParentVariantMap(variantMap);
     _createRowMultiSelectTree.fromParentVariantMap(variantMap);
-    _tableModel.fromParentVariantMap(variantMap);
+    _listModel.fromParentVariantMap(variantMap);
     _selectedGene.fromParentVariantMap(variantMap);
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _embeddingDataset.fromParentVariantMap(variantMap);
@@ -1837,7 +1690,7 @@ QVariantMap SettingsAction::toVariantMap() const
 
     _geneNamesConnection.insertIntoVariantMap(variantMap);
     _createRowMultiSelectTree.insertIntoVariantMap(variantMap);
-    _tableModel.insertIntoVariantMap(variantMap);
+    _listModel.insertIntoVariantMap(variantMap);
     _selectedGene.insertIntoVariantMap(variantMap);
     _mainPointsDataset.insertIntoVariantMap(variantMap);
     _embeddingDataset.insertIntoVariantMap(variantMap);

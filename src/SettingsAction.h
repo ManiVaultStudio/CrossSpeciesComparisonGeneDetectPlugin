@@ -33,7 +33,8 @@
 #include "QStatusBar"
 #include <widgets/FlowLayout.h>
 #include <QSplitter>
-
+#include <QTableView>
+#include <QListView>
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -103,7 +104,7 @@ public:
 
 public: // Action getters
 
-    VariantAction& getTableModelAction() { return _tableModel; }
+    VariantAction& getListModelAction() { return _listModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
     DatasetPickerAction& getFilteringEditTreeDatasetAction() { return _filteringEditTreeDataset; }
@@ -152,7 +153,7 @@ public: // Action getters
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
-    QTableView* getTableView() const { return _tableView; }
+    QTableView* getListView() const { return _listView; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
@@ -185,7 +186,7 @@ public: // Serialization
 
 protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
-    VariantAction                 _tableModel;
+    VariantAction                 _listModel;
     StringAction                  _selectedGene;
     DatasetPickerAction          _filteringEditTreeDataset;
     StringAction                _selectedRowIndex;
@@ -230,7 +231,7 @@ protected:
     QLabel* _currentCellSelectionClusterInfoLabel;
     std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
 
-    QTableView* _tableView;                /** Table view for the data */
+    QTableView* _listView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
 

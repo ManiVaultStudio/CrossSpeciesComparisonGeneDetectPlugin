@@ -39,7 +39,7 @@ public:
     
     /** This function is called by the core after the view plugin has been created */
     void init() override;
-    void modifyTableData();
+    void modifyListData();
     void updateSpeciesData(QJsonObject& node, const std::map<QString, Statistics>& speciesExpressionMap);
     void adjustTableWidths(const QString& value);
     void selectedCellCountStatusBarAdd();
