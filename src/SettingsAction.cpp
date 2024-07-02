@@ -7,11 +7,11 @@
 #include <CrossSpeciesComparisonTreeData.h>
 #include <numeric>   // for std::reduce
 #include <execution> // for std::execution::par
-#include "lib/Distance/annoylib.h"
-#include "lib/Distance/kissrandom.h"
+//#include "lib/Distance/annoylib.h"
+//#include "lib/Distance/kissrandom.h"
 #include <QtConcurrent>
-#include "lib/JSONnlohmann/json.hpp"
-#include "lib/Clustering/fastcluster.h"
+//#include "lib/JSONnlohmann/json.hpp"
+//#include "lib/Clustering/fastcluster.h"
 //#include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
 #include <sstream>
 #include <stack>
@@ -192,7 +192,7 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
     return sum / static_cast<float>(positiveCount);
 }
 
-
+/*
 std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>& species) {
     std::string newick;
     if (node.contains("children")) {
@@ -214,6 +214,7 @@ std::string jsonToNewick(const nlohmann::json& node, const std::vector<QString>&
     }
     return newick;
 }
+*/
 bool areSameIgnoreOrder(const QStringList& list1, const QStringList& list2) {
     if (list1.size() != list2.size()) {
         return false;
@@ -1713,7 +1714,7 @@ void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::m
         node["children"] = children; // Update the modified array back into the parent JSON object
     }
 }
-
+/*
 QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QString> leafnames, std::map <QString, Statistics> speciesMeanValues)
 {
     int i = 0;
@@ -1780,7 +1781,8 @@ QString SettingsAction::createJsonTreeFromNewick(QString tree, std::vector<QStri
 
     return  formattedTree;
 }
-
+*/
+/*
 std::string SettingsAction::mergeToNewick(int* merge, int numOfLeaves) {
     std::vector<std::string> labels(numOfLeaves);
     for (int i = 0; i < numOfLeaves; ++i) {
@@ -1817,7 +1819,7 @@ std::string SettingsAction::mergeToNewick(int* merge, int numOfLeaves) {
 
     return stack.top() + ";";
 }
-
+*/
 double* SettingsAction::condensedDistanceMatrix(const std::vector<float>& items) {
     size_t n = items.size();
     double* distmat = new double[(n * (n - 1)) / 2];
