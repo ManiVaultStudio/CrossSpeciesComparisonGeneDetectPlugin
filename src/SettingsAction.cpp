@@ -1346,7 +1346,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
     }
-
+    startCodeTimer("createModelFromData");
     QStandardItemModel* model = new QStandardItemModel();
     _initColumnNames = { "ID", "Species \nAppearance", "Gene Appearance Species Names", "Statistics" };
     model->setHorizontalHeaderLabels(_initColumnNames);
@@ -1411,7 +1411,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         model->appendRow(row);
     }
 
-
+    stopCodeTimer("createModelFromData");
 
     return QVariant::fromValue(model);
 
