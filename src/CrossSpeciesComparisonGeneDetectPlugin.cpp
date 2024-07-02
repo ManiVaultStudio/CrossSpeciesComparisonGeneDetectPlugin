@@ -346,9 +346,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             QToolTip::showText(QCursor::pos(), text, _settingsAction.getListView());
         }
         });
+    QFrame* verticalLine = new QFrame();
+    verticalLine->setFrameShape(QFrame::VLine);
+    verticalLine->setFrameShadow(QFrame::Sunken);
+    verticalLine->setLineWidth(1);
 
-    _settingsAction.getListView()->setMaximumWidth(170);
+    _settingsAction.getListView()->setMaximumWidth(165);
     _settingsAction.getTableSplitter()->addWidget(_settingsAction.getListView());
+    _settingsAction.getTableSplitter()->addWidget(verticalLine);
     _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable());
 
     // Add the splitter to the main layout
