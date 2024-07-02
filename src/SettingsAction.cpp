@@ -821,16 +821,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-                    std::mutex clusterGeneMeanExpressionMapMutex;
-                    std::mutex clusterNameToGeneNameToExpressionValueMutex;
-    
-                    std::vector<std::future<void>> futures;
+                    QMutex clusterGeneMeanExpressionMapMutex;
+                    QMutex clusterNameToGeneNameToExpressionValueMutex;
 
                     // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
 
+                    std::vector<QFuture<void>> futures;
+                    QFutureWatcher<void> futureWatcher;
+
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(std::async(std::launch::async, [&, species]() {
+                        futures.push_back(QtConcurrent::run([&, species]() {
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
 
@@ -869,7 +870,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                             // Lock and update the shared structure once per species
                             {
-                                std::lock_guard<std::mutex> lock(clusterNameToGeneNameToExpressionValueMutex);
+                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
                                 for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
                                     _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 }
@@ -879,9 +880,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                     // Wait for all futures to complete
                     for (auto& future : futures) {
-                        future.get();
+                        futureWatcher.setFuture(future);
+                        futureWatcher.waitForFinished();
                     }
-
 
 
 
