@@ -12,7 +12,7 @@
 #include <QtConcurrent>
 #include "lib/JSONnlohmann/json.hpp"
 #include "lib/Clustering/fastcluster.h"
-#include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
+//#include "lib/NewickComparator/newick_comparator.h" //https://github.com/MaciejSurowiec/Maximum_agreement_subtree_problem
 #include <sstream>
 #include <stack>
 #include <algorithm> // for std::find
