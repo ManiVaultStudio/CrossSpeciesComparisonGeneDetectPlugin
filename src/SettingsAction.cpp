@@ -1315,17 +1315,22 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         }
         case SelectionOption::MixedTopN: {
             int halfN = n / 2;
-            for (int i = 0; i < geneExpressionVec.size(); ++i) {
-                if (i < halfN || i >= geneExpressionVec.size() - halfN) { // Top halfN genes with highest mean value and Bottom halfN genes with lowest mean value
-                    geneList.insert(geneExpressionVec[i].first);
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-                if (i < halfN || (n % 2 != 0 && i == halfN) || i >= geneExpressionVec.size() - halfN) {
-                    rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1 for top half and correcting rank for bottom half
-                }
+            // Process top halfN genes
+            for (int i = 0; i < halfN; ++i) {
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
+            }
+            // Process bottom halfN genes, if n is odd, include the middle element
+            int startIdx = std::max(static_cast<int>(geneExpressionVec.size()) - halfN, halfN + (n % 2));
+            for (int i = startIdx; i < geneExpressionVec.size(); ++i) {
+                geneList.insert(geneExpressionVec[i].first);
+                geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
             }
             break;
         }
+
         }
     }
 
@@ -1342,79 +1347,56 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         return QVariant();
     }
 
-
     QStandardItemModel* model = new QStandardItemModel();
-
-    _initColumnNames.clear();
-    _initColumnNames = { "ID", "Species \nAppearance", "Gene Appearance Species Names" ,"Statistics"};
+    _initColumnNames = { "ID", "Species \nAppearance", "Gene Appearance Species Names", "Statistics" };
     model->setHorizontalHeaderLabels(_initColumnNames);
 
     QStringList headers = _initColumnNames;
-    _hiddenShowncolumns.setSelectedOptions({});
-    _hiddenShowncolumns.setOptions({});
     _hiddenShowncolumns.setOptions(headers);
-
-    QStringList selectedHeaders = { headers[0], headers[1]};
-    _hiddenShowncolumns.setSelectedOptions(selectedHeaders);
-
+    _hiddenShowncolumns.setSelectedOptions({ headers[0], headers[1] });
 
     for (const auto& gene : returnGeneList) {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
+        numbers.reserve(map.size()); // Reserve capacity based on map size
         std::map<QString, Statistics> statisticsValuesForSpeciesMap;
 
-        for (const auto& outerPair : map) {
-            QString speciesName = outerPair.first;
-
-            const std::map<QString, Statistics>& innerMap = outerPair.second;
+        for (const auto& [speciesName, innerMap] : map) {
             auto it = innerMap.find(gene);
-            float value = 0.0;
-
-                value = it->second.meanSelected;
-
-            numbers.push_back(value);
-            statisticsValuesForSpeciesMap[speciesName] = it->second;
+            if (it != innerMap.end()) {
+                float value = it->second.meanSelected;
+                numbers.push_back(value);
+                statisticsValuesForSpeciesMap[speciesName] = it->second;
+            }
         }
 
-
-
-        row.push_back(new QStandardItem(gene)); //0 ID
-
-
+        row.push_back(new QStandardItem(gene)); // ID
 
         std::map<QString, int> rankcounter;
-        auto rankit=rankingMap.find(gene);
-        if (rankit != rankingMap.end()) {
+        if (auto rankit = rankingMap.find(gene); rankit != rankingMap.end()) {
+            // Assuming rankit->second is of type std::vector<std::pair<QString,int>>
             for (const auto& pair : rankit->second) {
-                const auto& species = pair.first;
-                rankcounter[species] = pair.second;
+                rankcounter[pair.first] = pair.second;
             }
         }
 
-
-        auto it = geneCounter.find(gene);
         QString speciesGeneAppearancesComb;
         int count = 0;
-        if (it != geneCounter.end()) {
-            auto speciesDetails = it->second;
-
+        if (auto it = geneCounter.find(gene); it != geneCounter.end()) {
+            const auto& speciesDetails = it->second;
             count = speciesDetails.size();
-            
-            for (auto speciesDetail : speciesDetails) {
-                auto speciesName = speciesDetail;
-                speciesGeneAppearancesComb += speciesName + ";";
-                //speciesGeneAppearancesComb = QStringList(it->second.begin(), it->second.end()).join(";");
+            QStringList speciesNames;
+            for (const auto& speciesDetail : speciesDetails) {
+                speciesNames << speciesDetail;
             }
+            speciesGeneAppearancesComb = speciesNames.join(";");
         }
 
-
-        row.push_back(new QStandardItem(QString::number(count))); // 1 Gene Appearances /" + QString::number(numOfSpecies) + " Species"
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // 2 Gene Appearance Species Names
+        row.push_back(new QStandardItem(QString::number(count))); // Gene Appearances
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // Gene Appearance Species Names
 
         QString formattedStatistics;
-        for (const auto& pair : statisticsValuesForSpeciesMap) {
-            const auto& species = pair.first;
-            const auto& stats = pair.second;
+        for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
             formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")
                 .arg(species)
                 .arg(rankcounter[species])
@@ -1424,11 +1406,10 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
                 .arg(stats.countNonSelected);
         }
 
-        row.push_back(new QStandardItem(formattedStatistics)); //3 Statistics
+        row.push_back(new QStandardItem(formattedStatistics)); // Statistics
 
         model->appendRow(row);
     }
-
 
 
 
