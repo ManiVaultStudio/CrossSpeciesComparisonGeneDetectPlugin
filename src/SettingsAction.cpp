@@ -786,7 +786,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
-                                startCodeTimer("Part12.2.1");
+                                startCodeTimer("Loop1."+ speciesName.toStdString());
                                 StatisticsSingle calculateStatisticsShort, calculateStatisticsNot;
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -795,8 +795,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
                                 }
-                                stopCodeTimer("Part12.2.1");
-                                startCodeTimer("Part12.2.2");
+                                stopCodeTimer("Loop1." + speciesName.toStdString());
+                                startCodeTimer("Loop2." + speciesName.toStdString());
                                 if (!commonNotSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShortNot(commonNotSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShortNot, geneIndex, commonNotSelectedIndices);
@@ -804,10 +804,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     calculateStatisticsNot = calculateStatistics(resultContainerShortNot);
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
                                 }
-                                stopCodeTimer("Part12.2.2");
-                                startCodeTimer("Part12.2.3");
+                                stopCodeTimer("Loop2." + speciesName.toStdString());
+                                startCodeTimer("Loop3." + speciesName.toStdString());
                                 localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
-                                stopCodeTimer("Part12.2.3");
+                                stopCodeTimer("Loop3." + speciesName.toStdString());
                             }
 
                             // Lock and update the shared structure once per species
