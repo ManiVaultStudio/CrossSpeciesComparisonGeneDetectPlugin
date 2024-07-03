@@ -829,7 +829,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
-        model->sort(2, Qt::AscendingOrder);
+        model->sort(1, Qt::DescendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
