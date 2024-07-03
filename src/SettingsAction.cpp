@@ -988,7 +988,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 _topNGenesFilter.setMaximum(dimensions);
 
                 _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
-
+                _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(dimensions));
+                _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(dimensions));
             }
             else
 
@@ -996,6 +997,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 _topNGenesFilter.setMinimum(0);
                 _topNGenesFilter.setMaximum(0);
                 _topNGenesFilter.setValue(0);
+                _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
+                _topNGenesFilter.setText("Top N genes: 0 to 0");
             }
 
         }
@@ -1004,6 +1007,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setMinimum(0);
             _topNGenesFilter.setMaximum(0);
             _topNGenesFilter.setValue(0);
+            _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
+            _topNGenesFilter.setText("Top N genes: 0 to 0");
             
         }
         
