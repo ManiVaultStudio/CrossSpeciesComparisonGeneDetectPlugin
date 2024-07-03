@@ -786,7 +786,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
-
+                                startCodeTimer("Part12.2.1");
                                 StatisticsSingle calculateStatisticsShort, calculateStatisticsNot;
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -795,7 +795,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
                                 }
-
+                                stopCodeTimer("Part12.2.1");
+                                startCodeTimer("Part12.2.2");
                                 if (!commonNotSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShortNot(commonNotSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShortNot, geneIndex, commonNotSelectedIndices);
@@ -803,8 +804,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     calculateStatisticsNot = calculateStatistics(resultContainerShortNot);
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
                                 }
-
+                                stopCodeTimer("Part12.2.2");
+                                startCodeTimer("Part12.2.3");
                                 localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                                stopCodeTimer("Part12.2.3");
                             }
 
                             // Lock and update the shared structure once per species
