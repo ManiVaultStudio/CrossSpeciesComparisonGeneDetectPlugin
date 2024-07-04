@@ -518,18 +518,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                          QString datasetIdExp = _tsneDatasetExpressionColors->getId();
                          stopCodeTimer("Part7.1");
                          startCodeTimer("Part7.2");
-                         startCodeTimer("Part7.2.1");
-                         //first thread start
-                         startCodeTimer("Part7.2.1.1");
-                        std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize* pointsDatasetColumnsSize);
-                        stopCodeTimer("Part7.2.1.1");
-                        startCodeTimer("Part7.2.1.2");
-                        pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
-                        stopCodeTimer("Part7.2.1.2");
-                        startCodeTimer("Part7.2.1.3");
-                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-                        stopCodeTimer("Part7.2.1.3");
-                        stopCodeTimer("Part7.2.1");
+                         auto future1 = std::async(std::launch::async, [&]() {
+                             startCodeTimer("Part7.2.1");
+                             std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
+                             pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
+                             populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
+                             stopCodeTimer("Part7.2.1");
+                             });
                         startCodeTimer("Part7.2.2");
                         //second thread start
                         std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
@@ -542,7 +537,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
                         stopCodeTimer("Part7.2.3");
                         //wait for all threads to finish
-
+                        future1.wait();
                         stopCodeTimer("Part7.2");
 
                         stopCodeTimer("Part7");
