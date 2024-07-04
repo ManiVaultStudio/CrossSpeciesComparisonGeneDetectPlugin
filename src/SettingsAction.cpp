@@ -1347,7 +1347,12 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
                     geneList.insert(geneExpressionVec[i].first);
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    //check if the selected counter in the mpa is greater than 0
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
+
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                 }
 
                 rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
@@ -1361,7 +1366,11 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
                     geneList.insert(geneExpressionVec[i].first);
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
+
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                 }
                 rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1
             }
@@ -1372,7 +1381,11 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
                     geneList.insert(geneExpressionVec[i].first);
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
+
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                 }
                 rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, geneExpressionVec.size() - i); // Corrected rank calculation
             }
@@ -1383,14 +1396,22 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             // Process top halfN genes
             for (int i = 0; i < halfN; ++i) {
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+
+                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                 rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
             }
             // Process bottom halfN genes, if n is odd, include the middle element
             int startIdx = std::max(static_cast<int>(geneExpressionVec.size()) - halfN, halfN + (n % 2));
             for (int i = startIdx; i < geneExpressionVec.size(); ++i) {
                 geneList.insert(geneExpressionVec[i].first);
-                geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+
+                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                 rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
             }
             break;
