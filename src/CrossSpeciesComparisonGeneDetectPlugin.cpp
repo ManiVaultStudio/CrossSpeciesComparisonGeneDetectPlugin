@@ -196,6 +196,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             }
 
             _settingsAction.getRemoveRowSelection().setDisabled(true);
+            _settingsAction.getSpeciesExplorerInMapTrigger().setDisabled(true);
+
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
@@ -520,6 +522,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedGeneAction().setString(gene);
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
+        _settingsAction.getSpeciesExplorerInMapTrigger().setEnabled(true);
+
 
         std::map<QString, SpeciesDetails> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;

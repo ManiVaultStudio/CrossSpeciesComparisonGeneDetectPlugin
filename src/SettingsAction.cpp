@@ -329,6 +329,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
+    _speciesExplorerInMapTrigger.setSerializationName("CSCGDV:Species Explorer In Map Trigger");
+    _speciesExplorerInMapTrigger.setDisabled(true);
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
     _selectedGene.setDisabled(true);
     _selectedGene.setString("");
@@ -1243,6 +1245,8 @@ void SettingsAction::updateButtonTriggered()
 
             _removeRowSelection.trigger();
             _removeRowSelection.setEnabled(false);
+            _speciesExplorerInMapTrigger.setEnabled(false);
+
         }
         stopCodeTimer("UpdateGeneFilteringTrigger");
         _startComputationTriggerAction.setDisabled(false);
@@ -1768,6 +1772,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
+    _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
@@ -1800,6 +1805,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
+    _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
