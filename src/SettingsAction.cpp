@@ -372,573 +372,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         });
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
-            _startComputationTriggerAction.setDisabled(true);
-            startCodeTimer("UpdateGeneFilteringTrigger");
-            startCodeTimer("Part1");
-            
+            updateButtonTriggered();
 
-            auto pointsDataset = _mainPointsDataset.getCurrentDataset();
-            auto embeddingDataset = _embeddingDataset.getCurrentDataset();
-            auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
-            auto clusterDataset = _clusterNamesDataset.getCurrentDataset();
-            auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
-            _selectedSpeciesVals.setString("");
-            _geneNamesConnection.setString("");
-            bool isValid = false;
-            
-            QString referenceTreedatasetId = "";
-            stopCodeTimer("Part1");
-            startCodeTimer("Part2");
-            if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
-            {
-                qDebug() << "No datasets selected";
-                _startComputationTriggerAction.setDisabled(false);
-                return;
-            }
-            if (pointsDataset->getSelectionIndices().size() <1)
-            {
-                qDebug() << "No points selected";
-                _startComputationTriggerAction.setDisabled(false);
-                return;
-            }
-            if (_selectedPointsTSNEDataset.isValid())
-            {
-                _selectedPointsTSNEDataset->setSelectionIndices({});
-            }
-            stopCodeTimer("Part2");
-            startCodeTimer("Part3");
-            _clusterNameToGeneNameToExpressionValue.clear();
-            referenceTreedatasetId = referenceTreeDataset->getId();
-            isValid = speciesDataset->getParent() == pointsDataset && clusterDataset->getParent() == pointsDataset && embeddingDataset->getParent() == pointsDataset;
-            if (!isValid)
-            {
-                qDebug() << "Datasets are not valid";
-                _startComputationTriggerAction.setDisabled(false);
-                return;
-            }
-            _selectedIndicesFromStorage.clear();
-            _selectedIndicesFromStorage = pointsDataset->getSelectionIndices();
-
-            auto embeddingDatasetRaw = mv::data().getDataset<Points>(embeddingDataset->getId());
-            auto pointsDatasetRaw = mv::data().getDataset<Points>(pointsDataset->getId());
-            auto pointsDatasetallColumnNameList = pointsDatasetRaw->getDimensionNames();
-            auto embeddingDatasetallColumnNameList = embeddingDatasetRaw->getDimensionNames();
-            stopCodeTimer("Part3");
-            startCodeTimer("Part4");
-            std::vector<int> embeddingDatasetColumnIndices(embeddingDatasetallColumnNameList.size());
-            std::iota(embeddingDatasetColumnIndices.begin(), embeddingDatasetColumnIndices.end(), 0);
-
-            std::vector<int> pointsDatasetallColumnIndices(pointsDatasetallColumnNameList.size());
-            std::iota(pointsDatasetallColumnIndices.begin(), pointsDatasetallColumnIndices.end(), 0);
-            stopCodeTimer("Part4");
-        {
-            
-                if (_selectedIndicesFromStorage.size() > 0 && embeddingDatasetColumnIndices.size() > 0)
-            {
-                    startCodeTimer("Part5");
-                    auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
-                auto clusterDatasetRaw = mv::data().getDataset<Clusters>(clusterDataset->getId());
-                auto clusterDatasetName= clusterDatasetRaw->getGuiName();
-                auto clustersValuesAll = clusterDatasetRaw->getClusters();
-                auto speciesValuesAll = speciesDatasetRaw->getClusters();
-
-                std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
-                std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
-                stopCodeTimer("Part5");
-                if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
-                {
-                    startCodeTimer("Part6.1");
-                    if (!_selectedPointsDataset.isValid())
-                    {
-                        _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
-                        _selectedPointsDataset->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_selectedPointsDataset);
-
-                    }
-                    if (!_tsneDatasetExpressionColors.isValid())
-                    {
-                        _tsneDatasetExpressionColors = mv::data().createDataset("Points", "TSNEDatasetExpressionColors", _selectedPointsDataset);
-                        _tsneDatasetExpressionColors->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_tsneDatasetExpressionColors);
-
-                    }
-                    if (!_filteredUMAPDatasetPoints.isValid())
-                    {
-                        _filteredUMAPDatasetPoints = mv::data().createDataset("Points", "Filtered UMAP Dataset Points");
-                        _filteredUMAPDatasetPoints->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetPoints);
-                        if (!_filteredUMAPDatasetColors.isValid())
-                        {
-                            //need to delete
-
-                        }
-                        _filteredUMAPDatasetColors = mv::data().createDataset("Points", "Filtered UMAP Dataset Colors", _filteredUMAPDatasetPoints);
-                        _filteredUMAPDatasetColors->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetColors);
-
-                    }
-                    if (!_selectedPointsEmbeddingDataset.isValid())
-                    {
-                        _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);
-                        _selectedPointsEmbeddingDataset->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_selectedPointsEmbeddingDataset);
-
-                    }
-                    if (!_tsneDatasetSpeciesColors.isValid())
-                    {
-                        _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsDataset);
-                        _tsneDatasetSpeciesColors->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_tsneDatasetSpeciesColors);
-                    }
-
-                    if (!_tsneDatasetClusterColors.isValid())
-                    {
-                        _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsDataset);
-                        _tsneDatasetClusterColors->setGroupIndex(10);
-                        mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
-                    }
-                    stopCodeTimer("Part6.1");
-                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
-                    {
-                       startCodeTimer("Part6.2");
-                        _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
-                        events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
-                        _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
-                        events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
-                        stopCodeTimer("Part6.2");
-                        startCodeTimer("Part7");
-                        startCodeTimer("Part7.1");
-                         int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
-                         int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
-                         int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
-                         QString datasetIdEmb = _selectedPointsDataset->getId();
-                         QString datasetId = _selectedPointsEmbeddingDataset->getId();
-                         int dimofDatasetExp = 1;
-                         std::vector<QString> dimensionNamesExp = { "Expression" };
-                         QString datasetIdExp = _tsneDatasetExpressionColors->getId();
-                         stopCodeTimer("Part7.1");
-                         startCodeTimer("Part7.2");
-                         auto future1 = std::async(std::launch::async, [&]() {
-                             startCodeTimer("Part7.2.1");
-                             std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
-                             pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
-                             populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-                             stopCodeTimer("Part7.2.1");
-                             });
-                        startCodeTimer("Part7.2.2");
-                        //second thread start
-                        std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize* embeddingDatasetColumnsSize);
-                        embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
-                        populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
-                        stopCodeTimer("Part7.2.2");
-                        startCodeTimer("Part7.2.3");
-                        //third thread start
-                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
-                        populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
-                        stopCodeTimer("Part7.2.3");
-                        //wait for all threads to finish
-                        future1.wait();
-                        stopCodeTimer("Part7.2");
-
-                        stopCodeTimer("Part7");
-                        startCodeTimer("Part8");
-                        if (_selectedPointsTSNEDataset.isValid())
-                        {
-                            auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
-
-                            if (runningAction)
-                            {
-
-                                if (runningAction->isChecked())
-                                {
-                                    auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
-                                    if (stopAction)
-                                    {
-                                        stopAction->trigger();
-                                        std::this_thread::sleep_for(std::chrono::seconds(5));
-                                    }
-                                }
-
-                            }
-                        }
-
-                        if (_selectedPointsTSNEDataset.isValid())
-                        {
-                            auto datasetIDLowRem = _selectedPointsTSNEDataset.getDatasetId();
-                            mv::events().notifyDatasetAboutToBeRemoved(_selectedPointsTSNEDataset);
-                            mv::data().removeDataset(_selectedPointsTSNEDataset);
-                            mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
-                        }
-                        stopCodeTimer("Part8");
-                        startCodeTimer("Part9");
-                        mv::plugin::AnalysisPlugin* analysisPlugin; 
-                        bool usePreTSNE= _usePreComputedTSNE.isChecked();
-                        
-                        auto scatterplotModificationsLowDimUMAP = [this]() { 
-                            if (_selectedPointsTSNEDataset.isValid()) {
-                                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-                                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-                                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-                                if (scatterplotViewFactory) {
-                                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                        if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
-                                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                                            if (pointDatasetPickerAction) {
-                                                pointDatasetPickerAction->setCurrentText("");
-
-                                                pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
-
-                                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                                                if (colorDatasetPickerAction)
-                                                {
-                                                    colorDatasetPickerAction->setCurrentText("");
-
-
-
-                                                    auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
-                                                    if (selectedColorType != "")
-                                                    {
-                                                        if (selectedColorType == "Cluster")
-                                                        {
-                                                            if (_tsneDatasetClusterColors.isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
-                                                            }
-                                                        }
-                                                        else if (selectedColorType == "Species")
-                                                        {
-                                                            if (_tsneDatasetSpeciesColors.isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
-                                                            }
-                                                        }
-                                                        else if (selectedColorType == "Expression")
-                                                        {
-                                                            if (_tsneDatasetExpressionColors.isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
-                                                            }
-                                                        }
-
-
-
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            };
-                        stopCodeTimer("Part9"); 
-                        if (!usePreTSNE)
-                        {
-                           startCodeTimer("Part10");
-                            analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
-                            if (!analysisPlugin) {
-                                qDebug() << "Could not find create TSNE Analysis";
-                                return;
-                            }
-                            _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
-                            if (_selectedPointsTSNEDataset.isValid())
-                            {
-                            
-                                int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
-                                if (perplexity < 5)
-                                {
-                                    qDebug() << "Perplexity is less than 5";
-                                    _startComputationTriggerAction.setDisabled(false);
-                                    return;
-                                }
-                                if (perplexity != _tsnePerplexity.getValue())
-                                {
-                                    _tsnePerplexity.setValue(perplexity);
-                                }
-                            
-                                auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
-                                if (perplexityAction)
-                                {
-                                    qDebug() << "Perplexity: Found";
-                                    perplexityAction->setValue(perplexity);
-                                }
-                                else
-                                {
-                                    qDebug() << "Perplexity: Not Found";
-                                }
-
-                                scatterplotModificationsLowDimUMAP();
-
-                                auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
-                                if (startAction) {
-
-                                    startAction->trigger();
-
-                                    analysisPlugin->getOutputDataset()->setSelectionIndices({});
-                                }
-
-                            }
-                            stopCodeTimer("Part10");
-                            }
-                        else
-                        {
-                            startCodeTimer("Part11");
-                            auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
-
-                            if (umapDataset.isValid()) 
-                            {
-        
-
-                                _selectedPointsTSNEDataset = mv::data().createDerivedDataset<Points>("SelectedPointsTSNEDataset", _selectedPointsEmbeddingDataset, _selectedPointsEmbeddingDataset);
-
-                                mv::events().notifyDatasetAdded(_selectedPointsTSNEDataset);
-
-                                auto umapDatasetRaw = mv::data().getDataset<Points>(umapDataset->getId());
-                                auto dimNames = umapDatasetRaw->getDimensionNames();
-                                int preComputedEmbeddingColumnsSize = umapDatasetRaw->getNumDimensions();
-                                std::vector<float> resultContainerPreComputedUMAP(selectedIndicesFromStorageSize* preComputedEmbeddingColumnsSize);
-                                std::vector<int> preComputedEmbeddingColumnIndices(preComputedEmbeddingColumnsSize);
-
-                                std::iota(preComputedEmbeddingColumnIndices.begin(), preComputedEmbeddingColumnIndices.end(), 0);
-
-                                umapDatasetRaw->populateDataForDimensions(resultContainerPreComputedUMAP, preComputedEmbeddingColumnIndices, _selectedIndicesFromStorage);
-  
-                                QString datasetId = _selectedPointsTSNEDataset->getId();
-                                populatePointData(datasetId, resultContainerPreComputedUMAP, selectedIndicesFromStorageSize, preComputedEmbeddingColumnsSize, dimNames);
-
-                                if (_selectedPointsTSNEDataset.isValid())
-                                {
-                                    scatterplotModificationsLowDimUMAP();
-                                }
-                            }
-                            else
-                            {
-                                qDebug() << "UMAP Dataset not valid";
-                            }
-
-
-                            stopCodeTimer("Part11");
-
-
-                           
-                        }
-
-
-
-                    }
-                    else
-                    {
-                        qDebug() << "Datasets are not valid";
-                    }
-                    startCodeTimer("Part12");
-                    startCodeTimer("Part12.1");
-                    QtConcurrent::run([&]() {
-                        QMutex mutex;
-                        for (auto& clusters : clustersValuesAll) {
-                            auto clusterIndices = clusters.getIndices();
-                            auto clusterName = clusters.getName();
-                            auto clusterColor = clusters.getColor();
-                            std::vector<int> filteredIndices;
-
-                            QtConcurrent::blockingMap(clusterIndices, [&](int index) {
-                                int indexVal = findIndex(_selectedIndicesFromStorage, index);
-                                if (indexVal != -1) {
-                                    QMutexLocker locker(&mutex);
-                                    filteredIndices.push_back(indexVal);
-                                }
-                                });
-
-                            {
-                                QMutexLocker locker(&mutex);
-                                selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
-                            }
-                        }
-                        });
-
-                    stopCodeTimer("Part12.1");
-                    startCodeTimer("Part12.2");
-
-
-
-
-                    QMutex clusterGeneMeanExpressionMapMutex;
-                    QMutex clusterNameToGeneNameToExpressionValueMutex;
-
-                    // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
-                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-
-                    std::vector<QFuture<void>> futures;
-                    QFutureWatcher<void> futureWatcher;
-
-                    for (auto& species : speciesValuesAll) {
-                        futures.push_back(QtConcurrent::run([&, species]() {
-                            auto speciesIndices = species.getIndices();
-                            auto speciesName = species.getName();
-
-                            std::vector<int> commonSelectedIndices;
-                            //std::vector<int> commonNotSelectedIndices;
-                            std::sort(speciesIndices.begin(), speciesIndices.end());
-                            std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-                            //std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
-
-                            // Use a local map to aggregate results
-                            std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
-
-                            for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
-                                auto& geneName = pointsDatasetallColumnNameList[i];
-                                std::vector<int> geneIndex = { i };
-                                auto nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
-                                int allCellCounts = nonSelectionDetails.first;
-                                float allCellMean = nonSelectionDetails.second;
-
-                                float nonSelectedMean = allCellMean; // Use directly, no need to reassign
-                                int nonSelectedCells = allCellCounts;
-
-                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; // Initialize with default values
-
-                                if (!commonSelectedIndices.empty()) {
-                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
-                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    calculateStatisticsShort = calculateStatistics(resultContainerShort);
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
-                                    float allCellTotal = allCellMean * allCellCounts;
-
-                                    nonSelectedCells = allCellCounts - commonSelectedIndices.size();
-                                    // Check to prevent division by zero
-                                    if (nonSelectedCells > 0) {
-                                        nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
-                                    }
-                                    else {
-                                        nonSelectedMean = 0.0f; // Assign a default value or handle the case as needed
-                                    }
-                                }
-                                else {
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
-                                }
-
-                                StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
-
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
-                            }
-
-
-                            // Lock and update the shared structure once per species
-                            {
-                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
-                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                }
-                            }
-                            }));
-                    }
-
-                    // Wait for all futures to complete
-                    for (auto& future : futures) {
-                        futureWatcher.setFuture(future);
-                        futureWatcher.waitForFinished();
-                    }
-
-
-
-                    stopCodeTimer("Part12.2");
-
-                    auto clusterColorDatasetId = _tsneDatasetClusterColors->getId();
-                    auto speciesColorDatasetId = _tsneDatasetSpeciesColors->getId();
-                    startCodeTimer("Part12.3");
-                    populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
-                    stopCodeTimer("Part12.3");
-                    startCodeTimer("Part12.4"); 
-                    populateClusterData(clusterColorDatasetId, selctedClustersMap);
-                    stopCodeTimer("Part12.4");
-                    stopCodeTimer("Part12");
-                    if (_tsneDatasetClusterColors.isValid())
-                    {
-                        
-                        auto clusterValues = _tsneDatasetClusterColors->getClusters();
-                        if (!clusterValues.empty())
-                        {
-                            startCodeTimer("Part13");
-                            
-                            QLayoutItem* layoutItem;
-                            while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
-                                delete layoutItem->widget();
-                                delete layoutItem;
-                            }
-                            
-                            // Create a description label
-                            auto descriptionLabel = new QLabel("Selected Cell Counts per "+ clusterDatasetName +" :");
-                            // Optionally, set a stylesheet for the description label for styling
-                            descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
-                            // Add the description label to the layout
-                            _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
-
-
-                            for (auto cluster : clusterValues) {
-                                auto clusterName = cluster.getName();
-                                auto clusterIndicesSize = cluster.getIndices().size();
-                                auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
-
-                                // Calculate luminance
-                                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
-
-                                // Choose text color based on luminance
-                                QString textColor = (luminance > 0.5) ? "black" : "white";
-
-                                // Convert QColor to hex string for stylesheet
-                                QString backgroundColor = clusterColor.name(QColor::HexArgb);
-
-                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
-                                // Add text color and background color to clusterLabel with padding and border for better styling
-                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
-                                    .arg(textColor).arg(backgroundColor).arg(textColor));
-                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
-                            }
-
-
-                        }
-                        
-                    }
-
-                    startCodeTimer("Part14");
-                    QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
-                    stopCodeTimer("Part14");
-                    if (!geneListTable.isNull())
-                    {
-                        startCodeTimer("Part15");
-                        //_filteredGeneNamesVariant.setVariant(geneListTable);
-                        _listModel.setVariant(geneListTable);
-                        stopCodeTimer("Part15");
-
-                    }
-                    else
-                    {
-                        qDebug() << "QVariant empty";
-                    }
-
-
-
-                }
-
-                else
-                {
-                    qDebug() << "Species or Clusters are empty";
-                }
-
-
-            }
-            
-            else
-            {
-                qDebug() << "No points selected or no dimensions present";
-            }
-            _removeRowSelection.trigger();
-            _removeRowSelection.setEnabled(false);
-        }
-        stopCodeTimer("UpdateGeneFilteringTrigger");
-        _startComputationTriggerAction.setDisabled(false);
         };
-       
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
     const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
         
@@ -1223,6 +659,599 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction.setString("M");
 }
 
+
+
+void SettingsAction::updateButtonTriggered()
+{
+    try {
+        _startComputationTriggerAction.setDisabled(true);
+        startCodeTimer("UpdateGeneFilteringTrigger");
+        startCodeTimer("Part1");
+
+
+        auto pointsDataset = _mainPointsDataset.getCurrentDataset();
+        auto embeddingDataset = _embeddingDataset.getCurrentDataset();
+        auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
+        auto clusterDataset = _clusterNamesDataset.getCurrentDataset();
+        auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
+        _selectedSpeciesVals.setString("");
+        _geneNamesConnection.setString("");
+        bool isValid = false;
+
+        QString referenceTreedatasetId = "";
+        stopCodeTimer("Part1");
+        startCodeTimer("Part2");
+        if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
+        {
+            qDebug() << "No datasets selected";
+            _startComputationTriggerAction.setDisabled(false);
+            return;
+        }
+        if (pointsDataset->getSelectionIndices().size() < 1)
+        {
+            qDebug() << "No points selected";
+            _startComputationTriggerAction.setDisabled(false);
+            return;
+        }
+        if (_selectedPointsTSNEDataset.isValid())
+        {
+            _selectedPointsTSNEDataset->setSelectionIndices({});
+        }
+        stopCodeTimer("Part2");
+        startCodeTimer("Part3");
+        _clusterNameToGeneNameToExpressionValue.clear();
+        referenceTreedatasetId = referenceTreeDataset->getId();
+        isValid = speciesDataset->getParent() == pointsDataset && clusterDataset->getParent() == pointsDataset && embeddingDataset->getParent() == pointsDataset;
+        if (!isValid)
+        {
+            qDebug() << "Datasets are not valid";
+            _startComputationTriggerAction.setDisabled(false);
+            return;
+        }
+        _selectedIndicesFromStorage.clear();
+        _selectedIndicesFromStorage = pointsDataset->getSelectionIndices();
+
+        auto embeddingDatasetRaw = mv::data().getDataset<Points>(embeddingDataset->getId());
+        auto pointsDatasetRaw = mv::data().getDataset<Points>(pointsDataset->getId());
+        auto pointsDatasetallColumnNameList = pointsDatasetRaw->getDimensionNames();
+        auto embeddingDatasetallColumnNameList = embeddingDatasetRaw->getDimensionNames();
+        stopCodeTimer("Part3");
+        startCodeTimer("Part4");
+        std::vector<int> embeddingDatasetColumnIndices(embeddingDatasetallColumnNameList.size());
+        std::iota(embeddingDatasetColumnIndices.begin(), embeddingDatasetColumnIndices.end(), 0);
+
+        std::vector<int> pointsDatasetallColumnIndices(pointsDatasetallColumnNameList.size());
+        std::iota(pointsDatasetallColumnIndices.begin(), pointsDatasetallColumnIndices.end(), 0);
+        stopCodeTimer("Part4");
+        {
+
+            if (_selectedIndicesFromStorage.size() > 0 && embeddingDatasetColumnIndices.size() > 0)
+            {
+                startCodeTimer("Part5");
+                auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
+                auto clusterDatasetRaw = mv::data().getDataset<Clusters>(clusterDataset->getId());
+                auto clusterDatasetName = clusterDatasetRaw->getGuiName();
+                auto clustersValuesAll = clusterDatasetRaw->getClusters();
+                auto speciesValuesAll = speciesDatasetRaw->getClusters();
+
+                std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
+                std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
+                stopCodeTimer("Part5");
+                if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
+                {
+                    startCodeTimer("Part6.1");
+                    if (!_selectedPointsDataset.isValid())
+                    {
+                        _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
+                        _selectedPointsDataset->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_selectedPointsDataset);
+
+                    }
+                    if (!_tsneDatasetExpressionColors.isValid())
+                    {
+                        _tsneDatasetExpressionColors = mv::data().createDataset("Points", "TSNEDatasetExpressionColors", _selectedPointsDataset);
+                        _tsneDatasetExpressionColors->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_tsneDatasetExpressionColors);
+
+                    }
+                    if (!_filteredUMAPDatasetPoints.isValid())
+                    {
+                        _filteredUMAPDatasetPoints = mv::data().createDataset("Points", "Filtered UMAP Dataset Points");
+                        _filteredUMAPDatasetPoints->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetPoints);
+                        if (!_filteredUMAPDatasetColors.isValid())
+                        {
+                            //need to delete
+
+                        }
+                        _filteredUMAPDatasetColors = mv::data().createDataset("Points", "Filtered UMAP Dataset Colors", _filteredUMAPDatasetPoints);
+                        _filteredUMAPDatasetColors->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetColors);
+
+                    }
+                    if (!_selectedPointsEmbeddingDataset.isValid())
+                    {
+                        _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);
+                        _selectedPointsEmbeddingDataset->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_selectedPointsEmbeddingDataset);
+
+                    }
+                    if (!_tsneDatasetSpeciesColors.isValid())
+                    {
+                        _tsneDatasetSpeciesColors = mv::data().createDataset("Cluster", "TSNEDatasetSpeciesColors", _selectedPointsDataset);
+                        _tsneDatasetSpeciesColors->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_tsneDatasetSpeciesColors);
+                    }
+
+                    if (!_tsneDatasetClusterColors.isValid())
+                    {
+                        _tsneDatasetClusterColors = mv::data().createDataset("Cluster", "TSNEDatasetClusterColors", _selectedPointsDataset);
+                        _tsneDatasetClusterColors->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
+                    }
+                    stopCodeTimer("Part6.1");
+                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
+                    {
+                        startCodeTimer("Part6.2");
+                        _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
+                        events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
+                        _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
+                        events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
+                        stopCodeTimer("Part6.2");
+                        startCodeTimer("Part7");
+                        startCodeTimer("Part7.1");
+                        int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
+                        int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
+                        int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
+                        QString datasetIdEmb = _selectedPointsDataset->getId();
+                        QString datasetId = _selectedPointsEmbeddingDataset->getId();
+                        int dimofDatasetExp = 1;
+                        std::vector<QString> dimensionNamesExp = { "Expression" };
+                        QString datasetIdExp = _tsneDatasetExpressionColors->getId();
+                        stopCodeTimer("Part7.1");
+                        startCodeTimer("Part7.2");
+                        auto future1 = std::async(std::launch::async, [&]() {
+                            startCodeTimer("Part7.2.1");
+                            std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
+                            pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
+                            populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
+                            stopCodeTimer("Part7.2.1");
+                            });
+
+                        auto future2 = std::async(std::launch::async, [&]() {
+                            startCodeTimer("Part7.2.2");
+                            std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize * embeddingDatasetColumnsSize);
+                            embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
+                            populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
+                            stopCodeTimer("Part7.2.2");
+                            });
+                        startCodeTimer("Part7.2.3");
+                        //third thread start
+                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
+                        populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
+                        stopCodeTimer("Part7.2.3");
+                        //wait for all threads to finish
+                        future1.wait();
+                        future2.wait();
+                        stopCodeTimer("Part7.2");
+
+                        stopCodeTimer("Part7");
+                        startCodeTimer("Part8");
+                        if (_selectedPointsTSNEDataset.isValid())
+                        {
+                            auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
+
+                            if (runningAction)
+                            {
+
+                                if (runningAction->isChecked())
+                                {
+                                    auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                                    if (stopAction)
+                                    {
+                                        stopAction->trigger();
+                                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                                    }
+                                }
+
+                            }
+                        }
+
+                        if (_selectedPointsTSNEDataset.isValid())
+                        {
+                            auto datasetIDLowRem = _selectedPointsTSNEDataset.getDatasetId();
+                            mv::events().notifyDatasetAboutToBeRemoved(_selectedPointsTSNEDataset);
+                            mv::data().removeDataset(_selectedPointsTSNEDataset);
+                            mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
+                        }
+                        stopCodeTimer("Part8");
+                        startCodeTimer("Part9");
+                        mv::plugin::AnalysisPlugin* analysisPlugin;
+                        bool usePreTSNE = _usePreComputedTSNE.isChecked();
+
+                        auto scatterplotModificationsLowDimUMAP = [this]() {
+                            if (_selectedPointsTSNEDataset.isValid()) {
+                                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                                if (scatterplotViewFactory) {
+                                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                                        if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                                            if (pointDatasetPickerAction) {
+                                                pointDatasetPickerAction->setCurrentText("");
+
+                                                pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
+
+                                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                                if (colorDatasetPickerAction)
+                                                {
+                                                    colorDatasetPickerAction->setCurrentText("");
+
+
+
+                                                    auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
+                                                    if (selectedColorType != "")
+                                                    {
+                                                        if (selectedColorType == "Cluster")
+                                                        {
+                                                            if (_tsneDatasetClusterColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetClusterColors);
+                                                            }
+                                                        }
+                                                        else if (selectedColorType == "Species")
+                                                        {
+                                                            if (_tsneDatasetSpeciesColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetSpeciesColors);
+                                                            }
+                                                        }
+                                                        else if (selectedColorType == "Expression")
+                                                        {
+                                                            if (_tsneDatasetExpressionColors.isValid())
+                                                            {
+                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                            }
+                                                        }
+
+
+
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            };
+                        stopCodeTimer("Part9");
+                        if (!usePreTSNE)
+                        {
+                            startCodeTimer("Part10");
+                            analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
+                            if (!analysisPlugin) {
+                                qDebug() << "Could not find create TSNE Analysis";
+                                return;
+                            }
+                            _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
+                            if (_selectedPointsTSNEDataset.isValid())
+                            {
+
+                                int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
+                                if (perplexity < 5)
+                                {
+                                    qDebug() << "Perplexity is less than 5";
+                                    _startComputationTriggerAction.setDisabled(false);
+                                    return;
+                                }
+                                if (perplexity != _tsnePerplexity.getValue())
+                                {
+                                    _tsnePerplexity.setValue(perplexity);
+                                }
+
+                                auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
+                                if (perplexityAction)
+                                {
+                                    qDebug() << "Perplexity: Found";
+                                    perplexityAction->setValue(perplexity);
+                                }
+                                else
+                                {
+                                    qDebug() << "Perplexity: Not Found";
+                                }
+
+                                scatterplotModificationsLowDimUMAP();
+
+                                auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
+                                if (startAction) {
+
+                                    startAction->trigger();
+
+                                    analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                                }
+
+                            }
+                            stopCodeTimer("Part10");
+                        }
+                        else
+                        {
+                            startCodeTimer("Part11");
+                            auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
+
+                            if (umapDataset.isValid())
+                            {
+
+
+                                _selectedPointsTSNEDataset = mv::data().createDerivedDataset<Points>("SelectedPointsTSNEDataset", _selectedPointsEmbeddingDataset, _selectedPointsEmbeddingDataset);
+
+                                mv::events().notifyDatasetAdded(_selectedPointsTSNEDataset);
+
+                                auto umapDatasetRaw = mv::data().getDataset<Points>(umapDataset->getId());
+                                auto dimNames = umapDatasetRaw->getDimensionNames();
+                                int preComputedEmbeddingColumnsSize = umapDatasetRaw->getNumDimensions();
+                                std::vector<float> resultContainerPreComputedUMAP(selectedIndicesFromStorageSize * preComputedEmbeddingColumnsSize);
+                                std::vector<int> preComputedEmbeddingColumnIndices(preComputedEmbeddingColumnsSize);
+
+                                std::iota(preComputedEmbeddingColumnIndices.begin(), preComputedEmbeddingColumnIndices.end(), 0);
+
+                                umapDatasetRaw->populateDataForDimensions(resultContainerPreComputedUMAP, preComputedEmbeddingColumnIndices, _selectedIndicesFromStorage);
+
+                                QString datasetId = _selectedPointsTSNEDataset->getId();
+                                populatePointData(datasetId, resultContainerPreComputedUMAP, selectedIndicesFromStorageSize, preComputedEmbeddingColumnsSize, dimNames);
+
+                                if (_selectedPointsTSNEDataset.isValid())
+                                {
+                                    scatterplotModificationsLowDimUMAP();
+                                }
+                            }
+                            else
+                            {
+                                qDebug() << "UMAP Dataset not valid";
+                            }
+
+
+                            stopCodeTimer("Part11");
+
+
+
+                        }
+
+
+
+                    }
+                    else
+                    {
+                        qDebug() << "Datasets are not valid";
+                    }
+                    startCodeTimer("Part12");
+                    startCodeTimer("Part12.1");
+                    QFuture<void> future12 = QtConcurrent::run([&]() {
+                        QMutex mutex;
+                        for (auto& clusters : clustersValuesAll) {
+                            auto clusterIndices = clusters.getIndices();
+                            auto clusterName = clusters.getName();
+                            auto clusterColor = clusters.getColor();
+                            std::vector<int> filteredIndices;
+
+                            QtConcurrent::blockingMap(clusterIndices, [&](int index) {
+                                int indexVal = findIndex(_selectedIndicesFromStorage, index);
+                                if (indexVal != -1) {
+                                    QMutexLocker locker(&mutex);
+                                    filteredIndices.push_back(indexVal);
+                                }
+                                });
+
+                            {
+                                QMutexLocker locker(&mutex);
+                                selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
+                            }
+                        }
+                        });
+
+                    future12.waitForFinished(); // Wait for the concurrent task to complete
+                    stopCodeTimer("Part12.1");
+
+                    startCodeTimer("Part12.2");
+
+
+
+
+                    QMutex clusterGeneMeanExpressionMapMutex;
+                    QMutex clusterNameToGeneNameToExpressionValueMutex;
+
+                    // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
+                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
+
+                    std::vector<QFuture<void>> futures;
+                    QFutureWatcher<void> futureWatcher;
+
+                    for (auto& species : speciesValuesAll) {
+                        futures.push_back(QtConcurrent::run([&, species]() {
+                            auto speciesIndices = species.getIndices();
+                            auto speciesName = species.getName();
+
+                            std::vector<int> commonSelectedIndices;
+                            //std::vector<int> commonNotSelectedIndices;
+                            std::sort(speciesIndices.begin(), speciesIndices.end());
+                            std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+                            //std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
+
+                            // Use a local map to aggregate results
+                            std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
+
+                            for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
+                                auto& geneName = pointsDatasetallColumnNameList[i];
+                                std::vector<int> geneIndex = { i };
+                                auto nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                int allCellCounts = nonSelectionDetails.first;
+                                float allCellMean = nonSelectionDetails.second;
+
+                                float nonSelectedMean = allCellMean; // Use directly, no need to reassign
+                                int nonSelectedCells = allCellCounts;
+
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; // Initialize with default values
+
+                                if (!commonSelectedIndices.empty()) {
+                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
+                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
+                                    calculateStatisticsShort = calculateStatistics(resultContainerShort);
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
+                                    float allCellTotal = allCellMean * allCellCounts;
+
+                                    nonSelectedCells = allCellCounts - commonSelectedIndices.size();
+                                    // Check to prevent division by zero
+                                    if (nonSelectedCells > 0) {
+                                        nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
+                                    }
+                                    else {
+                                        nonSelectedMean = 0.0f; // Assign a default value or handle the case as needed
+                                    }
+                                }
+                                else {
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
+                                }
+
+                                StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
+
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                            }
+
+
+                            // Lock and update the shared structure once per species
+                            {
+                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
+                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
+                                }
+                            }
+                            }));
+                    }
+
+                    // Wait for all futures to complete
+                    for (auto& future : futures) {
+                        futureWatcher.setFuture(future);
+                        futureWatcher.waitForFinished();
+                    }
+
+
+
+                    stopCodeTimer("Part12.2");
+
+                    auto clusterColorDatasetId = _tsneDatasetClusterColors->getId();
+                    auto speciesColorDatasetId = _tsneDatasetSpeciesColors->getId();
+                    startCodeTimer("Part12.3");
+                    populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
+                    stopCodeTimer("Part12.3");
+                    startCodeTimer("Part12.4");
+                    populateClusterData(clusterColorDatasetId, selctedClustersMap);
+                    stopCodeTimer("Part12.4");
+                    stopCodeTimer("Part12");
+                    if (_tsneDatasetClusterColors.isValid())
+                    {
+
+                        auto clusterValues = _tsneDatasetClusterColors->getClusters();
+                        if (!clusterValues.empty())
+                        {
+                            startCodeTimer("Part13");
+
+                            QLayoutItem* layoutItem;
+                            while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+                                delete layoutItem->widget();
+                                delete layoutItem;
+                            }
+
+                            // Create a description label
+                            auto descriptionLabel = new QLabel("Selected Cell Counts per " + clusterDatasetName + " :");
+                            // Optionally, set a stylesheet for the description label for styling
+                            descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+                            // Add the description label to the layout
+                            _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
+
+
+                            for (auto cluster : clusterValues) {
+                                auto clusterName = cluster.getName();
+                                auto clusterIndicesSize = cluster.getIndices().size();
+                                auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
+
+                                // Calculate luminance
+                                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+                                // Choose text color based on luminance
+                                QString textColor = (luminance > 0.5) ? "black" : "white";
+
+                                // Convert QColor to hex string for stylesheet
+                                QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+                                // Add text color and background color to clusterLabel with padding and border for better styling
+                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                                    .arg(textColor).arg(backgroundColor).arg(textColor));
+                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+                            }
+
+
+                        }
+
+                    }
+
+                    //the next line should only execute if all above are finished
+
+
+                    startCodeTimer("Part14");
+                    QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
+                    stopCodeTimer("Part14");
+
+                    setModifiedTriggeredData(geneListTable);
+
+
+                }
+
+                else
+                {
+                    qDebug() << "Species or Clusters are empty";
+                }
+
+
+            }
+
+            else
+            {
+                qDebug() << "No points selected or no dimensions present";
+            }
+
+            _removeRowSelection.trigger();
+            _removeRowSelection.setEnabled(false);
+        }
+        stopCodeTimer("UpdateGeneFilteringTrigger");
+        _startComputationTriggerAction.setDisabled(false);
+    }
+    catch (const std::exception& e) {
+        qDebug() << "An exception occurred in coputation: " << e.what();
+    }
+    catch (...) {
+        qDebug() << "An unknown exception occurred in coputation";
+    }
+}
+
+void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
+{
+    if (!geneListTable.isNull())
+    {
+        startCodeTimer("Part15");
+        //_filteredGeneNamesVariant.setVariant(geneListTable);
+        _listModel.setVariant(geneListTable);
+        stopCodeTimer("Part15");
+
+    }
+    else
+    {
+        qDebug() << "QVariant empty";
+    }
+}
+
 void SettingsAction::computeGeneMeanExpressionMap()
 {
     
@@ -1354,21 +1383,12 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
 
         }
     }
-    //print std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
-    /*
-    for (const auto& [gene, rankVector] : rankingMap) {
-        qDebug() << "Gene: " << gene;
-        for (const auto& [species, rank] : rankVector) {
-            qDebug() << "Species: " << species << ", Rank: " << rank;
-        }
-    }
-    */
 
 
 
     stopCodeTimer("findTopNGenesPerCluster");
-
-    return createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap,n);
+    QVariant returnedmodel= createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap, n);
+    return returnedmodel;
 }
 
 QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {

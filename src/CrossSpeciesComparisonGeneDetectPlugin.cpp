@@ -472,6 +472,8 @@ QColor getColorFromValue(int value, int min, int max) {
 
 void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 {
+    try {
+    qDebug() << "It's here";
     auto variant = _settingsAction.getListModelAction().getVariant();
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
@@ -788,7 +790,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
     selectedCellStatisticsStatusBarRemove();
     selectedCellCountStatusBarAdd();
 
-
+        }
+        catch (const std::exception& e) {
+            qDebug() << "An exception occurred in modifyListData: " << e.what();
+        }
+        catch (...) {
+            qDebug() << "An unknown exception occurred in modifyListData";
+        }
 
 
 

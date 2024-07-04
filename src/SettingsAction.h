@@ -178,6 +178,8 @@ private:
     QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
+    void updateButtonTriggered();
+    void setModifiedTriggeredData(QVariant geneListTable);
 public: // Serialization
 
     /**
