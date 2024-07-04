@@ -33,7 +33,8 @@
 #include "QStatusBar"
 #include <widgets/FlowLayout.h>
 #include <QSplitter>
-
+#include <QTableView>
+#include <QListView>
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -43,17 +44,19 @@ namespace mv
 {
     class CoreInterface;
 }
-
-struct Statistics {
+struct SpeciesDetails {
+    int rank;
     float meanSelected;
-    float medianSelected;
-    float modeSelected;
-    float rangeSelected;
     int countSelected;
     float meanNonSelected;
-    float medianNonSelected;
-    float modeNonSelected;
-    float rangeNonSelected;
+    int countNonSelected;
+
+};
+struct Statistics {
+    
+    float meanSelected;
+    int countSelected;
+    float meanNonSelected;
     int countNonSelected;
 
 };
@@ -65,9 +68,6 @@ struct SpeciesColorCountStorage {
 
 struct StatisticsSingle {
     float meanVal;
-    float medianVal;
-    float modeVal;
-    float rangeVal;
     int countVal;
 
 };
@@ -112,7 +112,7 @@ public:
 
 public: // Action getters
 
-    VariantAction& getTableModelAction() { return _tableModel; }
+    VariantAction& getListModelAction() { return _listModel; }
     StringAction& getSelectedGeneAction() { return _selectedGene; }
     StringAction&  getSelectedRowIndexAction() { return _selectedRowIndex; }
     DatasetPickerAction& getFilteringEditTreeDatasetAction() { return _filteringEditTreeDataset; }
@@ -137,6 +137,8 @@ public: // Action getters
     StringAction& getStatusColorAction() { return _statusColorAction; }
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
+    OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
+    TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -161,7 +163,7 @@ public: // Action getters
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
-    QTableView* getTableView() const { return _tableView; }
+    QTableView* getListView() const { return _listView; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
@@ -175,9 +177,11 @@ public: // Action getters
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Statistics> speciesMeanValues);
 private:
-    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const int& n);
+    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
+    void updateButtonTriggered();
+    void setModifiedTriggeredData(QVariant geneListTable);
 public: // Serialization
 
     /**
@@ -194,14 +198,14 @@ public: // Serialization
 
 protected:
     CrossSpeciesComparisonGeneDetectPlugin& _crossSpeciesComparisonGeneDetectPlugin;
-    VariantAction                 _tableModel;
+    VariantAction                 _listModel;
     StringAction                  _selectedGene;
     DatasetPickerAction          _filteringEditTreeDataset;
     StringAction                _selectedRowIndex;
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;
     DatasetPickerAction    _referenceTreeDataset;
-    std::map<QString, std::map<QString, float>> _clusterGeneMeanExpressionMap;
+    std::map<QString, std::map<QString, std::pair<int,float>>> _clusterGeneMeanExpressionMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _clusterNamesDataset;
@@ -238,8 +242,9 @@ protected:
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
     std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
-
-    QTableView* _tableView;                /** Table view for the data */
+    OptionsAction                               _speciesExplorerInMap;
+    TriggerAction                               _speciesExplorerInMapTrigger;
+    QTableView* _listView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
 
