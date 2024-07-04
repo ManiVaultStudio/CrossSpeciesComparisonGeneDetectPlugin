@@ -775,10 +775,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             auto speciesName = species.getName();
 
                             std::vector<int> commonSelectedIndices;
-                            std::vector<int> commonNotSelectedIndices;
+                            //std::vector<int> commonNotSelectedIndices;
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-                            std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
+                            //std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
 
                             // Use a local map to aggregate results
                             std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
@@ -786,29 +786,41 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
-                                //startCodeTimer("Loop1."+ speciesName.toStdString());
-                                StatisticsSingle calculateStatisticsShort, calculateStatisticsNot;
+                                auto nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                int allCellCounts = nonSelectionDetails.first;
+                                float allCellMean = nonSelectionDetails.second;
+
+                                float nonSelectedMean = allCellMean; // Use directly, no need to reassign
+                                int nonSelectedCells = allCellCounts;
+
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; // Initialize with default values
+
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
-                                }
-                                //stopCodeTimer("Loop1." + speciesName.toStdString());
-                                //startCodeTimer("Loop2." + speciesName.toStdString());
-                                if (!commonNotSelectedIndices.empty()) {
-                                    std::vector<float> resultContainerShortNot(commonNotSelectedIndices.size());
-                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShortNot, geneIndex, commonNotSelectedIndices);
+                                    float allCellTotal = allCellMean * allCellCounts;
 
-                                    calculateStatisticsNot = calculateStatistics(resultContainerShortNot);
-                                    _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = commonNotSelectedIndices.size();
+                                    nonSelectedCells = allCellCounts - commonSelectedIndices.size();
+                                    // Check to prevent division by zero
+                                    if (nonSelectedCells > 0) {
+                                        nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
+                                    }
+                                    else {
+                                        nonSelectedMean = 0.0f; // Assign a default value or handle the case as needed
+                                    }
                                 }
-                                //stopCodeTimer("Loop2." + speciesName.toStdString());
-                                //startCodeTimer("Loop3." + speciesName.toStdString());
+                                else {
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
+                                }
+
+                                StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
+
                                 localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
-                                //stopCodeTimer("Loop3." + speciesName.toStdString());
                             }
+
 
                             // Lock and update the shared structure once per species
                             {
@@ -1230,7 +1242,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     std::vector<float> resultContainerFull(speciesIndices.size());
                     mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                     float fullMean = calculateMean(resultContainerFull);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName] = fullMean;
+                    _clusterGeneMeanExpressionMap[speciesName][geneName] = std::make_pair(speciesIndices.size(), fullMean);
                 }
                 });
             future.waitForFinished();
@@ -1341,6 +1353,15 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
 
         }
     }
+    //print std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
+    /*
+    for (const auto& [gene, rankVector] : rankingMap) {
+        qDebug() << "Gene: " << gene;
+        for (const auto& [species, rank] : rankVector) {
+            qDebug() << "Species: " << species << ", Rank: " << rank;
+        }
+    }
+    */
 
 
 
