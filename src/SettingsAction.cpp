@@ -810,29 +810,28 @@ void SettingsAction::updateButtonTriggered()
                         QString datasetIdExp = _tsneDatasetExpressionColors->getId();
                         stopCodeTimer("Part7.1");
                         startCodeTimer("Part7.2");
-                        auto future1 = std::async(std::launch::async, [&]() {
+
                             startCodeTimer("Part7.2.1");
                             std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
                             pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
                             populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
                             stopCodeTimer("Part7.2.1");
-                            });
 
-                        auto future2 = std::async(std::launch::async, [&]() {
+
+
                             startCodeTimer("Part7.2.2");
                             std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize * embeddingDatasetColumnsSize);
                             embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
                             populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
                             stopCodeTimer("Part7.2.2");
-                            });
+
                         startCodeTimer("Part7.2.3");
                         //third thread start
                         std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
                         stopCodeTimer("Part7.2.3");
-                        //wait for all threads to finish
-                        future1.wait();
-                        future2.wait();
+
+
                         stopCodeTimer("Part7.2");
 
                         stopCodeTimer("Part7");
