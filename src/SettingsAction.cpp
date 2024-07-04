@@ -811,28 +811,44 @@ void SettingsAction::updateButtonTriggered()
                         stopCodeTimer("Part7.1");
                         startCodeTimer("Part7.2");
 
-                            startCodeTimer("Part7.2.1");
-                            std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
+                        // Define result containers outside the lambda functions to ensure they are accessible later
+                        std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
+                        std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize * embeddingDatasetColumnsSize);
+                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
+
+                        //first thread start
+                        auto future1 = std::async(std::launch::async, [&]() {
                             pointsDatasetRaw->populateDataForDimensions(resultContainerForSelectedPoints, pointsDatasetallColumnIndices, _selectedIndicesFromStorage);
-                            populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-                            stopCodeTimer("Part7.2.1");
+                            });
 
-
-
-                            startCodeTimer("Part7.2.2");
-                            std::vector<float> resultContainerForSelectedEmbeddingPoints(selectedIndicesFromStorageSize * embeddingDatasetColumnsSize);
+                        //second thread start
+                        auto future2 = std::async(std::launch::async, [&]() {
                             embeddingDatasetRaw->populateDataForDimensions(resultContainerForSelectedEmbeddingPoints, embeddingDatasetColumnIndices, _selectedIndicesFromStorage);
-                            populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
-                            stopCodeTimer("Part7.2.2");
+                            });
+
+
+                        // Wait for all futures to complete before proceeding
+                        future1.wait();
+                        future2.wait();
+
+
+                        startCodeTimer("Part7.2.1");
+                        //needs to wait for future1 finish only
+                        populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
+                        stopCodeTimer("Part7.2.1");
+
+                        startCodeTimer("Part7.2.2");
+                        //needs to wait for future2 finish only
+                        populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
+                        stopCodeTimer("Part7.2.2");
 
                         startCodeTimer("Part7.2.3");
-                        //third thread start
-                        std::vector<float> resultContainerColorPoints(selectedIndicesFromStorageSize, -1.0f);
+                        //needs to wait for future3 finish only
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
                         stopCodeTimer("Part7.2.3");
 
-
                         stopCodeTimer("Part7.2");
+
 
                         stopCodeTimer("Part7");
                         startCodeTimer("Part8");
