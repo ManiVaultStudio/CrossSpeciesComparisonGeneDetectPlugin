@@ -355,6 +355,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
+    tsneOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
     auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
@@ -366,6 +367,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getTypeofTopNGenes());
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
@@ -923,14 +925,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A"); //6
             }
 
-
+            //QStringList speciesChosen = {};
             // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
                 for (int i = 1; i < rowItems.size(); ++i) { // Start from 1 to skip the first column
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
                 }
+               // speciesChosen.append("Selected");
             }
-
+            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);
 
 
             model->appendRow(rowItems);

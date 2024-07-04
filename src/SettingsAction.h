@@ -137,6 +137,8 @@ public: // Action getters
     StringAction& getStatusColorAction() { return _statusColorAction; }
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
+    OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
+    TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -240,7 +242,8 @@ protected:
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
     std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
-
+    OptionsAction                               _speciesExplorerInMap;
+    TriggerAction                               _speciesExplorerInMapTrigger;
     QTableView* _listView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;

@@ -211,7 +211,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection(this, "Remove Selection"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
-    _usePreComputedTSNE(this, "Use Precomputed TSNE")
+    _usePreComputedTSNE(this, "Use Precomputed TSNE"),
+    _speciesExplorerInMap(this, "Species Explorer In Map"),
+    _speciesExplorerInMapTrigger(this, "Explore Species")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -339,6 +341,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
+    _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
@@ -470,6 +473,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateSpeciesNameDataset = [this]() -> void {
 
+        QStringList speciesOptions = {};
         if (_speciesNamesDataset.getCurrentDataset().isValid())
         {
             auto clusterFullDataset=mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
@@ -484,7 +488,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         _selectedSpeciesCellCountMap[name].color = color;
                         _selectedSpeciesCellCountMap[name].selectedCellsCount = 0;
                         _selectedSpeciesCellCountMap[name].nonSelectedCellsCount = 0;
-
+                        speciesOptions.append(name);
                     }
 
                 }
@@ -492,7 +496,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             }
 
         }
-        
+        _speciesExplorerInMap.setOptions(speciesOptions);
         
         computeGeneMeanExpressionMap();
         };
@@ -1759,6 +1763,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
+    _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
@@ -1790,6 +1795,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
+    _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
