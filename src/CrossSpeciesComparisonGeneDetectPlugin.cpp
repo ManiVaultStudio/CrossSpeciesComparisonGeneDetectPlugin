@@ -358,26 +358,32 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     tsneOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
-
+    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
+    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     auto mainOptionsGroupLayout = new QVBoxLayout();
     auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotReembedColorOption());
 
+    _settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
+    _settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
+    _settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    
+
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    mainOptionsGroup2->addAction(&_settingsAction.getTypeofTopNGenes());
+    
+    
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
-    group1Widget->setMaximumWidth(460);
+    group1Widget->setMaximumWidth(800);
     mainOptionsGroupLayout->addWidget(group1Widget);
 
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    group2Widget->setMaximumWidth(500);
+    group2Widget->setMaximumWidth(800);
     mainOptionsGroupLayout->addWidget(group2Widget);
 
     mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());

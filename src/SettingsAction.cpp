@@ -213,14 +213,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Species Explorer In Map"),
-    _speciesExplorerInMapTrigger(this, "Explore Species")
+    _speciesExplorerInMapTrigger(this, "Explore Leaves")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _listView = new QTableView();
     _selectionDetailsTable = new QTableView();
     _splitter = new QHBoxLayout();
-
     _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
     _listView->setSelectionMode(QAbstractItemView::SingleSelection);
