@@ -339,6 +339,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+    extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
 
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
@@ -348,7 +349,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
-    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
+
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
