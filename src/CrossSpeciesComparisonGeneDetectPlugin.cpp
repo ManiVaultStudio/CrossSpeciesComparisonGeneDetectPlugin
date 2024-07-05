@@ -201,7 +201,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
-
+            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);

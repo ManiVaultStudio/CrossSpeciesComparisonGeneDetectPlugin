@@ -374,8 +374,30 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
+    const auto updatespeciesExplorerInMap = [this]() -> void
+        {
+            if (_speciesExplorerInMap.getSelectedOptions().size() > 0)
+            {
+                _speciesExplorerInMapTrigger.setDisabled(false);
+            }
+            else
+            {
+                _speciesExplorerInMapTrigger.setDisabled(true);
+            }
+
+        };
+    connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
+
+
+
+
+
+
+
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
+            _startComputationTriggerAction.setDisabled(true);
+            _speciesExplorerInMap.setSelectedOptions({});
             updateButtonTriggered();
 
         };
@@ -669,7 +691,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 void SettingsAction::updateButtonTriggered()
 {
     try {
-        _startComputationTriggerAction.setDisabled(true);
+       // _startComputationTriggerAction.setDisabled(true);
         startCodeTimer("UpdateGeneFilteringTrigger");
         startCodeTimer("Part1");
 
