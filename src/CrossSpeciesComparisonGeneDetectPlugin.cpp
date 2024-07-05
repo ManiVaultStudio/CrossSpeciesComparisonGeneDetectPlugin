@@ -927,6 +927,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
             }
             else {
+                
+                qDebug() << "Species: " + species + " not found in map auto it = statisticsValues.find(species);";
+                // print auto it = statisticsValues.find(species);
+                
+                for (auto it = statisticsValues.begin(); it != statisticsValues.end(); ++it)
+                {
+                    qDebug() << it->first;
+                }
+
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2
