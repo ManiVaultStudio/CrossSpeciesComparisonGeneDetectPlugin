@@ -212,7 +212,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
-    _speciesExplorerInMap(this, "Species Explorer In Map"),
+    _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _speciesExplorerInMapTrigger(this, "Explore Leaves")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");

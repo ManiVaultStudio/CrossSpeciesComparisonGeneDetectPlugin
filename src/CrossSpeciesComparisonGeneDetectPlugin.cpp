@@ -349,7 +349,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
-
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
@@ -358,7 +358,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
-    tsneOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
+    
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     auto mainOptionsGroupLayout = new QVBoxLayout();
