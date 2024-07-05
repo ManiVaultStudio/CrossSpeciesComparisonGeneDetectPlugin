@@ -385,8 +385,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
     group2Widget->setMaximumWidth(800);
     mainOptionsGroupLayout->addWidget(group2Widget);
-
-    mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
+    auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
+    statusBarWiddget->setMaximumWidth(350);
+    mainOptionsLayout->addWidget(statusBarWiddget);
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
