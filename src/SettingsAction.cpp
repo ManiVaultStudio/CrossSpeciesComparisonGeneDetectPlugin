@@ -212,15 +212,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
-    _speciesExplorerInMap(this, "Species Explorer In Map"),
-    _speciesExplorerInMapTrigger(this, "Explore Species")
+    _speciesExplorerInMap(this, "Leaves Explorer Options"),
+    _speciesExplorerInMapTrigger(this, "Explore Leaves")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _listView = new QTableView();
     _selectionDetailsTable = new QTableView();
     _splitter = new QHBoxLayout();
-
     _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
     _listView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -375,8 +374,30 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
+    const auto updatespeciesExplorerInMap = [this]() -> void
+        {
+            if (_speciesExplorerInMap.getSelectedOptions().size() > 0)
+            {
+                _speciesExplorerInMapTrigger.setDisabled(false);
+            }
+            else
+            {
+                _speciesExplorerInMapTrigger.setDisabled(true);
+            }
+
+        };
+    connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
+
+
+
+
+
+
+
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
+            _startComputationTriggerAction.setDisabled(true);
+            _speciesExplorerInMap.setSelectedOptions({});
             updateButtonTriggered();
 
         };
@@ -670,7 +691,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 void SettingsAction::updateButtonTriggered()
 {
     try {
-        _startComputationTriggerAction.setDisabled(true);
+       // _startComputationTriggerAction.setDisabled(true);
         startCodeTimer("UpdateGeneFilteringTrigger");
         startCodeTimer("Part1");
 

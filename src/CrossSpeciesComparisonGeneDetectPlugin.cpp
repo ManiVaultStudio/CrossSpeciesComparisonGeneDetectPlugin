@@ -201,7 +201,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
-
+            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -339,6 +339,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+    extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
 
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
@@ -348,8 +349,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
-    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getStatusColorAction());
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
@@ -357,34 +359,41 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
-    tsneOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
-
+    
+    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
+    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
     auto mainOptionsGroupLayout = new QVBoxLayout();
     auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
     mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getScatterplotReembedColorOption());
 
+    _settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
+    _settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
+    _settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    
+
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    mainOptionsGroup2->addAction(&_settingsAction.getTypeofTopNGenes());
+    
+    
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
-    group1Widget->setMaximumWidth(460);
+    group1Widget->setMaximumWidth(800);
     mainOptionsGroupLayout->addWidget(group1Widget);
 
     auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    group2Widget->setMaximumWidth(500);
+    group2Widget->setMaximumWidth(800);
     mainOptionsGroupLayout->addWidget(group2Widget);
-
-    mainOptionsLayout->addWidget(_settingsAction.getStatusBarActionWidget());
+    auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
+    statusBarWiddget->setMaximumWidth(550);
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+    mainOptionsLayout->addWidget(statusBarWiddget);
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
-    mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
+    //mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
 
     auto fullSettingsLayout = new QVBoxLayout();
     fullSettingsLayout->addLayout(mainOptionsLayout);
@@ -920,6 +929,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
             }
             else {
+                
+                qDebug() << "Species: " + species + " not found in map auto it = statisticsValues.find(species);";
+                // print auto it = statisticsValues.find(species);
+                
+                for (auto it = statisticsValues.begin(); it != statisticsValues.end(); ++it)
+                {
+                    qDebug() << it->first;
+                }
+
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2
