@@ -782,7 +782,7 @@ void SettingsAction::updateButtonTriggered()
                 auto clustersValuesAll = clusterDatasetRaw->getClusters();
                 auto speciesValuesAll = speciesDatasetRaw->getClusters();
 
-                std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
+                std::map<QString, std::pair<QColor, std::vector<int>>> selectedClustersMap;
                 std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
                 //stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
@@ -1090,7 +1090,7 @@ void SettingsAction::updateButtonTriggered()
                     }
                     //startCodeTimer("Part12");
                     //startCodeTimer("Part12.1");
-                    QFuture<void> future12 = QtConcurrent::run([&]() {
+                    QFuture<void> futureClusterCVals = QtConcurrent::run([&]() {
                         QMutex mutex;
                         for (auto& clusters : clustersValuesAll) {
                             auto clusterIndices = clusters.getIndices();
@@ -1108,12 +1108,34 @@ void SettingsAction::updateButtonTriggered()
 
                             {
                                 QMutexLocker locker(&mutex);
-                                selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
+                                selectedClustersMap[clusterName] = { clusterColor, filteredIndices };
                             }
                         }
                         });
+                    QFuture<void> futureSpeciesCVals = QtConcurrent::run([&]() {
+                        QMutex mutex;
+                        for (auto& clusters : speciesValuesAll) {
+                            auto clusterIndices = clusters.getIndices();
+                            auto clusterName = clusters.getName();
+                            auto clusterColor = clusters.getColor();
+                            std::vector<int> filteredIndices;
 
-                    future12.waitForFinished(); // Wait for the concurrent task to complete
+                            QtConcurrent::blockingMap(clusterIndices, [&](int index) {
+                                int indexVal = findIndex(_selectedIndicesFromStorage, index);
+                                if (indexVal != -1) {
+                                    QMutexLocker locker(&mutex);
+                                    filteredIndices.push_back(indexVal);
+                                }
+                                });
+
+                            {
+                                QMutexLocker locker(&mutex);
+                                selectedSpeciesMap[clusterName] = { clusterColor, filteredIndices };
+                            }
+                        }
+                        });
+                    futureClusterCVals.waitForFinished(); // Wait for the concurrent task to complete
+                    futureSpeciesCVals.waitForFinished();
                     //stopCodeTimer("Part12.1");
 
                     //startCodeTimer("Part12.2");
@@ -1209,7 +1231,7 @@ void SettingsAction::updateButtonTriggered()
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
                     //stopCodeTimer("Part12.3");
                     //startCodeTimer("Part12.4");
-                    populateClusterData(clusterColorDatasetId, selctedClustersMap);
+                    populateClusterData(clusterColorDatasetId, selectedClustersMap);
                     //stopCodeTimer("Part12.4");
                     //stopCodeTimer("Part12");
                     if (_tsneDatasetClusterColors.isValid())
