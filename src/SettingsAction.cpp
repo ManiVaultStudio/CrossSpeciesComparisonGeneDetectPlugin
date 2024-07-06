@@ -213,7 +213,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
-    _speciesExplorerInMapTrigger(this, "Leaf Explore")
+    _speciesExplorerInMapTrigger(this, "Explore")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
