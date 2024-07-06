@@ -401,11 +401,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
 
+    
+    optionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
     optionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
     optionsGroup->addAction(&_settingsAction.getRemoveRowSelection());
     optionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     //auto topNGenesFilterLabel = new QLabel(QString("Top N: [%1, %2]").arg(_settingsAction.getTopNGenesFilter().getMinimum()).arg(_settingsAction.getTopNGenesFilter().getMaximum()));
-    optionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
+    
 
     mainOptionsLayout->addWidget(statusBarWiddget);
     mainOptionsLayout->addWidget(searchBoxWidget);
