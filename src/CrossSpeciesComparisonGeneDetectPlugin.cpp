@@ -509,24 +509,24 @@ QColor getColorFromValue(int value, int min, int max) {
 void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 {
     try {
-    qDebug() << "It's here";
+    //qDebug() << "It's here";
     auto variant = _settingsAction.getListModelAction().getVariant();
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
     if (!_settingsAction.getGeneTableView()) {
-        qDebug() << "_settingsAction.getGeneTableView() is null";
+        //qDebug() << "_settingsAction.getGeneTableView() is null";
         return;
     }
 
     if (!model) {
-        qDebug() << "Model is null";
+        //qDebug() << "Model is null";
         QAbstractItemModel* currentModel = _settingsAction.getGeneTableView()->model();
         if (currentModel) {
             currentModel->removeRows(0, currentModel->rowCount());
             _settingsAction.getGeneTableView()->update();
         }
         else {
-            qDebug() << "TableView model is null";
+            //qDebug() << "TableView model is null";
         }
         return;
     }

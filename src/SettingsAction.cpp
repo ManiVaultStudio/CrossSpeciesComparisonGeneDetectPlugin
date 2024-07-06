@@ -835,7 +835,7 @@ void SettingsAction::updateButtonTriggered()
                         _tsneDatasetClusterColors->setGroupIndex(10);
                         mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                     }
-                    stopCodeTimer("Part6.1");
+                    //stopCodeTimer("Part6.1");
                     if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                     {
                         //startCodeTimer("Part6.2");
@@ -881,7 +881,7 @@ void SettingsAction::updateButtonTriggered()
                         //startCodeTimer("Part7.2.1");
                         //needs to wait for future1 finish only
                         populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
-                        stopCodeTimer("Part7.2.1");
+                        //stopCodeTimer("Part7.2.1");
 
                         //startCodeTimer("Part7.2.2");
                         //needs to wait for future2 finish only
@@ -1303,10 +1303,10 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
 {
     if (!geneListTable.isNull())
     {
-        startCodeTimer("Part15");
+        //startCodeTimer("Part15");
         //_filteredGeneNamesVariant.setVariant(geneListTable);
         _listModel.setVariant(geneListTable);
-        stopCodeTimer("Part15");
+        //stopCodeTimer("Part15");
 
     }
     else
