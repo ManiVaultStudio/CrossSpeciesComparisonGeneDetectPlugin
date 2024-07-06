@@ -350,7 +350,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
-
+    extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
@@ -367,42 +367,40 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-    //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
-    tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     
-    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
-    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
-    //auto mainOptionsGroupLayout = new QVBoxLayout();
-    //auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
-    //auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
-    //mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
-    //mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    
+
+    auto mainOptionsGroupLayout = new QVBoxLayout();
+    auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
+    auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
+    mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
+    mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
  
-
-    //mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    //mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    //mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
-    //mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup1->addAction(&_settingsAction.getStartComputationTriggerAction());
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
     
     
+    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());  
+    mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
 
-    //auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
-    //group1Widget->setMaximumWidth(1000);
-    //mainOptionsGroupLayout->addWidget(group1Widget);
+    auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
+    group1Widget->setMaximumWidth(450);
+    mainOptionsGroupLayout->addWidget(group1Widget);
 
-    //auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    //group2Widget->setMaximumWidth(800);
-    //mainOptionsGroupLayout->addWidget(group2Widget);
+    auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
+    group2Widget->setMaximumWidth(450);
+    mainOptionsGroupLayout->addWidget(group2Widget);
     auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
-    statusBarWiddget->setMaximumWidth(550);
+    statusBarWiddget->setMaximumWidth(400);
 
     auto searchBoxWidget = _settingsAction.getSearchBox();
-    searchBoxWidget->setMaximumWidth(550);
+    searchBoxWidget->setMaximumWidth(400);
 
-    //mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+    
 
-    auto optionsGroup = new HorizontalGroupAction(this, "Group");
 
 
 
@@ -411,18 +409,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
 
-    
-    optionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
-    optionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
-    optionsGroup->addAction(&_settingsAction.getRemoveRowSelection());
-    optionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    //auto topNGenesFilterLabel = new QLabel(QString("Top N: [%1, %2]").arg(_settingsAction.getTopNGenesFilter().getMinimum()).arg(_settingsAction.getTopNGenesFilter().getMaximum()));
-    
+   
 
     mainOptionsLayout->addWidget(statusBarWiddget);
+    mainOptionsLayout->addLayout(mainOptionsGroupLayout);
     mainOptionsLayout->addWidget(searchBoxWidget);
-
-    mainOptionsLayout->addWidget(optionsGroup->createWidget(&getWidget()));
 
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);

@@ -205,15 +205,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotReembedColorOption(this, "Reembed Color"),
+    _scatterplotReembedColorOption(this, "Embed Color"),
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
-    _removeRowSelection(this, "Remove Selection"),
+    _removeRowSelection(this, "DeSelect"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
-    _speciesExplorerInMapTrigger(this, "Explore Leaves")
+    _speciesExplorerInMapTrigger(this, "Leaf Explore")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
