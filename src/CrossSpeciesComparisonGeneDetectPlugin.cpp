@@ -208,8 +208,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto updateTableModel = [this]() -> void
         {
+            //_settingsAction.setErrorOutFlag(false);
             modifyListData();
-            _settingsAction.getStatusColorAction().setString("C");
+            if (_settingsAction.getErroredOutFlag())
+            {
+                _settingsAction.getStatusColorAction().setString("E");
+                
+            }
+            else
+            {
+                _settingsAction.getStatusColorAction().setString("C");
+            }
+            
         };
 
     connect(&_settingsAction.getListModelAction(), &VariantAction::variantChanged, this, updateTableModel);
@@ -982,7 +992,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     qDebug() << it->first;
                 }
-
+                _settingsAction.setErrorOutFlag(true);
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2

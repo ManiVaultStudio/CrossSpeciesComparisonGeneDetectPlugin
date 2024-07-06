@@ -222,14 +222,18 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _searchBox->setFixedHeight(20);
     //_searchBox->setFixedWidth(100);
-    _statusBarActionWidget->setMinimumWidth(100);
-    _statusBarActionWidget->setMaximumWidth(200);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
 
-
+    _statusBarActionWidget->setStatusTip("Status");
+    _statusBarActionWidget->setFixedHeight(20);
+    //_statusBarActionWidget->setFixedWidth(120);
+    _statusBarActionWidget->setMinimumWidth(100);
+    _statusBarActionWidget->setMaximumWidth(200);
+    _statusBarActionWidget->setAutoFillBackground(true);
+    _statusBarActionWidget->setSizeGripEnabled(false);
 
     _geneTableView = new QTableView();
     _selectionDetailsTable = new QTableView();
@@ -317,13 +321,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-    _statusBarActionWidget->setStatusTip("Status");
-    _statusBarActionWidget->setFixedHeight(20);
-    //_statusBarActionWidget->setFixedWidth(120);
-    _statusBarActionWidget->setMinimumWidth(100);
-    _statusBarActionWidget->setMaximumWidth(200);
-    _statusBarActionWidget->setAutoFillBackground(true);
-    _statusBarActionWidget->setSizeGripEnabled(false);
+
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
@@ -418,6 +416,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             _startComputationTriggerAction.setDisabled(true);
             _speciesExplorerInMap.setSelectedOptions({});
+            _erroredOutFlag = false;
             updateButtonTriggered();
 
         };
@@ -618,7 +617,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     
     
     const auto updateStatus = [this]() -> void {
-        // Assuming the context is to modify the QStatusBar _statusBarActionWidget based on the string value
         auto string = _statusColorAction.getString();
         QString labelText = "";
         QString backgroundColor = "none";
@@ -629,6 +627,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         else if (string == "M") {
             labelText = "Pending";
             backgroundColor = "#ffc107"; // Gold
+        }
+        else if (string == "E") {
+            labelText ="Error! Try again";
+            backgroundColor = "#dc3545"; // Red
         }
         else {
             labelText = "Unknown";
