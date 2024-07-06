@@ -998,7 +998,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     qDebug() << it->first;
                 }
                 //_settingsAction.setErrorOutFlag(true);
-                _settingsAction.getStatusColorAction().setString("E");
+                //_settingsAction.getStatusColorAction().setString("E");
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2

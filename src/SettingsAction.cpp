@@ -1173,10 +1173,10 @@ void SettingsAction::updateButtonTriggered()
                                 int allCellCounts = nonSelectionDetails.first;
                                 float allCellMean = nonSelectionDetails.second;
 
-                                float nonSelectedMean = allCellMean; // Use directly, no need to reassign
-                                int nonSelectedCells = allCellCounts;
+                                float nonSelectedMean = 0.0; 
+                                int nonSelectedCells = 0;
 
-                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; // Initialize with default values
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; 
 
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -1191,10 +1191,12 @@ void SettingsAction::updateButtonTriggered()
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
                                     }
                                     else {
-                                        nonSelectedMean = 0.0f; // Assign a default value or handle the case as needed
+                                        nonSelectedMean = 0.0f; 
                                     }
                                 }
                                 else {
+                                    nonSelectedMean = allCellMean;
+                                    nonSelectedCells = allCellCounts;
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
                                 }
 
