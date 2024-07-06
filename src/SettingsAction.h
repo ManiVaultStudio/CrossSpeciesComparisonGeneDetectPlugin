@@ -163,7 +163,8 @@ public: // Action getters
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
-    QTableView* getListView() const { return _listView; }
+    QTableView* getGeneTableView() const { return _geneTableView; }
+    QLineEdit* getSearchBox() const { return _searchBox; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
@@ -244,8 +245,8 @@ protected:
     std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
     OptionsAction                               _speciesExplorerInMap;
     TriggerAction                               _speciesExplorerInMapTrigger;
-    QTableView* _listView;                /** Table view for the data */
+    QTableView* _geneTableView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
-
+    QLineEdit* _searchBox;
 };

@@ -217,47 +217,61 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
-    _listView = new QTableView();
+    _searchBox = new QLineEdit();
+    _searchBox->setPlaceholderText("Search");
+    _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _searchBox->setFixedHeight(20);
+    //_searchBox->setFixedWidth(100);
+    _statusBarActionWidget->setMinimumWidth(100);
+    _statusBarActionWidget->setMaximumWidth(200);
+    _searchBox->setAutoFillBackground(true);
+    _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
+    _searchBox->setClearButtonEnabled(true);
+    _searchBox->setFocusPolicy(Qt::StrongFocus);
+
+
+
+    _geneTableView = new QTableView();
     _selectionDetailsTable = new QTableView();
     _splitter = new QHBoxLayout();
-    _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    _listView->setSelectionMode(QAbstractItemView::SingleSelection);
-    _listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _listView->setAlternatingRowColors(true);
-    _listView->setSortingEnabled(true);
-    _listView->setShowGrid(true);
-    _listView->setGridStyle(Qt::SolidLine);
-    _listView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _listView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    _listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _listView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _listView->setCornerButtonEnabled(false);
-    _listView->setWordWrap(false);
-    _listView->setTabKeyNavigation(false);
-    _listView->setAcceptDrops(false);
-    _listView->setDropIndicatorShown(false);
-    _listView->setDragEnabled(false);
-    _listView->setDragDropMode(QAbstractItemView::NoDragDrop);
-    _listView->setDragDropOverwriteMode(false);
-    _listView->setAutoScroll(false);
-    _listView->setAutoScrollMargin(16);
-    _listView->setAutoFillBackground(true);
-    _listView->setFrameShape(QFrame::NoFrame);
-    _listView->setFrameShadow(QFrame::Plain);
-    _listView->setLineWidth(0);
-    _listView->setMidLineWidth(0);
-    _listView->setFocusPolicy(Qt::NoFocus);
-    _listView->setContextMenuPolicy(Qt::NoContextMenu);
-    _listView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _listView->setMinimumSize(QSize(0, 0));
-    _listView->setMaximumSize(QSize(16777215, 16777215));
-    _listView->setBaseSize(QSize(0, 0));
-    _listView->setFocusPolicy(Qt::StrongFocus);
-    _listView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _geneTableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _geneTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _geneTableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    _geneTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _geneTableView->setAlternatingRowColors(true);
+    _geneTableView->setSortingEnabled(true);
+    _geneTableView->setShowGrid(true);
+    _geneTableView->setGridStyle(Qt::SolidLine);
+    _geneTableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _geneTableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _geneTableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _geneTableView->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _geneTableView->setCornerButtonEnabled(false);
+    _geneTableView->setWordWrap(false);
+    _geneTableView->setTabKeyNavigation(false);
+    _geneTableView->setAcceptDrops(false);
+    _geneTableView->setDropIndicatorShown(false);
+    _geneTableView->setDragEnabled(false);
+    _geneTableView->setDragDropMode(QAbstractItemView::NoDragDrop);
+    _geneTableView->setDragDropOverwriteMode(false);
+    _geneTableView->setAutoScroll(false);
+    _geneTableView->setAutoScrollMargin(16);
+    _geneTableView->setAutoFillBackground(true);
+    _geneTableView->setFrameShape(QFrame::NoFrame);
+    _geneTableView->setFrameShadow(QFrame::Plain);
+    _geneTableView->setLineWidth(0);
+    _geneTableView->setMidLineWidth(0);
+    _geneTableView->setFocusPolicy(Qt::NoFocus);
+    _geneTableView->setContextMenuPolicy(Qt::NoContextMenu);
+    _geneTableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _geneTableView->setMinimumSize(QSize(0, 0));
+    _geneTableView->setMaximumSize(QSize(16777215, 16777215));
+    _geneTableView->setBaseSize(QSize(0, 0));
+    _geneTableView->setFocusPolicy(Qt::StrongFocus);
+    _geneTableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     //only highlight multiple rows if shiuft is pressed
-    _listView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    _geneTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
 
@@ -305,7 +319,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
-    _statusBarActionWidget->setFixedWidth(100);
+    //_statusBarActionWidget->setFixedWidth(120);
+    _statusBarActionWidget->setMinimumWidth(100);
+    _statusBarActionWidget->setMaximumWidth(200);
     _statusBarActionWidget->setAutoFillBackground(true);
     _statusBarActionWidget->setSizeGripEnabled(false);
 
@@ -390,10 +406,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-
-
-
-
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
             _startComputationTriggerAction.setDisabled(true);
@@ -468,6 +480,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
                 _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(dimensions));
                 _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(dimensions));
+                _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(dimensions));
+                
             }
             else
 
@@ -477,6 +491,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 _topNGenesFilter.setValue(0);
                 _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
                 _topNGenesFilter.setText("Top N genes: 0 to 0");
+                _topNGenesFilter.setIconText("Top N genes: 0 to 0");
             }
 
         }
@@ -487,6 +502,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setValue(0);
             _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
             _topNGenesFilter.setText("Top N genes: 0 to 0");
+            _topNGenesFilter.setIconText("Top N genes: 0 to 0");
             
         }
         
@@ -693,7 +709,7 @@ void SettingsAction::updateButtonTriggered()
     try {
        // _startComputationTriggerAction.setDisabled(true);
         startCodeTimer("UpdateGeneFilteringTrigger");
-        startCodeTimer("Part1");
+        //startCodeTimer("Part1");
 
 
         auto pointsDataset = _mainPointsDataset.getCurrentDataset();
@@ -706,8 +722,8 @@ void SettingsAction::updateButtonTriggered()
         bool isValid = false;
 
         QString referenceTreedatasetId = "";
-        stopCodeTimer("Part1");
-        startCodeTimer("Part2");
+        //stopCodeTimer("Part1");
+        //startCodeTimer("Part2");
         if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
         {
             qDebug() << "No datasets selected";
@@ -724,8 +740,8 @@ void SettingsAction::updateButtonTriggered()
         {
             _selectedPointsTSNEDataset->setSelectionIndices({});
         }
-        stopCodeTimer("Part2");
-        startCodeTimer("Part3");
+        //stopCodeTimer("Part2");
+        //startCodeTimer("Part3");
         _clusterNameToGeneNameToExpressionValue.clear();
         referenceTreedatasetId = referenceTreeDataset->getId();
         isValid = speciesDataset->getParent() == pointsDataset && clusterDataset->getParent() == pointsDataset && embeddingDataset->getParent() == pointsDataset;
@@ -742,19 +758,19 @@ void SettingsAction::updateButtonTriggered()
         auto pointsDatasetRaw = mv::data().getDataset<Points>(pointsDataset->getId());
         auto pointsDatasetallColumnNameList = pointsDatasetRaw->getDimensionNames();
         auto embeddingDatasetallColumnNameList = embeddingDatasetRaw->getDimensionNames();
-        stopCodeTimer("Part3");
-        startCodeTimer("Part4");
+        //stopCodeTimer("Part3");
+        //startCodeTimer("Part4");
         std::vector<int> embeddingDatasetColumnIndices(embeddingDatasetallColumnNameList.size());
         std::iota(embeddingDatasetColumnIndices.begin(), embeddingDatasetColumnIndices.end(), 0);
 
         std::vector<int> pointsDatasetallColumnIndices(pointsDatasetallColumnNameList.size());
         std::iota(pointsDatasetallColumnIndices.begin(), pointsDatasetallColumnIndices.end(), 0);
-        stopCodeTimer("Part4");
+        //stopCodeTimer("Part4");
         {
 
             if (_selectedIndicesFromStorage.size() > 0 && embeddingDatasetColumnIndices.size() > 0)
             {
-                startCodeTimer("Part5");
+                //startCodeTimer("Part5");
                 auto speciesDatasetRaw = mv::data().getDataset<Clusters>(speciesDataset->getId());
                 auto clusterDatasetRaw = mv::data().getDataset<Clusters>(clusterDataset->getId());
                 auto clusterDatasetName = clusterDatasetRaw->getGuiName();
@@ -763,10 +779,10 @@ void SettingsAction::updateButtonTriggered()
 
                 std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
                 std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
-                stopCodeTimer("Part5");
+                //stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
                 {
-                    startCodeTimer("Part6.1");
+                    //startCodeTimer("Part6.1");
                     if (!_selectedPointsDataset.isValid())
                     {
                         _selectedPointsDataset = mv::data().createDataset("Points", "SelectedPointsDataset");
@@ -819,14 +835,14 @@ void SettingsAction::updateButtonTriggered()
                     stopCodeTimer("Part6.1");
                     if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
                     {
-                        startCodeTimer("Part6.2");
+                        //startCodeTimer("Part6.2");
                         _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
                         _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
                         events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
-                        stopCodeTimer("Part6.2");
-                        startCodeTimer("Part7");
-                        startCodeTimer("Part7.1");
+                        //stopCodeTimer("Part6.2");
+                        //startCodeTimer("Part7");
+                        //startCodeTimer("Part7.1");
                         int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
                         int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
                         int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
@@ -835,8 +851,8 @@ void SettingsAction::updateButtonTriggered()
                         int dimofDatasetExp = 1;
                         std::vector<QString> dimensionNamesExp = { "Expression" };
                         QString datasetIdExp = _tsneDatasetExpressionColors->getId();
-                        stopCodeTimer("Part7.1");
-                        startCodeTimer("Part7.2");
+                        //stopCodeTimer("Part7.1");
+                        //startCodeTimer("Part7.2");
 
                         // Define result containers outside the lambda functions to ensure they are accessible later
                         std::vector<float> resultContainerForSelectedPoints(selectedIndicesFromStorageSize * pointsDatasetColumnsSize);
@@ -859,26 +875,26 @@ void SettingsAction::updateButtonTriggered()
                         future2.wait();
 
 
-                        startCodeTimer("Part7.2.1");
+                        //startCodeTimer("Part7.2.1");
                         //needs to wait for future1 finish only
                         populatePointData(datasetIdEmb, resultContainerForSelectedPoints, selectedIndicesFromStorageSize, pointsDatasetColumnsSize, pointsDatasetallColumnNameList);
                         stopCodeTimer("Part7.2.1");
 
-                        startCodeTimer("Part7.2.2");
+                        //startCodeTimer("Part7.2.2");
                         //needs to wait for future2 finish only
                         populatePointData(datasetId, resultContainerForSelectedEmbeddingPoints, selectedIndicesFromStorageSize, embeddingDatasetColumnsSize, embeddingDatasetallColumnNameList);
-                        stopCodeTimer("Part7.2.2");
+                        //stopCodeTimer("Part7.2.2");
 
-                        startCodeTimer("Part7.2.3");
+                        //startCodeTimer("Part7.2.3");
                         //needs to wait for future3 finish only
                         populatePointData(datasetIdExp, resultContainerColorPoints, selectedIndicesFromStorageSize, dimofDatasetExp, dimensionNamesExp);
-                        stopCodeTimer("Part7.2.3");
+                        //stopCodeTimer("Part7.2.3");
 
-                        stopCodeTimer("Part7.2");
+                        //stopCodeTimer("Part7.2");
 
 
-                        stopCodeTimer("Part7");
-                        startCodeTimer("Part8");
+                        //stopCodeTimer("Part7");
+                        //startCodeTimer("Part8");
                         if (_selectedPointsTSNEDataset.isValid())
                         {
                             auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Running"));
@@ -906,8 +922,8 @@ void SettingsAction::updateButtonTriggered()
                             mv::data().removeDataset(_selectedPointsTSNEDataset);
                             mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                         }
-                        stopCodeTimer("Part8");
-                        startCodeTimer("Part9");
+                        //stopCodeTimer("Part8");
+                        //startCodeTimer("Part9");
                         mv::plugin::AnalysisPlugin* analysisPlugin;
                         bool usePreTSNE = _usePreComputedTSNE.isChecked();
 
@@ -968,10 +984,10 @@ void SettingsAction::updateButtonTriggered()
                             }
 
                             };
-                        stopCodeTimer("Part9");
+                        //stopCodeTimer("Part9");
                         if (!usePreTSNE)
                         {
-                            startCodeTimer("Part10");
+                            //startCodeTimer("Part10");
                             analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
                             if (!analysisPlugin) {
                                 qDebug() << "Could not find create TSNE Analysis";
@@ -1015,11 +1031,11 @@ void SettingsAction::updateButtonTriggered()
                                 }
 
                             }
-                            stopCodeTimer("Part10");
+                            //stopCodeTimer("Part10");
                         }
                         else
                         {
-                            startCodeTimer("Part11");
+                            //startCodeTimer("Part11");
                             auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
 
                             if (umapDataset.isValid())
@@ -1054,7 +1070,7 @@ void SettingsAction::updateButtonTriggered()
                             }
 
 
-                            stopCodeTimer("Part11");
+                            //stopCodeTimer("Part11");
 
 
 
@@ -1067,8 +1083,8 @@ void SettingsAction::updateButtonTriggered()
                     {
                         qDebug() << "Datasets are not valid";
                     }
-                    startCodeTimer("Part12");
-                    startCodeTimer("Part12.1");
+                    //startCodeTimer("Part12");
+                    //startCodeTimer("Part12.1");
                     QFuture<void> future12 = QtConcurrent::run([&]() {
                         QMutex mutex;
                         for (auto& clusters : clustersValuesAll) {
@@ -1093,9 +1109,9 @@ void SettingsAction::updateButtonTriggered()
                         });
 
                     future12.waitForFinished(); // Wait for the concurrent task to complete
-                    stopCodeTimer("Part12.1");
+                    //stopCodeTimer("Part12.1");
 
-                    startCodeTimer("Part12.2");
+                    //startCodeTimer("Part12.2");
 
 
 
@@ -1180,24 +1196,24 @@ void SettingsAction::updateButtonTriggered()
 
 
 
-                    stopCodeTimer("Part12.2");
+                    //stopCodeTimer("Part12.2");
 
                     auto clusterColorDatasetId = _tsneDatasetClusterColors->getId();
                     auto speciesColorDatasetId = _tsneDatasetSpeciesColors->getId();
-                    startCodeTimer("Part12.3");
+                    //startCodeTimer("Part12.3");
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
-                    stopCodeTimer("Part12.3");
-                    startCodeTimer("Part12.4");
+                    //stopCodeTimer("Part12.3");
+                    //startCodeTimer("Part12.4");
                     populateClusterData(clusterColorDatasetId, selctedClustersMap);
-                    stopCodeTimer("Part12.4");
-                    stopCodeTimer("Part12");
+                    //stopCodeTimer("Part12.4");
+                    //stopCodeTimer("Part12");
                     if (_tsneDatasetClusterColors.isValid())
                     {
 
                         auto clusterValues = _tsneDatasetClusterColors->getClusters();
                         if (!clusterValues.empty())
                         {
-                            startCodeTimer("Part13");
+                            //startCodeTimer("Part13");
 
                             QLayoutItem* layoutItem;
                             while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
@@ -1242,9 +1258,9 @@ void SettingsAction::updateButtonTriggered()
                     //the next line should only execute if all above are finished
 
 
-                    startCodeTimer("Part14");
+                    //startCodeTimer("Part14");
                     QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
-                    stopCodeTimer("Part14");
+                    //stopCodeTimer("Part14");
 
                     setModifiedTriggeredData(geneListTable);
 
