@@ -90,9 +90,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 if (selectedRows.size()==1)
                 {
                     int selectedRow = selectedRows[0];
-                    if (treeDataset.isValid() && _settingsAction.getListView() && selectedRow >= 0)
+                    if (treeDataset.isValid() && _settingsAction.getGeneTableView() && selectedRow >= 0)
                     {
-                        QString treeData = _settingsAction.getListView()->model()->index(selectedRow, 2).data().toString();
+                        QString treeData = _settingsAction.getGeneTableView()->model()->index(selectedRow, 2).data().toString();
                         //qDebug()<< "Tree data: " << treeData;
                         if (!treeData.isEmpty())
                         {
@@ -102,7 +102,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                             {
                                 treeDataset->setTreeData(valueStringReference);
                                 events().notifyDatasetDataChanged(treeDataset);
-                                //QString firstColumnValue = _settingsAction.getListView()->model()->index(selectedRow, 0).data().toString();
+                                //QString firstColumnValue = _settingsAction.getGeneTableView()->model()->index(selectedRow, 0).data().toString();
                                // _settingsAction.getGeneNamesConnection().setString(firstColumnValue);
                             }
                         }
@@ -118,7 +118,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 }
                 QStringList firstColumnValues;
                 for (int row : selectedRows) {
-                    firstColumnValues << _settingsAction.getListView()->model()->index(row, 0).data().toString();
+                    firstColumnValues << _settingsAction.getGeneTableView()->model()->index(row, 0).data().toString();
                 }
                 QString firstColumnValue = firstColumnValues.join("*%$@*@$%*");
                 //_settingsAction.getGeneNamesConnection().setString(firstColumnValue);
@@ -141,21 +141,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     const auto removeRowSelectionTable = [this]() -> void
         {
             auto statusString = _settingsAction.getStatusColorAction().getString();
-            if (_settingsAction.getListView() && _settingsAction.getListView()->selectionModel()) {
+            if (_settingsAction.getGeneTableView() && _settingsAction.getGeneTableView()->selectionModel()) {
                 // Clear the current index if there's no selection
-                _settingsAction.getListView()->clearSelection();
+                _settingsAction.getGeneTableView()->clearSelection();
 
                 // Temporarily disable the selection mode to remove highlight
-                QAbstractItemView::SelectionMode oldMode = _settingsAction.getListView()->selectionMode();
-                _settingsAction.getListView()->setSelectionMode(QAbstractItemView::NoSelection);
+                QAbstractItemView::SelectionMode oldMode = _settingsAction.getGeneTableView()->selectionMode();
+                _settingsAction.getGeneTableView()->setSelectionMode(QAbstractItemView::NoSelection);
 
                 // Clear the current index
-                _settingsAction.getListView()->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+                _settingsAction.getGeneTableView()->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
 
                 // Restore the original selection mode
-                _settingsAction.getListView()->setSelectionMode(oldMode);
+                _settingsAction.getGeneTableView()->setSelectionMode(oldMode);
                 // Update the view to ensure changes are reflected
-                _settingsAction.getListView()->update();
+                _settingsAction.getGeneTableView()->update();
                 _settingsAction.getSelctedSpeciesVals().setString("");
 
 
@@ -208,8 +208,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto updateTableModel = [this]() -> void
         {
+            //_settingsAction.setErrorOutFlag(false);
             modifyListData();
-            _settingsAction.getStatusColorAction().setString("C");
+            //if (_settingsAction.getErroredOutFlag())
+            //{
+                //_settingsAction.getStatusColorAction().setString("E");
+                
+            //}
+            //else
+            //{
+                _settingsAction.getStatusColorAction().setString("C");
+            //}
+            
         };
 
     connect(&_settingsAction.getListModelAction(), &VariantAction::variantChanged, this, updateTableModel);
@@ -218,16 +228,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
 
-        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_settingsAction.getListView()->model());
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(_settingsAction.getGeneTableView()->model());
 
         if (model) {
             for (int i = 0; i < model->columnCount(); i++) {
                 if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
-                    _settingsAction.getListView()->hideColumn(i);
+                    _settingsAction.getGeneTableView()->hideColumn(i);
                 }
                 else
                 {
-                    _settingsAction.getListView()->showColumn(i);
+                    _settingsAction.getGeneTableView()->showColumn(i);
 
                 }
             }
@@ -243,36 +253,36 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
 
     //make long strings in the cells visible and not ...shortened
-    _settingsAction.getListView()->setTextElideMode(Qt::ElideNone);
-    _settingsAction.getListView()->setWordWrap(true);
-    _settingsAction.getListView()->setAlternatingRowColors(true);
-    _settingsAction.getListView()->setSortingEnabled(true);
+    _settingsAction.getGeneTableView()->setTextElideMode(Qt::ElideNone);
+    _settingsAction.getGeneTableView()->setWordWrap(true);
+    _settingsAction.getGeneTableView()->setAlternatingRowColors(true);
+    _settingsAction.getGeneTableView()->setSortingEnabled(true);
 
     //on hovering a cell, show the full text available in a tooltip
-    connect(_settingsAction.getListView(), &QTableView::entered, [this](const QModelIndex& index) {
+    connect(_settingsAction.getGeneTableView(), &QTableView::entered, [this](const QModelIndex& index) {
         if (index.isValid()) {
             QString text = index.data().toString();
             if (!text.isEmpty()) {
-                _settingsAction.getListView()->setToolTip(text);
+                _settingsAction.getGeneTableView()->setToolTip(text);
             }
         }
         });
 
 
 
-    _settingsAction.getListView()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _settingsAction.getListView()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _settingsAction.getListView()->sortByColumn(1, Qt::DescendingOrder);
+    _settingsAction.getGeneTableView()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getGeneTableView()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    _settingsAction.getGeneTableView()->sortByColumn(1, Qt::DescendingOrder);
 
-    _settingsAction.getListView()->verticalHeader()->hide();
-    _settingsAction.getListView()->setMouseTracking(true);
-    _settingsAction.getListView()->setToolTipDuration(10000);
-    QFont fontLs = _settingsAction.getListView()->horizontalHeader()->font();
+    _settingsAction.getGeneTableView()->verticalHeader()->hide();
+    _settingsAction.getGeneTableView()->setMouseTracking(true);
+    _settingsAction.getGeneTableView()->setToolTipDuration(10000);
+    QFont fontLs = _settingsAction.getGeneTableView()->horizontalHeader()->font();
     fontLs.setBold(true);
-    _settingsAction.getListView()->horizontalHeader()->setFont(fontLs);
-    _settingsAction.getListView()->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
-    _settingsAction.getListView()->horizontalHeader()->setHighlightSections(false);
-    _settingsAction.getListView()->verticalHeader()->setHighlightSections(false);
+    _settingsAction.getGeneTableView()->horizontalHeader()->setFont(fontLs);
+    _settingsAction.getGeneTableView()->setStyleSheet("QTableView::item:selected { background-color: #00A2ED; }");
+    _settingsAction.getGeneTableView()->horizontalHeader()->setHighlightSections(false);
+    _settingsAction.getGeneTableView()->verticalHeader()->setHighlightSections(false);
 
 
 
@@ -326,8 +336,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainLayout->setSpacing(0);
 
     auto mainOptionsLayout = new QHBoxLayout();
-    mainOptionsLayout->setSpacing(0);
-    mainOptionsLayout->setContentsMargins(0, 0, 0, 0);
+    mainOptionsLayout->setSpacing(5);
+    mainOptionsLayout->setContentsMargins(1, 1, 1, 1);
 
     auto extraOptionsGroup = new VerticalGroupAction(this, "Settings");
     extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
@@ -362,35 +372,58 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
-    auto mainOptionsGroupLayout = new QVBoxLayout();
-    auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
-    auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
-    mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
-    mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    //auto mainOptionsGroupLayout = new QVBoxLayout();
+    //auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
+    //auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
+    //mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
+    //mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
-    _settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
-    _settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
-    _settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-    
+ 
 
-    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
-    mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    //mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    //mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
+    //mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
+    //mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
     
     
 
-    auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
-    group1Widget->setMaximumWidth(800);
-    mainOptionsGroupLayout->addWidget(group1Widget);
+    //auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
+    //group1Widget->setMaximumWidth(1000);
+    //mainOptionsGroupLayout->addWidget(group1Widget);
 
-    auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    group2Widget->setMaximumWidth(800);
-    mainOptionsGroupLayout->addWidget(group2Widget);
+    //auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
+    //group2Widget->setMaximumWidth(800);
+    //mainOptionsGroupLayout->addWidget(group2Widget);
     auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
     statusBarWiddget->setMaximumWidth(550);
-    mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+
+    auto searchBoxWidget = _settingsAction.getSearchBox();
+    searchBoxWidget->setMaximumWidth(550);
+
+    //mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+
+    auto optionsGroup = new HorizontalGroupAction(this, "Group");
+
+
+
+    //_settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
+    //_settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
+    //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+
+
+    
+    optionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
+    optionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
+    optionsGroup->addAction(&_settingsAction.getRemoveRowSelection());
+    optionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
+    //auto topNGenesFilterLabel = new QLabel(QString("Top N: [%1, %2]").arg(_settingsAction.getTopNGenesFilter().getMinimum()).arg(_settingsAction.getTopNGenesFilter().getMaximum()));
+    
+
     mainOptionsLayout->addWidget(statusBarWiddget);
+    mainOptionsLayout->addWidget(searchBoxWidget);
+
+    mainOptionsLayout->addWidget(optionsGroup->createWidget(&getWidget()));
+
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     //mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
@@ -399,19 +432,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     fullSettingsLayout->addLayout(mainOptionsLayout);
     mainLayout->addLayout(fullSettingsLayout);
 
-    connect(_settingsAction.getListView(), &QTableView::entered, [this](const QModelIndex& index) {
+    connect(_settingsAction.getGeneTableView(), &QTableView::entered, [this](const QModelIndex& index) {
         if (index.isValid()) {
             QString text = index.model()->data(index).toString();
-            QToolTip::showText(QCursor::pos(), text, _settingsAction.getListView());
+            QToolTip::showText(QCursor::pos(), text, _settingsAction.getGeneTableView());
         }
         });
+
+
+
     QFrame* verticalLine = new QFrame();
     verticalLine->setFrameShape(QFrame::VLine);
     verticalLine->setFrameShadow(QFrame::Sunken);
     verticalLine->setLineWidth(1);
 
-    _settingsAction.getListView()->setMaximumWidth(165);
-    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getListView());
+    _settingsAction.getGeneTableView()->setMaximumWidth(165);
+    _settingsAction.getTableSplitter()->addWidget(_settingsAction.getGeneTableView());
     _settingsAction.getTableSplitter()->addWidget(verticalLine);
     _settingsAction.getTableSplitter()->addWidget(_settingsAction.getSelectionDetailsTable());
 
@@ -486,45 +522,69 @@ QColor getColorFromValue(int value, int min, int max) {
 void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 {
     try {
-    qDebug() << "It's here";
+    //qDebug() << "It's here";
     auto variant = _settingsAction.getListModelAction().getVariant();
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
-    if (!_settingsAction.getListView()) {
-        qDebug() << "_settingsAction.getListView() is null";
+    if (!_settingsAction.getGeneTableView()) {
+        //qDebug() << "_settingsAction.getGeneTableView() is null";
         return;
     }
 
     if (!model) {
-        qDebug() << "Model is null";
-        QAbstractItemModel* currentModel = _settingsAction.getListView()->model();
+        //qDebug() << "Model is null";
+        QAbstractItemModel* currentModel = _settingsAction.getGeneTableView()->model();
         if (currentModel) {
             currentModel->removeRows(0, currentModel->rowCount());
-            _settingsAction.getListView()->update();
+            _settingsAction.getGeneTableView()->update();
         }
         else {
-            qDebug() << "TableView model is null";
+            //qDebug() << "TableView model is null";
         }
         return;
     }
 
-    _settingsAction.getListView()->setModel(model);
+    //_settingsAction.getGeneTableView()->setModel(model);
+
+
+
+    QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel(this);
+    proxyModel->setSourceModel(model);
+    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    proxyModel->setFilterKeyColumn(-1); 
+
+
+    _settingsAction.getGeneTableView()->setModel(proxyModel);
+    //auto tempVal = _settingsAction.getSearchBox()->text();
+
+    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [proxyModel](const QString& text) {
+        if (text.isEmpty()) {
+            proxyModel->setFilterWildcard("*"); // Reset filter to show all items
+        }
+        else {
+            proxyModel->setFilterWildcard("*" + text + "*");
+        }
+        });
+    _settingsAction.getSearchBox()->setText("");
+
+
+
 
     auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
 
 
-    for (int i = 0; i < _settingsAction.getListView()->model()->columnCount(); i++) {
+    for (int i = 0; i < _settingsAction.getGeneTableView()->model()->columnCount(); i++) {
         if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
-            _settingsAction.getListView()->hideColumn(i);
+            _settingsAction.getGeneTableView()->hideColumn(i);
             
         }
     }
      model->sort(1, Qt::DescendingOrder);
-    _settingsAction.getListView()->resizeColumnsToContents();
-    _settingsAction.getListView()->update();
+    _settingsAction.getGeneTableView()->resizeColumnsToContents();
+    _settingsAction.getGeneTableView()->update();
 
 
-    connect(_settingsAction.getListView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
+    connect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) return;
 
         QString gene = current.siblingAtColumn(0).data().toString();
@@ -937,7 +997,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     qDebug() << it->first;
                 }
-
+                //_settingsAction.setErrorOutFlag(true);
+                _settingsAction.getStatusColorAction().setString("E");
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2
