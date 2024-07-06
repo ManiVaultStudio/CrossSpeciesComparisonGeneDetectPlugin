@@ -168,8 +168,8 @@ public: // Action getters
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
-    bool getErroredOutFlag() const { return _erroredOutFlag; }
-    bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
+    //bool getErroredOutFlag() const { return _erroredOutFlag; }
+    //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
     void computeGeneMeanExpressionMap();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
@@ -251,5 +251,5 @@ protected:
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
     QLineEdit* _searchBox;
-    bool _erroredOutFlag;
+    //bool _erroredOutFlag;
 };

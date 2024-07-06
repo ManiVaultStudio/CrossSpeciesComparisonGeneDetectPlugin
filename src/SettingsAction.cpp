@@ -416,7 +416,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             _startComputationTriggerAction.setDisabled(true);
             _speciesExplorerInMap.setSelectedOptions({});
-            _erroredOutFlag = false;
+            //_erroredOutFlag = false;
             updateButtonTriggered();
 
         };
@@ -629,7 +629,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             backgroundColor = "#ffc107"; // Gold
         }
         else if (string == "E") {
-            labelText ="Error! Try again";
+            labelText ="Error Occurred! Try updating again";
             backgroundColor = "#dc3545"; // Red
         }
         else {

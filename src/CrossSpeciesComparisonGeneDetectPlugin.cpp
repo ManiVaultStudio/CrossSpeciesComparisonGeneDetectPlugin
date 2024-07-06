@@ -210,15 +210,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         {
             //_settingsAction.setErrorOutFlag(false);
             modifyListData();
-            if (_settingsAction.getErroredOutFlag())
-            {
-                _settingsAction.getStatusColorAction().setString("E");
+            //if (_settingsAction.getErroredOutFlag())
+            //{
+                //_settingsAction.getStatusColorAction().setString("E");
                 
-            }
-            else
-            {
+            //}
+            //else
+            //{
                 _settingsAction.getStatusColorAction().setString("C");
-            }
+            //}
             
         };
 
@@ -997,7 +997,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     qDebug() << it->first;
                 }
-                _settingsAction.setErrorOutFlag(true);
+                //_settingsAction.setErrorOutFlag(true);
+                _settingsAction.getStatusColorAction().setString("E");
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2
