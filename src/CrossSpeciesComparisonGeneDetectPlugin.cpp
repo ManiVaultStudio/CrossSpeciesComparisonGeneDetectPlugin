@@ -326,7 +326,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainLayout->setSpacing(0);
 
     auto mainOptionsLayout = new QHBoxLayout();
-    mainOptionsLayout->setSpacing(1);
+    mainOptionsLayout->setSpacing(5);
     mainOptionsLayout->setContentsMargins(1, 1, 1, 1);
 
     auto extraOptionsGroup = new VerticalGroupAction(this, "Settings");
@@ -368,10 +368,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
     //mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
-    _settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
-    _settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
-    _settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-    
+ 
 
     //mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
     //mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
@@ -398,6 +395,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto optionsGroup = new HorizontalGroupAction(this, "Group");
 
 
+
+    //_settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
+    //_settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
+    //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
 
     optionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
