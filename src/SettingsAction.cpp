@@ -390,6 +390,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
+    const auto changetooltipTopN = [this]() -> void
+        {
+            _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+
+        };
+    connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, changetooltipTopN);
+
     const auto updatespeciesExplorerInMap = [this]() -> void
         {
             if (_speciesExplorerInMap.getSelectedOptions().size() > 0)
@@ -403,8 +413,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
-
-
 
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
@@ -472,27 +480,22 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             
             auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
-            if (dimensions>0)
-            {
+            if (dimensions > 0) {
                 _topNGenesFilter.setMinimum(0);
                 _topNGenesFilter.setMaximum(dimensions);
 
                 _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
-                _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(dimensions));
-                _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(dimensions));
-                _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(dimensions));
-                
             }
-            else
-
-            {
+            else {
                 _topNGenesFilter.setMinimum(0);
                 _topNGenesFilter.setMaximum(0);
                 _topNGenesFilter.setValue(0);
-                _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
-                _topNGenesFilter.setText("Top N genes: 0 to 0");
-                _topNGenesFilter.setIconText("Top N genes: 0 to 0");
             }
+
+            _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+
 
         }
         else
@@ -500,9 +503,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setMinimum(0);
             _topNGenesFilter.setMaximum(0);
             _topNGenesFilter.setValue(0);
-            _topNGenesFilter.setToolTip("Top N genes: 0 to 0");
-            _topNGenesFilter.setText("Top N genes: 0 to 0");
-            _topNGenesFilter.setIconText("Top N genes: 0 to 0");
+            _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             
         }
         
