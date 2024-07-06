@@ -1146,42 +1146,36 @@ void SettingsAction::updateButtonTriggered()
                     //startCodeTimer("Part12.2");
 
 
-
+                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
 
                     QMutex clusterGeneMeanExpressionMapMutex;
                     QMutex clusterNameToGeneNameToExpressionValueMutex;
 
-                    // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
-                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-
-                    std::vector<QFuture<void>> futures;
-                    QFutureWatcher<void> futureWatcher;
+                    QFutureSynchronizer<void> synchronizer; // Use QFutureSynchronizer to wait for all tasks
 
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(QtConcurrent::run([&, species]() {
+                        auto future = QtConcurrent::run([&, species]() {
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
 
                             std::vector<int> commonSelectedIndices;
-                            //std::vector<int> commonNotSelectedIndices;
+
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-                            //std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
 
-                            // Use a local map to aggregate results
-                            std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
+                            std::unordered_map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
-                                auto& geneName = pointsDatasetallColumnNameList[i];
+                                const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
-                                auto nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
                                 int allCellCounts = nonSelectionDetails.first;
                                 float allCellMean = nonSelectionDetails.second;
 
-                                float nonSelectedMean = 0.0; 
+                                float nonSelectedMean = 0.0;
                                 int nonSelectedCells = 0;
 
-                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; 
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 };
 
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -1190,13 +1184,14 @@ void SettingsAction::updateButtonTriggered()
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
                                     float allCellTotal = allCellMean * allCellCounts;
 
-                                    nonSelectedCells = allCellCounts - commonSelectedIndices.size();
+                                    nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
+                                    
                                     // Check to prevent division by zero
                                     if (nonSelectedCells > 0) {
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
                                     }
                                     else {
-                                        nonSelectedMean = 0.0f; 
+                                        nonSelectedMean = 0.0f;
                                     }
                                 }
                                 else {
@@ -1212,22 +1207,18 @@ void SettingsAction::updateButtonTriggered()
                             }
 
 
-                            // Lock and update the shared structure once per species
+
                             {
                                 QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
                                 for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
                                     _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 }
                             }
-                            }));
+                            });
+                        synchronizer.addFuture(future); // Add each future to the synchronizer
                     }
 
-                    // Wait for all futures to complete
-                    for (auto& future : futures) {
-                        futureWatcher.setFuture(future);
-                        futureWatcher.waitForFinished();
-                    }
-
+                    synchronizer.waitForFinished();
 
 
                     //stopCodeTimer("Part12.2");
@@ -1570,7 +1561,6 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
                 .arg(stats.meanNonSelected, 0, 'f', 2)
                 .arg(stats.countNonSelected);
         }
-
         row.push_back(new QStandardItem(formattedStatistics)); // Statistics
 
         model->appendRow(row);
