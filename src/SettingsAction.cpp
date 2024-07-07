@@ -38,10 +38,13 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
-Statistics combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected) {
-    Statistics combinedStats;
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected, const StatisticsSingle& allSelected) {
+    Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
+
+    combinedStats.meanAll = allSelected.meanVal;
+    combinedStats.countAll = allSelected.countVal;
 
     combinedStats.meanNonSelected = nonSelected.meanVal; 
     combinedStats.countNonSelected = nonSelected.countVal; 
@@ -1163,7 +1166,7 @@ void SettingsAction::updateButtonTriggered()
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
-                            std::unordered_map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
+                            std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
@@ -1192,7 +1195,7 @@ void SettingsAction::updateButtonTriggered()
                                     }
                                     else {
                                         nonSelectedMean = 0.0f;
-                                        nonSelectedCells = 0;
+                                        //nonSelectedCells = 0;
                                     }
                                 }
                                 else {
@@ -1202,9 +1205,10 @@ void SettingsAction::updateButtonTriggered()
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                                StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot,calculateStatisticsAll);
                             }
 
 
@@ -1349,7 +1353,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
-            QFuture<void> future = QtConcurrent::map(speciesclusters.begin(), speciesclusters.end(), [&](const auto& species) {
+            for (auto species : speciesclusters) {
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
                 for (int i = 0; i < mainPointDimensionNames.size(); i++) {
@@ -1360,14 +1364,16 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     float fullMean = calculateMean(resultContainerFull);
                     _clusterGeneMeanExpressionMap[speciesName][geneName] = std::make_pair(speciesIndices.size(), fullMean);
                 }
-                });
-            future.waitForFinished();
+
+            }
+
+
         }
     }
 
 }
 
-QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore) {
+QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore) {
     
     if (map.empty() || n <= 0) {
         return QVariant();
@@ -1498,7 +1504,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     return returnedmodel;
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
+QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
@@ -1516,7 +1522,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         numbers.reserve(map.size()); // Reserve capacity based on map size
-        std::map<QString, Statistics> statisticsValuesForSpeciesMap;
+        std::map<QString, Stats> statisticsValuesForSpeciesMap;
 
         for (const auto& [speciesName, innerMap] : map) {
             auto it = innerMap.find(gene);
@@ -1554,13 +1560,16 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")
+            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6, MeanAll: %7, CountAll: %8;\n")
                 .arg(species)
                 .arg(rankcounter[species])
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
-                .arg(stats.countNonSelected);
+                .arg(stats.countNonSelected)
+                .arg(stats.meanAll, 0, 'f', 2)
+                .arg(stats.countAll)
+                ;
         }
         row.push_back(new QStandardItem(formattedStatistics)); // Statistics
 

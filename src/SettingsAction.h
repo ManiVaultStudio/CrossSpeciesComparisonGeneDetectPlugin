@@ -44,26 +44,31 @@ namespace mv
 {
     class CoreInterface;
 }
-struct SpeciesDetails {
+struct SpeciesDetailsStats {
     int rank;
     float meanSelected;
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
+    float meanAll;
+    int countAll;
 
 };
-struct Statistics {
+struct Stats {
     
     float meanSelected;
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
+    float meanAll;
+    int countAll;
 
 };
-struct SpeciesColorCountStorage {
+struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
+    int allCellsCount;
 };
 
 struct StatisticsSingle {
@@ -166,7 +171,7 @@ public: // Action getters
     QTableView* getGeneTableView() const { return _geneTableView; }
     QLineEdit* getSearchBox() const { return _searchBox; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
-    std::map<QString, SpeciesColorCountStorage> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
+    std::map<QString, SpeciesColorCountStorageVals> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
@@ -178,10 +183,10 @@ public: // Action getters
 
     double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
-    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Statistics> speciesMeanValues);
+    QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Stats> speciesMeanValues);
 private:
-    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
-    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore);
+    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
+    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
     void updateButtonTriggered();
     void setModifiedTriggeredData(QVariant geneListTable);
@@ -213,7 +218,7 @@ protected:
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _clusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
-    std::map<QString, std::map<QString, Statistics>> _clusterNameToGeneNameToExpressionValue;
+    std::map<QString, std::map<QString, Stats>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
     IntegralAction          _topNGenesFilter;
     StringAction           _geneNamesConnection;
@@ -244,7 +249,7 @@ protected:
     QStringList _initColumnNames;
     ToggleAction                  _usePreComputedTSNE;
     QLabel* _currentCellSelectionClusterInfoLabel;
-    std::map<QString, SpeciesColorCountStorage>       _selectedSpeciesCellCountMap;
+    std::map<QString, SpeciesColorCountStorageVals>       _selectedSpeciesCellCountMap;
     OptionsAction                               _speciesExplorerInMap;
     TriggerAction                               _speciesExplorerInMapTrigger;
     QTableView* _geneTableView;                /** Table view for the data */
