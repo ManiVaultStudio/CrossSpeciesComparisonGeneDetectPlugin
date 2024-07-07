@@ -34,8 +34,8 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
-std::map<QString, SpeciesDetails> convertToStatisticsMap(const QString& formattedStatistics) {
-    std::map<QString, SpeciesDetails> statisticsMap;
+std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& formattedStatistics) {
+    std::map<QString, SpeciesDetailsStats> statisticsMap;
 
 
 
@@ -43,19 +43,21 @@ std::map<QString, SpeciesDetails> convertToStatisticsMap(const QString& formatte
 
     //qdebud speciesStatsList
     //qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");//, MeanAll: ([\\d.]+), CountAll: (\\d+)
 
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
         if (match.hasMatch()) {
             QString species = match.captured(1);
-            SpeciesDetails stats = {
+            SpeciesDetailsStats stats = {
                 match.captured(2).toInt(),
                 match.captured(3).toFloat(),
                 match.captured(4).toInt(),
                 match.captured(5).toFloat(),
-                match.captured(6).toInt()
+                match.captured(6).toInt(),
+                //match.captured(7).toFloat(),
+                //match.captured(8).toInt()
             };
             statisticsMap[species] = stats;
         }
@@ -350,7 +352,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
     extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
-
+    extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
     datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
@@ -367,42 +369,40 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-    //tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
-    tsneOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     
-    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
-    tsneOptionsGroup->addAction(&_settingsAction.getTypeofTopNGenes());
-    //auto mainOptionsGroupLayout = new QVBoxLayout();
-    //auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
-    //auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
-    //mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
-    //mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    
+
+    auto mainOptionsGroupLayout = new QVBoxLayout();
+    auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
+    auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
+    mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
+    mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
  
-
-    //mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
-    //mainOptionsGroup1->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    //mainOptionsGroup2->addAction(&_settingsAction.getStartComputationTriggerAction());
-    //mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup1->addAction(&_settingsAction.getStartComputationTriggerAction());
+    mainOptionsGroup1->addAction(&_settingsAction.getTopNGenesFilter());
+    mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
     
     
+    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());  
+    mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
+    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
 
-    //auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
-    //group1Widget->setMaximumWidth(1000);
-    //mainOptionsGroupLayout->addWidget(group1Widget);
+    auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
+    group1Widget->setMaximumWidth(450);
+    mainOptionsGroupLayout->addWidget(group1Widget);
 
-    //auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
-    //group2Widget->setMaximumWidth(800);
-    //mainOptionsGroupLayout->addWidget(group2Widget);
+    auto group2Widget = mainOptionsGroup2->createWidget(&getWidget());
+    group2Widget->setMaximumWidth(450);
+    mainOptionsGroupLayout->addWidget(group2Widget);
     auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
-    statusBarWiddget->setMaximumWidth(550);
+    statusBarWiddget->setMaximumWidth(400);
 
     auto searchBoxWidget = _settingsAction.getSearchBox();
-    searchBoxWidget->setMaximumWidth(550);
+    searchBoxWidget->setMaximumWidth(400);
 
-    //mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+    
 
-    auto optionsGroup = new HorizontalGroupAction(this, "Group");
 
 
 
@@ -411,18 +411,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
 
-    
-    optionsGroup->addAction(&_settingsAction.getTopNGenesFilter());
-    optionsGroup->addAction(&_settingsAction.getStartComputationTriggerAction());
-    optionsGroup->addAction(&_settingsAction.getRemoveRowSelection());
-    optionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
-    //auto topNGenesFilterLabel = new QLabel(QString("Top N: [%1, %2]").arg(_settingsAction.getTopNGenesFilter().getMinimum()).arg(_settingsAction.getTopNGenesFilter().getMaximum()));
-    
+   
 
     mainOptionsLayout->addWidget(statusBarWiddget);
+    mainOptionsLayout->addLayout(mainOptionsGroupLayout);
     mainOptionsLayout->addWidget(searchBoxWidget);
-
-    mainOptionsLayout->addWidget(optionsGroup->createWidget(&getWidget()));
 
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
@@ -594,7 +587,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSpeciesExplorerInMapTrigger().setEnabled(true);
 
 
-        std::map<QString, SpeciesDetails> speciesExpressionMap;
+        std::map<QString, SpeciesDetailsStats> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
         QJsonObject valueStringReference;
@@ -618,7 +611,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             else if (columnName == "Statistics") {
 
                 if (!finalsettingSpeciesNamesArray.isEmpty()) {
-                    std::map<QString, SpeciesDetails> statisticsValues = convertToStatisticsMap(data.toString());
+                    std::map<QString, SpeciesDetailsStats> statisticsValues = convertToStatisticsMap(data.toString());
                     speciesExpressionMap = statisticsValues;
                     selectedCellCountStatusBarRemove();
                     selectedCellStatisticsStatusBarAdd(statisticsValues, finalsettingSpeciesNamesArray);
@@ -924,7 +917,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
     adjustTableWidths("small");
 }
 
-void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetails> statisticsValues, QStringList selectedSpecies)
+void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
@@ -932,7 +925,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"});
+        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -982,9 +975,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
                 rowItems << item; //6 Mean\nNon\nSelected
+                /*
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.countAll), Qt::EditRole);
+                rowItems << item;  //5 Count\nNon\nSelected
 
-
-
+                item = new QStandardItem();
+                item->setData(QVariant(it->second.meanAll), Qt::EditRole);
+                rowItems << item; //6 Mean\nNon\nSelected
+                */
 
 
             }
@@ -998,7 +997,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     qDebug() << it->first;
                 }
                 //_settingsAction.setErrorOutFlag(true);
-                _settingsAction.getStatusColorAction().setString("E");
+                //_settingsAction.getStatusColorAction().setString("E");
                 // Fill with placeholders if no statistics found
                 rowItems << new QStandardItem("N/A"); //1
                 rowItems << new QStandardItem("N/A"); //2
@@ -1022,7 +1021,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
 
-        model->sort(2, Qt::AscendingOrder);
+        model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);////"Absolute","Negative","Positive","Mixed"
+
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
 
         _settingsAction.getSelectionDetailsTable()->setModel(model);
@@ -1045,7 +1045,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemo
 }
 
 
-void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, SpeciesDetails>& speciesExpressionMap) {
+void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, SpeciesDetailsStats>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
         QString nodeName = node["name"].toString();

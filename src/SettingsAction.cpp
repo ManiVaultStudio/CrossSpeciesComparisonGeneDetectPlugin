@@ -38,10 +38,13 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
-Statistics combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected) {
-    Statistics combinedStats;
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected/*, const StatisticsSingle& allSelected*/) {
+    Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
+
+    //combinedStats.meanAll = allSelected.meanVal;
+    //combinedStats.countAll = allSelected.countVal;
 
     combinedStats.meanNonSelected = nonSelected.meanVal; 
     combinedStats.countNonSelected = nonSelected.countVal; 
@@ -199,21 +202,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _clusterNamesDataset(this, "Cluster Names"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
-    _topNGenesFilter(this, "Top N", 10),
+    _topNGenesFilter(this, "Top N"),
     _geneNamesConnection(this, "Gene Names Connection"),
     _createRowMultiSelectTree(this, "Create Row MultiSelect Tree"),
     _performGeneTableTsneAction(this, "Perform Gene Table TSNE"),
     _tsnePerplexity(this, "TSNE Perplexity"),
     _hiddenShowncolumns(this, "Hidden Shown Columns"),
-    _scatterplotReembedColorOption(this, "Reembed Color"),
+    _scatterplotReembedColorOption(this, "Embed Color"),
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
-    _removeRowSelection(this, "Remove Selection"),
+    _removeRowSelection(this, "DeSelect"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
-    _speciesExplorerInMapTrigger(this, "Explore Leaves")
+    _speciesExplorerInMapTrigger(this, "Explore")
 {
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
@@ -226,7 +229,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
-
+    _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
     //_statusBarActionWidget->setFixedWidth(120);
@@ -394,7 +397,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
-
+            _topNGenesFilter.setObjectName("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setWhatsThis("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
         };
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, changetooltipTopN);
 
@@ -472,8 +476,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateMainPointsDataset = [this]() -> void {
 
- 
-        computeGeneMeanExpressionMap();
+        if (!_meanMapComputed)
+        {
+            computeGeneMeanExpressionMap();
+        }
+        
+        
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
             
@@ -494,6 +502,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setObjectName("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setWhatsThis("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
 
 
         }
@@ -505,6 +515,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setToolTip("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setObjectName("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
+            _topNGenesFilter.setWhatsThis("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             
         }
         
@@ -513,7 +525,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
 
     const auto updateSpeciesNameDataset = [this]() -> void {
-
+        _selectedSpeciesCellCountMap.clear();
         QStringList speciesOptions = {};
         if (_speciesNamesDataset.getCurrentDataset().isValid())
         {
@@ -539,7 +551,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         }
         _speciesExplorerInMap.setOptions(speciesOptions);
         
-        computeGeneMeanExpressionMap();
+        if (!_meanMapComputed)
+        {
+            computeGeneMeanExpressionMap();
+        }
         };
 
     connect(&_speciesNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateSpeciesNameDataset);
@@ -782,7 +797,7 @@ void SettingsAction::updateButtonTriggered()
                 auto clustersValuesAll = clusterDatasetRaw->getClusters();
                 auto speciesValuesAll = speciesDatasetRaw->getClusters();
 
-                std::map<QString, std::pair<QColor, std::vector<int>>> selctedClustersMap;
+                std::map<QString, std::pair<QColor, std::vector<int>>> selectedClustersMap;
                 std::map<QString, std::pair<QColor, std::vector<int>>> selectedSpeciesMap;
                 //stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
@@ -1090,7 +1105,7 @@ void SettingsAction::updateButtonTriggered()
                     }
                     //startCodeTimer("Part12");
                     //startCodeTimer("Part12.1");
-                    QFuture<void> future12 = QtConcurrent::run([&]() {
+                    QFuture<void> futureClusterCVals = QtConcurrent::run([&]() {
                         QMutex mutex;
                         for (auto& clusters : clustersValuesAll) {
                             auto clusterIndices = clusters.getIndices();
@@ -1108,53 +1123,69 @@ void SettingsAction::updateButtonTriggered()
 
                             {
                                 QMutexLocker locker(&mutex);
-                                selctedClustersMap[clusterName] = { clusterColor, filteredIndices };
+                                selectedClustersMap[clusterName] = { clusterColor, filteredIndices };
                             }
                         }
                         });
+                    QFuture<void> futureSpeciesCVals = QtConcurrent::run([&]() {
+                        QMutex mutex;
+                        for (auto& clusters : speciesValuesAll) {
+                            auto clusterIndices = clusters.getIndices();
+                            auto clusterName = clusters.getName();
+                            auto clusterColor = clusters.getColor();
+                            std::vector<int> filteredIndices;
 
-                    future12.waitForFinished(); // Wait for the concurrent task to complete
+                            QtConcurrent::blockingMap(clusterIndices, [&](int index) {
+                                int indexVal = findIndex(_selectedIndicesFromStorage, index);
+                                if (indexVal != -1) {
+                                    QMutexLocker locker(&mutex);
+                                    filteredIndices.push_back(indexVal);
+                                }
+                                });
+
+                            {
+                                QMutexLocker locker(&mutex);
+                                selectedSpeciesMap[clusterName] = { clusterColor, filteredIndices };
+                            }
+                        }
+                        });
+                    futureClusterCVals.waitForFinished(); // Wait for the concurrent task to complete
+                    futureSpeciesCVals.waitForFinished();
                     //stopCodeTimer("Part12.1");
 
                     //startCodeTimer("Part12.2");
 
 
-
+                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
 
                     QMutex clusterGeneMeanExpressionMapMutex;
                     QMutex clusterNameToGeneNameToExpressionValueMutex;
 
-                    // Sort _selectedIndicesFromStorage once if it's not modified inside the loop
-                    std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-
-                    std::vector<QFuture<void>> futures;
-                    QFutureWatcher<void> futureWatcher;
+                    QFutureSynchronizer<void> synchronizer; // Use QFutureSynchronizer to wait for all tasks
 
                     for (auto& species : speciesValuesAll) {
-                        futures.push_back(QtConcurrent::run([&, species]() {
+                        auto future = QtConcurrent::run([&, species]() {
                             auto speciesIndices = species.getIndices();
                             auto speciesName = species.getName();
 
                             std::vector<int> commonSelectedIndices;
-                            //std::vector<int> commonNotSelectedIndices;
+
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-                            //std::set_difference(speciesIndices.begin(), speciesIndices.end(), commonSelectedIndices.begin(), commonSelectedIndices.end(), std::back_inserter(commonNotSelectedIndices));
 
-                            // Use a local map to aggregate results
-                            std::map<QString, Statistics> localClusterNameToGeneNameToExpressionValue;
+                            std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
-                                auto& geneName = pointsDatasetallColumnNameList[i];
+                                const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
-                                auto nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
                                 int allCellCounts = nonSelectionDetails.first;
                                 float allCellMean = nonSelectionDetails.second;
 
-                                float nonSelectedMean = allCellMean; // Use directly, no need to reassign
-                                int nonSelectedCells = allCellCounts;
+                                float nonSelectedMean = 0.0;
+                                int nonSelectedCells = 0;
 
-                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 }; // Initialize with default values
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 };
 
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -1163,42 +1194,43 @@ void SettingsAction::updateButtonTriggered()
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
                                     float allCellTotal = allCellMean * allCellCounts;
 
-                                    nonSelectedCells = allCellCounts - commonSelectedIndices.size();
+                                    nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
+                                    
                                     // Check to prevent division by zero
                                     if (nonSelectedCells > 0) {
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
                                     }
                                     else {
-                                        nonSelectedMean = 0.0f; // Assign a default value or handle the case as needed
+                                        nonSelectedMean = 0.0f;
+                                        //nonSelectedCells = 0;
                                     }
                                 }
                                 else {
+                                    nonSelectedMean = allCellMean;
+                                    nonSelectedCells = allCellCounts;
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                                //StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot/*,calculateStatisticsAll*/);
                             }
 
 
-                            // Lock and update the shared structure once per species
+
                             {
                                 QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
                                 for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
                                     _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 }
                             }
-                            }));
+                            });
+                        synchronizer.addFuture(future); // Add each future to the synchronizer
                     }
 
-                    // Wait for all futures to complete
-                    for (auto& future : futures) {
-                        futureWatcher.setFuture(future);
-                        futureWatcher.waitForFinished();
-                    }
-
+                    synchronizer.waitForFinished();
 
 
                     //stopCodeTimer("Part12.2");
@@ -1209,7 +1241,7 @@ void SettingsAction::updateButtonTriggered()
                     populateClusterData(speciesColorDatasetId, selectedSpeciesMap);
                     //stopCodeTimer("Part12.3");
                     //startCodeTimer("Part12.4");
-                    populateClusterData(clusterColorDatasetId, selctedClustersMap);
+                    populateClusterData(clusterColorDatasetId, selectedClustersMap);
                     //stopCodeTimer("Part12.4");
                     //stopCodeTimer("Part12");
                     if (_tsneDatasetClusterColors.isValid())
@@ -1328,7 +1360,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
-            QFuture<void> future = QtConcurrent::map(speciesclusters.begin(), speciesclusters.end(), [&](const auto& species) {
+            for (auto species : speciesclusters) {
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
                 for (int i = 0; i < mainPointDimensionNames.size(); i++) {
@@ -1339,14 +1371,16 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     float fullMean = calculateMean(resultContainerFull);
                     _clusterGeneMeanExpressionMap[speciesName][geneName] = std::make_pair(speciesIndices.size(), fullMean);
                 }
-                });
-            future.waitForFinished();
+
+            }
+            _meanMapComputed = true;
+
         }
     }
 
 }
 
-QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Statistics>>& map, int n, QString datasetId, float treeSimilarityScore) {
+QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore) {
     
     if (map.empty() || n <= 0) {
         return QVariant();
@@ -1477,7 +1511,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     return returnedmodel;
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Statistics>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
+QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
@@ -1495,7 +1529,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         numbers.reserve(map.size()); // Reserve capacity based on map size
-        std::map<QString, Statistics> statisticsValuesForSpeciesMap;
+        std::map<QString, Stats> statisticsValuesForSpeciesMap;
 
         for (const auto& [speciesName, innerMap] : map) {
             auto it = innerMap.find(gene);
@@ -1533,15 +1567,17 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")
+            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
-                .arg(stats.countNonSelected);
+                .arg(stats.countNonSelected)
+                //.arg(stats.meanAll, 0, 'f', 2)
+                //.arg(stats.countAll)
+                ;
         }
-
         row.push_back(new QStandardItem(formattedStatistics)); // Statistics
 
         model->appendRow(row);
