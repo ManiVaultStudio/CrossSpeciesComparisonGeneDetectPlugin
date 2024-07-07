@@ -1021,7 +1021,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
 
-        model->sort(2, Qt::AscendingOrder);
+        model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);////"Absolute","Negative","Positive","Mixed"
+
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
 
         _settingsAction.getSelectionDetailsTable()->setModel(model);
