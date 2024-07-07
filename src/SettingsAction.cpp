@@ -38,13 +38,13 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
-Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected, const StatisticsSingle& allSelected) {
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
 
-    combinedStats.meanAll = allSelected.meanVal;
-    combinedStats.countAll = allSelected.countVal;
+    //combinedStats.meanAll = allSelected.meanVal;
+    //combinedStats.countAll = allSelected.countVal;
 
     combinedStats.meanNonSelected = nonSelected.meanVal; 
     combinedStats.countNonSelected = nonSelected.countVal; 
@@ -1212,10 +1212,10 @@ void SettingsAction::updateButtonTriggered()
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                                StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
+                                //StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot,calculateStatisticsAll);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot/*,calculateStatisticsAll*/);
                             }
 
 
@@ -1567,15 +1567,15 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6, MeanAll: %7, CountAll: %8;\n")
+            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
                 .arg(stats.countNonSelected)
-                .arg(stats.meanAll, 0, 'f', 2)
-                .arg(stats.countAll)
+                //.arg(stats.meanAll, 0, 'f', 2)
+                //.arg(stats.countAll)
                 ;
         }
         row.push_back(new QStandardItem(formattedStatistics)); // Statistics

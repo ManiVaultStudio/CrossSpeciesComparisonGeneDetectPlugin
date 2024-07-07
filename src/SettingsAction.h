@@ -50,8 +50,8 @@ struct SpeciesDetailsStats {
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
-    float meanAll;
-    int countAll;
+    //float meanAll;
+    //int countAll;
 
 };
 struct Stats {
@@ -60,15 +60,15 @@ struct Stats {
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
-    float meanAll;
-    int countAll;
+    //float meanAll;
+    //int countAll;
 
 };
 struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
-    int allCellsCount;
+    //int allCellsCount;
 };
 
 struct StatisticsSingle {
