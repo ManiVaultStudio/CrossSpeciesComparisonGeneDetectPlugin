@@ -518,7 +518,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
 
     const auto updateSpeciesNameDataset = [this]() -> void {
-
+        _selectedSpeciesCellCountMap.clear();
         QStringList speciesOptions = {};
         if (_speciesNamesDataset.getCurrentDataset().isValid())
         {
@@ -1192,6 +1192,7 @@ void SettingsAction::updateButtonTriggered()
                                     }
                                     else {
                                         nonSelectedMean = 0.0f;
+                                        nonSelectedCells = 0;
                                     }
                                 }
                                 else {
