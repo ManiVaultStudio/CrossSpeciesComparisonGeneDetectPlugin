@@ -229,7 +229,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
-
+    _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
     _statusBarActionWidget->setFixedHeight(20);
     //_statusBarActionWidget->setFixedWidth(120);
@@ -476,8 +476,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateMainPointsDataset = [this]() -> void {
 
- 
-        computeGeneMeanExpressionMap();
+        if (!_meanMapComputed)
+        {
+            computeGeneMeanExpressionMap();
+        }
+        
+        
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
             
@@ -547,7 +551,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         }
         _speciesExplorerInMap.setOptions(speciesOptions);
         
-        computeGeneMeanExpressionMap();
+        if (!_meanMapComputed)
+        {
+            computeGeneMeanExpressionMap();
+        }
         };
 
     connect(&_speciesNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateSpeciesNameDataset);
@@ -1366,7 +1373,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                 }
 
             }
-
+            _meanMapComputed = true;
 
         }
     }

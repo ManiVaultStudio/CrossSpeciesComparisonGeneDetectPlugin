@@ -257,4 +257,5 @@ protected:
     QHBoxLayout* _splitter;
     QLineEdit* _searchBox;
     //bool _erroredOutFlag;
+    bool _meanMapComputed;
 };
