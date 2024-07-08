@@ -420,12 +420,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //mainOptionsLayout->addWidget(statusBarWiddget);
     //mainOptionsLayout->addLayout(mainOptionsGroupLayout);
     //mainOptionsLayout->addWidget(searchBoxWidget);
-    //auto linkerandtsneLayout = new QVBoxLayout();
-    //linkerandtsneLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 1);
-    //linkerandtsneLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 1);
-    //mainOptionsLayout->addLayout(linkerandtsneLayout);
-    mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
-    mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
+
+
+
+    auto linkerandtsneLayout = new QVBoxLayout();
+    auto linkerWidget = datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget());
+    linkerWidget->setMaximumHeight(22);
+    linkerandtsneLayout->addWidget(linkerWidget);
+    auto tsneWidget = tsneOptionsGroup->createCollapsedWidget(&getWidget());
+    tsneWidget->setMaximumHeight(22);
+    linkerandtsneLayout->addWidget(tsneWidget);
+    
+    mainOptionsLayout->addLayout(linkerandtsneLayout);
+
+    //mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
+    //mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     //mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
 
     auto fullSettingsLayout = new QVBoxLayout();

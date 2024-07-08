@@ -225,7 +225,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _searchBox->setMaximumHeight(22);
     //_searchBox->setMinimumWidth(100);
-    _searchBox->setMaximumWidth(600);
+    _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
@@ -235,7 +235,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget->setMaximumHeight(22);
     //_statusBarActionWidget->setFixedWidth(120);
     //_statusBarActionWidget->setMinimumWidth(100);
-    _statusBarActionWidget->setMaximumWidth(600);
+    _statusBarActionWidget->setMaximumWidth(800);
     _statusBarActionWidget->setAutoFillBackground(true);
     _statusBarActionWidget->setSizeGripEnabled(false);
 
