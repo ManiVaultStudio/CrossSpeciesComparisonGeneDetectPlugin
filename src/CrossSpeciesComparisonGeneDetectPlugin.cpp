@@ -208,6 +208,26 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
 
+
+    const auto updateSpeciesExplorerInMap = [this]() -> void
+        {
+ 
+            QStringList leafValues = _settingsAction.getSpeciesExplorerInMap().getSelectedOptions();
+
+            
+            _settingsAction.removeSelectionTableRows(&leafValues);
+
+
+
+        };
+
+    connect(&_settingsAction.getSpeciesExplorerInMapTrigger(), &TriggerAction::triggered, this, updateSpeciesExplorerInMap);
+
+
+
+
+
+
     const auto updateTableModel = [this]() -> void
         {
             //_settingsAction.setErrorOutFlag(false);
@@ -293,7 +313,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     _settingsAction.getSelectionDetailsTable()->setTextElideMode(Qt::ElideNone);
     _settingsAction.getSelectionDetailsTable()->setWordWrap(true);
-    _settingsAction.getSelectionDetailsTable()->setAlternatingRowColors(true);
+    _settingsAction.getSelectionDetailsTable()->setAlternatingRowColors(false);
     _settingsAction.getSelectionDetailsTable()->setSortingEnabled(true);
 
     //on hovering a cell, show the full text available in a tooltip
@@ -310,7 +330,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     _settingsAction.getSelectionDetailsTable()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     _settingsAction.getSelectionDetailsTable()->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    _settingsAction.getSelectionDetailsTable()->sortByColumn(2, Qt::AscendingOrder);
+    _settingsAction.getSelectionDetailsTable()->sortByColumn(2, Qt::DescendingOrder);
 
     _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
     _settingsAction.getSelectionDetailsTable()->setMouseTracking(true);
@@ -926,6 +946,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
     adjustTableWidths("small");
 }
 
+
+
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
@@ -1019,10 +1041,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             //QStringList speciesChosen = {};
             // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
-                for (int i = 1; i < rowItems.size(); ++i) { // Start from 1 to skip the first column
+                for (int i = 1; i < rowItems.size(); ++i) { 
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
                 }
-               // speciesChosen.append("Selected");
+
             }
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);
 

@@ -17,7 +17,7 @@
 #include <stack>
 #include <algorithm> // for std::find
 #include <mutex>
-
+#include <unordered_set>
 #include <iostream>
 #include <map>
 #include <string>
@@ -291,7 +291,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     _selectionDetailsTable->setSelectionMode(QAbstractItemView::SingleSelection);
     _selectionDetailsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _selectionDetailsTable->setAlternatingRowColors(true);
+    _selectionDetailsTable->setAlternatingRowColors(false);
     _selectionDetailsTable->setSortingEnabled(true);
     _selectionDetailsTable->setShowGrid(true);
     _selectionDetailsTable->setGridStyle(Qt::SolidLine);
@@ -322,8 +322,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setBaseSize(QSize(0, 0));
     _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
     _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-
-    //only highlight multiple rows if shiuft is pressed
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
@@ -1708,6 +1706,50 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
 
 
 }
+
+void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
+{
+    //check if _selectionDetailsTable is valid
+    if (_selectionDetailsTable == nullptr) {
+        return;
+    }
+
+
+
+    QAbstractItemModel* model = _selectionDetailsTable->model();
+
+    //check if model is valid
+    if (model == nullptr) {
+        return;
+    }
+
+    // Assuming model is already defined and represents the data model for _selectionDetailsTable
+    // and selectedSpecies is a QStringList containing the species names to check against
+
+    // Iterate through all rows
+    for (int row = 0; row < model->rowCount(); ++row) {
+        QModelIndex index = model->index(row, 0); // Assuming species name is in column 0
+        QString species = model->data(index).toString();
+
+        // Check if the species is one of the selected species
+        if (selectedLeaves->contains(species)) {
+            for (int col = 1; col < model->columnCount(); ++col) {
+                QModelIndex cellIndex = model->index(row, col);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#00A2ED")), Qt::BackgroundRole);
+            }
+        }
+        else
+        {
+            //remove existing color from rows
+            for (int col = 1; col < model->columnCount(); ++col) {
+                QModelIndex cellIndex = model->index(row, col);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#FFFFFF")), Qt::BackgroundRole);
+            }
+        }
+    }
+
+}
+
 void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
