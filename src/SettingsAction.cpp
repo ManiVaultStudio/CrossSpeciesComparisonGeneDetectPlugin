@@ -428,7 +428,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
                 _speciesExplorerInMapTrigger.setDisabled(true);
             }
+            QStringList leafValues = _speciesExplorerInMap.getSelectedOptions();
 
+
+            removeSelectionTableRows(&leafValues);
         };
     connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
 

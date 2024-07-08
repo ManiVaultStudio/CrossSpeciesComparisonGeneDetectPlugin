@@ -212,10 +212,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     const auto updateSpeciesExplorerInMap = [this]() -> void
         {
  
-            QStringList leafValues = _settingsAction.getSpeciesExplorerInMap().getSelectedOptions();
-
-            
-            _settingsAction.removeSelectionTableRows(&leafValues);
+            //TODO: ;
 
 
 
