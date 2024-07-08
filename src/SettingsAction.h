@@ -144,6 +144,8 @@ public: // Action getters
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
+    TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
+    ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -184,6 +186,10 @@ public: // Action getters
     double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Stats> speciesMeanValues);
+    void disableActions();
+    void enableActions();
+    void removeSelectionTableRows(QStringList* selectedLeaves);
+    void enableDisableButtonsAutomatically();
 private:
     QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);
@@ -239,6 +245,7 @@ protected:
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
     TriggerAction          _removeRowSelection;
+    TriggerAction           _revertRowSelectionChangesToInitial;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
     OptionAction           _scatterplotReembedColorOption;
     StringAction    _statusColorAction;
@@ -256,6 +263,7 @@ protected:
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
     QLineEdit* _searchBox;
+    ToggleAction    _applyLogTransformation;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
 };

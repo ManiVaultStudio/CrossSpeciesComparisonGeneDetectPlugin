@@ -17,7 +17,7 @@
 #include <stack>
 #include <algorithm> // for std::find
 #include <mutex>
-
+#include <unordered_set>
 #include <iostream>
 #include <map>
 #include <string>
@@ -212,29 +212,37 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "DeSelect"),
+    _revertRowSelectionChangesToInitial(this, "Revert"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
-    _speciesExplorerInMapTrigger(this, "Explore")
+    _speciesExplorerInMapTrigger(this, "Explore"),
+    _applyLogTransformation(this, "Gene mapping log")
 {
+    
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _searchBox = new QLineEdit();
+    QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
+    QAction* searchAction = new QAction(_searchBox);
+    searchAction->setIcon(searchIcon);
+    _searchBox->addAction(searchAction, QLineEdit::LeadingPosition);
     _searchBox->setPlaceholderText("Search ID...");
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _searchBox->setFixedHeight(20);
-    //_searchBox->setFixedWidth(100);
+    _searchBox->setMaximumHeight(22);
+    //_searchBox->setMinimumWidth(100);
+    _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
     _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
-    _statusBarActionWidget->setFixedHeight(20);
+    _statusBarActionWidget->setMaximumHeight(22);
     //_statusBarActionWidget->setFixedWidth(120);
-    _statusBarActionWidget->setMinimumWidth(100);
-    _statusBarActionWidget->setMaximumWidth(200);
+    //_statusBarActionWidget->setMinimumWidth(100);
+    _statusBarActionWidget->setMaximumWidth(800);
     _statusBarActionWidget->setAutoFillBackground(true);
     _statusBarActionWidget->setSizeGripEnabled(false);
 
@@ -286,7 +294,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     _selectionDetailsTable->setSelectionMode(QAbstractItemView::SingleSelection);
     _selectionDetailsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _selectionDetailsTable->setAlternatingRowColors(true);
+    _selectionDetailsTable->setAlternatingRowColors(false);
     _selectionDetailsTable->setSortingEnabled(true);
     _selectionDetailsTable->setShowGrid(true);
     _selectionDetailsTable->setGridStyle(Qt::SolidLine);
@@ -317,8 +325,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setBaseSize(QSize(0, 0));
     _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
     _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-
-    //only highlight multiple rows if shiuft is pressed
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
@@ -345,6 +351,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
+    _revertRowSelectionChangesToInitial.setSerializationName("CSCGDV:Revert Row Selection Changes To Initial");
+    _revertRowSelectionChangesToInitial.setDisabled(true);
     _speciesExplorerInMapTrigger.setSerializationName("CSCGDV:Species Explorer In Map Trigger");
     _speciesExplorerInMapTrigger.setDisabled(true);
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
@@ -358,6 +366,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setValue(30);
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(false);
+    _applyLogTransformation.setChecked(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
@@ -370,6 +379,23 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
+
+    QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
+    _startComputationTriggerAction.setIcon(updateIcon);
+    _startComputationTriggerAction.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon exploreIcon = Application::getIconFont("FontAwesome").getIcon("wpexplorer");
+    _speciesExplorerInMapTrigger.setIcon(exploreIcon);
+    _speciesExplorerInMapTrigger.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon removeIcon = Application::getIconFont("FontAwesome").getIcon("backspace");
+    _removeRowSelection.setIcon(removeIcon);
+    _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon revertIcon = Application::getIconFont("FontAwesome").getIcon("undo");
+    _revertRowSelectionChangesToInitial.setIcon(revertIcon);
+    _revertRowSelectionChangesToInitial.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });
@@ -404,24 +430,22 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updatespeciesExplorerInMap = [this]() -> void
         {
-            if (_speciesExplorerInMap.getSelectedOptions().size() > 0)
-            {
-                _speciesExplorerInMapTrigger.setDisabled(false);
-            }
-            else
-            {
-                _speciesExplorerInMapTrigger.setDisabled(true);
-            }
 
+            QStringList leafValues = _speciesExplorerInMap.getSelectedOptions();
+
+
+            removeSelectionTableRows(&leafValues);
+            enableDisableButtonsAutomatically();
         };
     connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
 
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
-            _startComputationTriggerAction.setDisabled(true);
+            disableActions();
             _speciesExplorerInMap.setSelectedOptions({});
             //_erroredOutFlag = false;
             updateButtonTriggered();
+            enableActions();
 
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
@@ -635,17 +659,34 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         auto string = _statusColorAction.getString();
         QString labelText = "";
         QString backgroundColor = "none";
+        if (string == "C")
+        {
+            _startComputationTriggerAction.setDisabled(true);
+        }
+        else
+        {
+            _startComputationTriggerAction.setDisabled(false);
+        }
+
+
         if (string == "C") {
             labelText = "Updated";
             backgroundColor = "#28a745"; // Green
+            
         }
         else if (string == "M") {
             labelText = "Pending";
             backgroundColor = "#ffc107"; // Gold
+
         }
         else if (string == "E") {
             labelText ="Error Occurred! Try updating again";
             backgroundColor = "#dc3545"; // Red
+        }
+        else if (string == "R")
+        {
+            labelText = "Running updation";
+            backgroundColor = "#007bff"; // Blue
         }
         else {
             labelText = "Unknown";
@@ -747,13 +788,13 @@ void SettingsAction::updateButtonTriggered()
         if (!pointsDataset.isValid() || !embeddingDataset.isValid() || !speciesDataset.isValid() || !clusterDataset.isValid() || !referenceTreeDataset.isValid())
         {
             qDebug() << "No datasets selected";
-            _startComputationTriggerAction.setDisabled(false);
+            //_startComputationTriggerAction.setDisabled(false);
             return;
         }
         if (pointsDataset->getSelectionIndices().size() < 1)
         {
             qDebug() << "No points selected";
-            _startComputationTriggerAction.setDisabled(false);
+            //_startComputationTriggerAction.setDisabled(false);
             return;
         }
         if (_selectedPointsTSNEDataset.isValid())
@@ -768,7 +809,7 @@ void SettingsAction::updateButtonTriggered()
         if (!isValid)
         {
             qDebug() << "Datasets are not valid";
-            _startComputationTriggerAction.setDisabled(false);
+            //_startComputationTriggerAction.setDisabled(false);
             return;
         }
         _selectedIndicesFromStorage.clear();
@@ -1021,7 +1062,7 @@ void SettingsAction::updateButtonTriggered()
                                 if (perplexity < 5)
                                 {
                                     qDebug() << "Perplexity is less than 5";
-                                    _startComputationTriggerAction.setDisabled(false);
+                                    //_startComputationTriggerAction.setDisabled(false);
                                     return;
                                 }
                                 if (perplexity != _tsnePerplexity.getValue())
@@ -1319,11 +1360,11 @@ void SettingsAction::updateButtonTriggered()
 
             _removeRowSelection.trigger();
             _removeRowSelection.setEnabled(false);
-            _speciesExplorerInMapTrigger.setEnabled(false);
+            //enableDisableButtonsAutomatically();
 
         }
         stopCodeTimer("UpdateGeneFilteringTrigger");
-        _startComputationTriggerAction.setDisabled(false);
+        //_startComputationTriggerAction.setDisabled(false);
     }
     catch (const std::exception& e) {
         qDebug() << "An exception occurred in coputation: " << e.what();
@@ -1604,6 +1645,106 @@ void SettingsAction::populatePointDataConcurrently(QString datasetId, const std:
         }
         });
 }
+void SettingsAction::enableActions()
+{
+    //_startComputationTriggerAction.setDisabled(false);
+    _topNGenesFilter.setDisabled(false);
+    _typeofTopNGenes.setDisabled(false);
+    _scatterplotReembedColorOption.setDisabled(false);
+    _applyLogTransformation.setDisabled(false);
+    _usePreComputedTSNE.setDisabled(false);
+    _tsnePerplexity.setDisabled(false);
+    _referenceTreeDataset.setDisabled(false);
+    _mainPointsDataset.setDisabled(false);
+    _embeddingDataset.setDisabled(false);
+    _speciesNamesDataset.setDisabled(false);
+    _clusterNamesDataset.setDisabled(false);
+    _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
+    _speciesExplorerInMap.setDisabled(false);
+    _selectedSpeciesVals.setDisabled(false);
+    _statusColorAction.setDisabled(false);
+    _searchBox->setDisabled(false);
+    enableDisableButtonsAutomatically();
+    if (_statusColorAction.getString() == "C")
+    {
+        _startComputationTriggerAction.setDisabled(true);
+    }
+    else
+    {
+        _startComputationTriggerAction.setDisabled(false);
+    }
+}
+void SettingsAction::disableActions()
+{
+    _statusColorAction.setString("R");
+    _startComputationTriggerAction.setDisabled(true);
+    _topNGenesFilter.setDisabled(true);
+    _typeofTopNGenes.setDisabled(true);
+    _scatterplotReembedColorOption.setDisabled(true);
+    _removeRowSelection.setDisabled(true);
+    _revertRowSelectionChangesToInitial.setDisabled(true);
+    _speciesExplorerInMapTrigger.setDisabled(true);
+    _usePreComputedTSNE.setDisabled(true);
+    _applyLogTransformation.setDisabled(true);
+    _tsnePerplexity.setDisabled(true);
+    _referenceTreeDataset.setDisabled(true);
+    _mainPointsDataset.setDisabled(true);
+    _embeddingDataset.setDisabled(true);
+    _speciesNamesDataset.setDisabled(true);
+    _clusterNamesDataset.setDisabled(true);
+    _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
+    _speciesExplorerInMap.setDisabled(true);
+    _selectedSpeciesVals.setDisabled(true);
+    _statusColorAction.setDisabled(true);
+    _searchBox->setDisabled(true);
+}
+
+void SettingsAction::enableDisableButtonsAutomatically()
+{
+
+    bool optionsActionHasOptions = !_speciesExplorerInMap.getOptions().isEmpty();
+    bool stringActionHasOptions = !_selectedSpeciesVals.getString().isEmpty();
+
+    bool bothListsEqual = false;
+    if (optionsActionHasOptions && stringActionHasOptions) {
+        QStringList temp = _selectedSpeciesVals.getString().split(" @%$,$%@ ");
+        QStringList species = _speciesExplorerInMap.getSelectedOptions();
+
+        std::sort(temp.begin(), temp.end());
+        std::sort(species.begin(), species.end());
+        bothListsEqual = (temp == species);
+    }
+
+    if (!stringActionHasOptions)
+    {
+        _speciesExplorerInMapTrigger.setDisabled(true);
+        _revertRowSelectionChangesToInitial.setDisabled(true);
+    }
+    else
+    {
+        if (!optionsActionHasOptions)
+        {
+            _speciesExplorerInMapTrigger.setDisabled(true);
+            _revertRowSelectionChangesToInitial.setDisabled(false);
+        }
+        else
+        {
+            if (bothListsEqual)
+            {
+                _speciesExplorerInMapTrigger.setDisabled(false);
+                _revertRowSelectionChangesToInitial.setDisabled(true);
+            }
+            else
+            {
+                _speciesExplorerInMapTrigger.setDisabled(false);
+                _revertRowSelectionChangesToInitial.setDisabled(false);
+            }
+        }
+    }
+
+
+
+}
 
 
 void SettingsAction::populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames)
@@ -1649,6 +1790,50 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
 
 
 }
+
+void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
+{
+    //check if _selectionDetailsTable is valid
+    if (_selectionDetailsTable == nullptr) {
+        return;
+    }
+
+
+
+    QAbstractItemModel* model = _selectionDetailsTable->model();
+
+    //check if model is valid
+    if (model == nullptr) {
+        return;
+    }
+
+    // Assuming model is already defined and represents the data model for _selectionDetailsTable
+    // and selectedSpecies is a QStringList containing the species names to check against
+
+    // Iterate through all rows
+    for (int row = 0; row < model->rowCount(); ++row) {
+        QModelIndex index = model->index(row, 0); // Assuming species name is in column 0
+        QString species = model->data(index).toString();
+
+        // Check if the species is one of the selected species
+        if (selectedLeaves->contains(species)) {
+            for (int col = 1; col < model->columnCount(); ++col) {
+                QModelIndex cellIndex = model->index(row, col);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#00A2ED")), Qt::BackgroundRole);
+            }
+        }
+        else
+        {
+            //remove existing color from rows
+            for (int col = 1; col < model->columnCount(); ++col) {
+                QModelIndex cellIndex = model->index(row, col);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#FFFFFF")), Qt::BackgroundRole);
+            }
+        }
+    }
+
+}
+
 void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
@@ -1850,6 +2035,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
+    _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
@@ -1883,6 +2069,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
+    _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
