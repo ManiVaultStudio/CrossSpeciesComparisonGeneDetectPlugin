@@ -217,7 +217,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
-    _speciesExplorerInMapTrigger(this, "Explore")
+    _speciesExplorerInMapTrigger(this, "Explore"),
+    _applyLogTransformation(this, "Gene mapping log")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -365,6 +366,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setValue(30);
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(false);
+    _applyLogTransformation.setChecked(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
@@ -1649,7 +1651,7 @@ void SettingsAction::enableActions()
     _topNGenesFilter.setDisabled(false);
     _typeofTopNGenes.setDisabled(false);
     _scatterplotReembedColorOption.setDisabled(false);
-
+    _applyLogTransformation.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
     _tsnePerplexity.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
@@ -1683,6 +1685,7 @@ void SettingsAction::disableActions()
     _revertRowSelectionChangesToInitial.setDisabled(true);
     _speciesExplorerInMapTrigger.setDisabled(true);
     _usePreComputedTSNE.setDisabled(true);
+    _applyLogTransformation.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);

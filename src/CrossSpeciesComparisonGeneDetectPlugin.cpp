@@ -271,7 +271,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //}
             //else
             //{
-                //_settingsAction.getRemoveRowSelection().triggered();
+                _settingsAction.getRemoveRowSelection().trigger();
                 _settingsAction.getStatusColorAction().setString("C");
             //}
             
@@ -422,6 +422,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     
     
 
@@ -473,7 +474,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto linkerandtsneLayout = new QVBoxLayout();
     auto linkerWidget = datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget());
     linkerWidget->setMaximumHeight(22);
-    linkerandtsneLayout->addWidget(linkerWidget);
+    //linkerandtsneLayout->addWidget(linkerWidget);
     auto tsneWidget = tsneOptionsGroup->createCollapsedWidget(&getWidget());
     tsneWidget->setMaximumHeight(22);
     linkerandtsneLayout->addWidget(tsneWidget);
@@ -757,7 +758,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                 
                 std::vector<QString> columnGeneColors = { gene };
                 int tempNumDimensionsColors = columnGeneColors.size();
-                applyLogTransformation(resultContainerSpeciesColors);
+                if (_settingsAction.getApplyLogTransformation().isChecked())
+                {
+                    applyLogTransformation(resultContainerSpeciesColors);
+                }
                 _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
 
                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -893,7 +897,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                         int rowSizeEmbd = rowSize;
                         int columnSizeEmbd = 1;
                         std::vector<QString> columnGeneEmbd = { gene };
-                        applyLogTransformation(resultContainerColorPoints);
+                        if (_settingsAction.getApplyLogTransformation().isChecked())
+                        {
+                            applyLogTransformation(resultContainerColorPoints);
+                        }
+                        //
                         _settingsAction.populatePointData(datasetIdEmb, resultContainerColorPoints, rowSizeEmbd, columnSizeEmbd, columnGeneEmbd);
 
                     }

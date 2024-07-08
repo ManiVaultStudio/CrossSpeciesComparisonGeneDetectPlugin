@@ -145,6 +145,7 @@ public: // Action getters
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
+    ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -262,6 +263,7 @@ protected:
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
     QLineEdit* _searchBox;
+    ToggleAction    _applyLogTransformation;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
 };
