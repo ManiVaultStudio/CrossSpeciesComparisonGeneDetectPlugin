@@ -212,6 +212,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotEmbeddingPointsUMAPOption(this, "Embedding UMAP Points"),
     _selectedSpeciesVals(this, "Selected Species Vals"),
     _removeRowSelection(this, "DeSelect"),
+    _revertRowSelectionChangesToInitial(this, "Revert"),
     _statusColorAction(this, "Status color"),
     _typeofTopNGenes(this, "N Type"),
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
@@ -348,6 +349,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
+    _revertRowSelectionChangesToInitial.setSerializationName("CSCGDV:Revert Row Selection Changes To Initial");
+    _revertRowSelectionChangesToInitial.setDisabled(true);
     _speciesExplorerInMapTrigger.setSerializationName("CSCGDV:Species Explorer In Map Trigger");
     _speciesExplorerInMapTrigger.setDisabled(true);
     _statusColorAction.setSerializationName("CSCGDV:Status Color");
@@ -385,6 +388,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     QIcon removeIcon = Application::getIconFont("FontAwesome").getIcon("backspace");
     _removeRowSelection.setIcon(removeIcon);
     _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon revertIcon = Application::getIconFont("FontAwesome").getIcon("undo");
+    _revertRowSelectionChangesToInitial.setIcon(revertIcon);
+    _revertRowSelectionChangesToInitial.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
@@ -1339,6 +1346,7 @@ void SettingsAction::updateButtonTriggered()
 
             _removeRowSelection.trigger();
             _removeRowSelection.setEnabled(false);
+            _revertRowSelectionChangesToInitial.setEnabled(false);
             _speciesExplorerInMapTrigger.setEnabled(false);
 
         }
@@ -1652,6 +1660,7 @@ void SettingsAction::disableActions()
     _typeofTopNGenes.setDisabled(true);
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
+    _revertRowSelectionChangesToInitial.setDisabled(true);
     _speciesExplorerInMapTrigger.setDisabled(true);
     _usePreComputedTSNE.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
@@ -1954,6 +1963,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
+    _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
@@ -1987,6 +1997,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
+    _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);

@@ -144,6 +144,7 @@ public: // Action getters
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
+    TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -242,6 +243,7 @@ protected:
     Dataset<Clusters>        _tsneDatasetClusterColors;
     Dataset<Points>        _tsneDatasetExpressionColors;
     TriggerAction          _removeRowSelection;
+    TriggerAction           _revertRowSelectionChangesToInitial;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
     OptionAction           _scatterplotReembedColorOption;
     StringAction    _statusColorAction;

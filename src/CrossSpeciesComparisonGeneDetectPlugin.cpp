@@ -199,7 +199,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
             _settingsAction.getRemoveRowSelection().setDisabled(true);
             _settingsAction.getSpeciesExplorerInMapTrigger().setDisabled(true);
-
+            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
@@ -221,7 +221,35 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     connect(&_settingsAction.getSpeciesExplorerInMapTrigger(), &TriggerAction::triggered, this, updateSpeciesExplorerInMap);
 
 
+    const auto updateRevertRowSelectionChangesToInitial = [this]() -> void
+        {
+            // Check if _settingsAction is valid and initialized
+            if (&_settingsAction) {
+                QString selectedSpeciesVals = _settingsAction.getSelctedSpeciesVals().getString();
 
+                // Check if the string is not empty
+                if (!selectedSpeciesVals.isEmpty()) {
+                    QStringList autoSpecies = selectedSpeciesVals.split(" @%$,$%@ ");
+
+                    // Further check if autoSpecies is not just a list with an empty string
+                    if (!(autoSpecies.size() == 1 && autoSpecies.first().isEmpty())) {
+                        if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
+                        {
+                            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
+                            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                        }
+                        
+                    }
+
+                }
+
+            }
+
+
+
+        };
+
+    connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
 
 
 
@@ -403,9 +431,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
     
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
-
+    mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
+    mainOptionsGroup2->addAction(&_settingsAction.getRevertRowSelectionChangesToInitial());
+    
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(450);
@@ -610,6 +639,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedGeneAction().setString(gene);
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
+        _settingsAction.getRevertRowSelectionChangesToInitial().setEnabled(true);
         _settingsAction.getSpeciesExplorerInMapTrigger().setEnabled(true);
 
 
