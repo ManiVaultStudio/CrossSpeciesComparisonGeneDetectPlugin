@@ -184,6 +184,8 @@ public: // Action getters
     double* condensedDistanceMatrix(const std::vector<float>& items);
     std::string mergeToNewick(int* merge, int numOfLeaves);
     QString createJsonTreeFromNewick(QString tree, std::vector<QString> leafNames, std::map <QString, Stats> speciesMeanValues);
+    void disableActions();
+    void enableActions();
 private:
     QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);

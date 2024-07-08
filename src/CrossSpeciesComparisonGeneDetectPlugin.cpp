@@ -384,9 +384,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup1->addAction(&_settingsAction.getTypeofTopNGenes());
     
     
-    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());  
+    
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
     mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
+    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
+
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
     group1Widget->setMaximumWidth(450);

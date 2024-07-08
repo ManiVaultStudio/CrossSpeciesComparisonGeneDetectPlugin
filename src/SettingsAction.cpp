@@ -418,10 +418,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
-            _startComputationTriggerAction.setDisabled(true);
+            disableActions();
             _speciesExplorerInMap.setSelectedOptions({});
             //_erroredOutFlag = false;
             updateButtonTriggered();
+            enableActions();
 
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
@@ -1323,7 +1324,7 @@ void SettingsAction::updateButtonTriggered()
 
         }
         stopCodeTimer("UpdateGeneFilteringTrigger");
-        _startComputationTriggerAction.setDisabled(false);
+        //_startComputationTriggerAction.setDisabled(false);
     }
     catch (const std::exception& e) {
         qDebug() << "An exception occurred in coputation: " << e.what();
@@ -1604,8 +1605,48 @@ void SettingsAction::populatePointDataConcurrently(QString datasetId, const std:
         }
         });
 }
-
-
+void SettingsAction::enableActions()
+{
+    _startComputationTriggerAction.setDisabled(false);
+    _topNGenesFilter.setDisabled(false);
+    _typeofTopNGenes.setDisabled(false);
+    _scatterplotReembedColorOption.setDisabled(false);
+    //_removeRowSelection.setDisabled(false);
+    //_speciesExplorerInMapTrigger.setDisabled(false);
+    _usePreComputedTSNE.setDisabled(false);
+    _tsnePerplexity.setDisabled(false);
+    _referenceTreeDataset.setDisabled(false);
+    _mainPointsDataset.setDisabled(false);
+    _embeddingDataset.setDisabled(false);
+    _speciesNamesDataset.setDisabled(false);
+    _clusterNamesDataset.setDisabled(false);
+    _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
+    _speciesExplorerInMap.setDisabled(false);
+    _selectedSpeciesVals.setDisabled(false);
+    _statusColorAction.setDisabled(false);
+    _searchBox->setDisabled(false);
+}
+void SettingsAction::disableActions()
+{
+    _startComputationTriggerAction.setDisabled(true);
+    _topNGenesFilter.setDisabled(true);
+    _typeofTopNGenes.setDisabled(true);
+    _scatterplotReembedColorOption.setDisabled(true);
+    _removeRowSelection.setDisabled(true);
+    _speciesExplorerInMapTrigger.setDisabled(true);
+    _usePreComputedTSNE.setDisabled(true);
+    _tsnePerplexity.setDisabled(true);
+    _referenceTreeDataset.setDisabled(true);
+    _mainPointsDataset.setDisabled(true);
+    _embeddingDataset.setDisabled(true);
+    _speciesNamesDataset.setDisabled(true);
+    _clusterNamesDataset.setDisabled(true);
+    _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
+    _speciesExplorerInMap.setDisabled(true);
+    _selectedSpeciesVals.setDisabled(true);
+    _statusColorAction.setDisabled(true);
+    _searchBox->setDisabled(true);
+}
 void SettingsAction::populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames)
 {
     auto pointDataset = mv::data().getDataset<Points>(datasetId);
