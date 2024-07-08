@@ -380,7 +380,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _startComputationTriggerAction.setIcon(updateIcon);
     _startComputationTriggerAction.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
-    QIcon exploreIcon = Application::getIconFont("FontAwesome").getIcon("search");
+    QIcon exploreIcon = Application::getIconFont("FontAwesome").getIcon("wpexplorer");
     _speciesExplorerInMapTrigger.setIcon(exploreIcon);
     _speciesExplorerInMapTrigger.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
