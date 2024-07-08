@@ -188,6 +188,7 @@ public: // Action getters
     void disableActions();
     void enableActions();
     void removeSelectionTableRows(QStringList* selectedLeaves);
+    void enableDisableButtonsAutomatically();
 private:
     QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);

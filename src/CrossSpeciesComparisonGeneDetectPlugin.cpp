@@ -198,8 +198,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             }
 
             _settingsAction.getRemoveRowSelection().setDisabled(true);
-            _settingsAction.getSpeciesExplorerInMapTrigger().setDisabled(true);
-            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+            //_settingsAction.enableDisableButtonsAutomatically();
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
@@ -213,7 +212,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         {
  
             //TODO: ;
-
+            _settingsAction.enableDisableButtonsAutomatically();
 
 
         };
@@ -236,7 +235,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                         if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
                         {
                             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
-                            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                            //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
                         }
                         
                     }
@@ -244,13 +243,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 }
 
             }
-
+            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
 
 
         };
 
     connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
 
+
+    const auto updateSelctedSpeciesVals = [this]() -> void
+        {
+            _settingsAction.enableDisableButtonsAutomatically();
+
+        };
+
+    connect(&_settingsAction.getSelctedSpeciesVals(), &StringAction::changed, this, updateSelctedSpeciesVals);
 
 
     const auto updateTableModel = [this]() -> void
@@ -639,8 +646,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedGeneAction().setString(gene);
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
-        _settingsAction.getRevertRowSelectionChangesToInitial().setEnabled(true);
-        _settingsAction.getSpeciesExplorerInMapTrigger().setEnabled(true);
+        //_settingsAction.enableDisableButtonsAutomatically();
 
 
         std::map<QString, SpeciesDetailsStats> speciesExpressionMap;
