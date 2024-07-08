@@ -365,7 +365,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setMaximum(50);
     _tsnePerplexity.setValue(30);
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
-    _usePreComputedTSNE.setChecked(false);
+    _usePreComputedTSNE.setChecked(true);
     _applyLogTransformation.setChecked(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");

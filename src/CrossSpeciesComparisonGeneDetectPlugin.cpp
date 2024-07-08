@@ -421,8 +421,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
-    tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
-    tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
+    //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     
     
