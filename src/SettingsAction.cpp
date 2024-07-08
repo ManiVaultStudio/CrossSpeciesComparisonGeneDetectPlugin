@@ -375,6 +375,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
+
+    QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
+    _startComputationTriggerAction.setIcon(updateIcon);
+    _startComputationTriggerAction.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon exploreIcon = Application::getIconFont("FontAwesome").getIcon("search");
+    _speciesExplorerInMapTrigger.setIcon(exploreIcon);
+    _speciesExplorerInMapTrigger.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon removeIcon = Application::getIconFont("FontAwesome").getIcon("backspace");
+    _removeRowSelection.setIcon(removeIcon);
+    _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
     _scatterplotEmbeddingPointsUMAPOption.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == PointType;
         });

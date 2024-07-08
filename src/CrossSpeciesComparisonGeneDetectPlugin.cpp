@@ -405,13 +405,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     
 
-
-
-
-    //_settingsAction.getSpeciesExplorerInMapTrigger().setIcon(Application::getIconFont("FontAwesome").getIcon("search"));
-    //_settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
-    //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
-
     auto startsANDSearchLayout = new QVBoxLayout();
     startsANDSearchLayout->addWidget(statusBarWiddget);
     startsANDSearchLayout->addWidget(searchBoxWidget);
