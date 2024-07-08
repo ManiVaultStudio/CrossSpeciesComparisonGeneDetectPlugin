@@ -221,6 +221,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
     _searchBox = new QLineEdit();
+    QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
+    QAction* searchAction = new QAction(_searchBox);
+    searchAction->setIcon(searchIcon);
+    _searchBox->addAction(searchAction, QLineEdit::LeadingPosition);
     _searchBox->setPlaceholderText("Search ID...");
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _searchBox->setMaximumHeight(22);
