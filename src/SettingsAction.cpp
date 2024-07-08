@@ -223,18 +223,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox = new QLineEdit();
     _searchBox->setPlaceholderText("Search ID...");
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _searchBox->setFixedHeight(20);
-    //_searchBox->setFixedWidth(100);
+    _searchBox->setMaximumHeight(22);
+    //_searchBox->setMinimumWidth(100);
+    _searchBox->setMaximumWidth(600);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
     _searchBox->setClearButtonEnabled(true);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
     _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
-    _statusBarActionWidget->setFixedHeight(20);
+    _statusBarActionWidget->setMaximumHeight(22);
     //_statusBarActionWidget->setFixedWidth(120);
-    _statusBarActionWidget->setMinimumWidth(100);
-    _statusBarActionWidget->setMaximumWidth(200);
+    //_statusBarActionWidget->setMinimumWidth(100);
+    _statusBarActionWidget->setMaximumWidth(600);
     _statusBarActionWidget->setAutoFillBackground(true);
     _statusBarActionWidget->setSizeGripEnabled(false);
 

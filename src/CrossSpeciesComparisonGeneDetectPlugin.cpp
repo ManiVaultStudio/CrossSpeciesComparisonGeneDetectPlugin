@@ -398,10 +398,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     group2Widget->setMaximumWidth(450);
     mainOptionsGroupLayout->addWidget(group2Widget);
     auto statusBarWiddget = _settingsAction.getStatusBarActionWidget();
-    statusBarWiddget->setMaximumWidth(400);
+    statusBarWiddget->setMaximumWidth(600);
 
     auto searchBoxWidget = _settingsAction.getSearchBox();
-    searchBoxWidget->setMaximumWidth(400);
+    searchBoxWidget->setMaximumWidth(600);
 
     
 
@@ -412,13 +412,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //_settingsAction.getRemoveRowSelection().setIcon(Application::getIconFont("FontAwesome").getIcon("eraser"));
     //_settingsAction.getStartComputationTriggerAction().setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
 
-
-   
-
-    mainOptionsLayout->addWidget(statusBarWiddget);
+    auto startsANDSearchLayout = new QVBoxLayout();
+    startsANDSearchLayout->addWidget(statusBarWiddget);
+    startsANDSearchLayout->addWidget(searchBoxWidget);
+    mainOptionsLayout->addLayout(startsANDSearchLayout);
     mainOptionsLayout->addLayout(mainOptionsGroupLayout);
-    mainOptionsLayout->addWidget(searchBoxWidget);
-
+    //mainOptionsLayout->addWidget(statusBarWiddget);
+    //mainOptionsLayout->addLayout(mainOptionsGroupLayout);
+    //mainOptionsLayout->addWidget(searchBoxWidget);
+    //auto linkerandtsneLayout = new QVBoxLayout();
+    //linkerandtsneLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 1);
+    //linkerandtsneLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 1);
+    //mainOptionsLayout->addLayout(linkerandtsneLayout);
     mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     //mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
