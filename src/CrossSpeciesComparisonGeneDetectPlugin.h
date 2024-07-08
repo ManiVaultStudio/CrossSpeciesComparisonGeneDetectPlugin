@@ -46,11 +46,12 @@ public:
     void selectedCellCountStatusBarRemove();
     void selectedCellStatisticsStatusBarRemove();
     void selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies);
+    void geneExplorer();
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
      */
-    void onDataEvent(mv::DatasetEvent* dataEvent);
+    //void onDataEvent(mv::DatasetEvent* dataEvent);
 
     SettingsAction& getSettingsAction() { return _settingsAction; }
 
