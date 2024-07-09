@@ -146,6 +146,7 @@ public: // Action getters
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
+    OptionAction& getClusterCountSortingType() { return _clusterCountSortingType; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -266,4 +267,5 @@ protected:
     ToggleAction    _applyLogTransformation;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
+    OptionAction                _clusterCountSortingType;
 };

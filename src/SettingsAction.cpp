@@ -220,7 +220,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _speciesExplorerInMapTrigger(this, "Explore"),
-    _applyLogTransformation(this, "Gene mapping log")
+    _applyLogTransformation(this, "Gene mapping log"),
+    _clusterCountSortingType(this, "Cluster Count Sorting Type")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -374,12 +375,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
+    _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
+    _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View"}, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
     QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
@@ -756,6 +759,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_typeofTopNGenes, &OptionAction::currentIndexChanged, this, updateTypeOfTopNGenesFilter);
+
+    const auto updateApplyLogTransformation = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_applyLogTransformation, &ToggleAction::toggled, this, updateApplyLogTransformation);
+
+    const auto updateClusterCountSortingType = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_clusterCountSortingType, &OptionAction::currentIndexChanged, this, updateClusterCountSortingType);
+
     const auto updateTopGenesSlider = [this]() -> void {
         _statusColorAction.setString("M");
 
@@ -1669,6 +1685,7 @@ void SettingsAction::enableActions()
     //_startComputationTriggerAction.setDisabled(false);
     _topNGenesFilter.setDisabled(false);
     _typeofTopNGenes.setDisabled(false);
+    _clusterCountSortingType.setDisabled(false);
     _scatterplotReembedColorOption.setDisabled(false);
     _applyLogTransformation.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
@@ -1699,6 +1716,7 @@ void SettingsAction::disableActions()
     _startComputationTriggerAction.setDisabled(true);
     _topNGenesFilter.setDisabled(true);
     _typeofTopNGenes.setDisabled(true);
+    _clusterCountSortingType.setDisabled(true);
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
     _revertRowSelectionChangesToInitial.setDisabled(true);
@@ -2061,6 +2079,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
+    _clusterCountSortingType.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
  
 
@@ -2095,6 +2114,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
+    _clusterCountSortingType.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
     return variantMap;
 }

@@ -210,9 +210,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto updateSpeciesExplorerInMap = [this]() -> void
         {
- 
-            //TODO: ;
-            
+          
             geneExplorer();
             _settingsAction.enableDisableButtonsAutomatically();
         };
@@ -423,6 +421,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
+    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     
     
@@ -441,7 +441,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
     
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
     mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getRevertRowSelectionChangesToInitial());
     
