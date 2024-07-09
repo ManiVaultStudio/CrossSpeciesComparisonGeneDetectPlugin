@@ -28,10 +28,12 @@
 #include <vector>
 
 #include <unordered_map>
-
+#include <QApplication>
+#include <QPalette>
 
 using namespace mv;
 using namespace mv::gui;
+
 
 
 
@@ -1629,6 +1631,23 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     return QVariant::fromValue(model);
 
 }
+
+QStringList SettingsAction::getSystemModeColor() {
+    // Get the application palette
+    QPalette palette = QApplication::palette();
+
+    // Check the color of the window text to determine if the system is in dark mode or light mode
+    // Assuming dark mode has lighter text (e.g., white) and light mode has darker text (e.g., black)
+    if (palette.color(QPalette::WindowText).lightness() < 128) {
+        // Light mode
+        return { "#FFFFFF","#000000" }; // White
+    }
+    else {
+        // Dark mode
+        return { "#000000","#FFFFFF" }; // Black
+    }
+}
+
 void SettingsAction::populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames)
 {
     QtConcurrent::run([this, datasetId, pointVector, numPoints, numDimensions, dimensionNames]() {
@@ -1807,8 +1826,9 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         return;
     }
 
-    // Assuming model is already defined and represents the data model for _selectionDetailsTable
-    // and selectedSpecies is a QStringList containing the species names to check against
+    auto colorValues = getSystemModeColor();
+    auto systemColor = colorValues[0];
+    auto valuesColor = colorValues[1];
 
     // Iterate through all rows
     for (int row = 0; row < model->rowCount(); ++row) {
@@ -1820,6 +1840,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
             for (int col = 1; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#00A2ED")), Qt::BackgroundRole);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#000000")), Qt::ForegroundRole);
             }
         }
         else
@@ -1827,7 +1848,8 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
             //remove existing color from rows
             for (int col = 1; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
-                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#FFFFFF")), Qt::BackgroundRole);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(systemColor)), Qt::BackgroundRole);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(valuesColor)), Qt::ForegroundRole);
             }
         }
     }

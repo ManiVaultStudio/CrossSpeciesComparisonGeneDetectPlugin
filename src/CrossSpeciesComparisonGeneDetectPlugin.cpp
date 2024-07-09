@@ -1144,6 +1144,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
         // Set headers
         model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
+        auto colorValues = _settingsAction.getSystemModeColor();
+        auto systemColor = colorValues[0];
+        auto ValuesColor = colorValues[1];
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -1228,10 +1231,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             //QStringList speciesChosen = {};
             // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
-                for (int i = 1; i < rowItems.size(); ++i) { 
+                for (int i = 1; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
+                    rowItems[i]->setForeground(QBrush(QColor("#FFFFFF")));
                 }
 
+            }
+            else
+            {
+                for (int i = 1; i < rowItems.size(); ++i) {
+                    rowItems[i]->setBackground(QBrush(QColor(systemColor)));
+                    rowItems[i]->setForeground(QBrush(QColor(ValuesColor)));
+                }
             }
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);
 
