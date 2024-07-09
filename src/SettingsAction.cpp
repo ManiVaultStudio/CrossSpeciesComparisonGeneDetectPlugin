@@ -369,13 +369,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setValue(30);
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
-    _applyLogTransformation.setChecked(true);
+    _applyLogTransformation.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
+    _applyLogTransformation.setSerializationName("CSCGDV:Apply Log Transformation");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
@@ -2081,7 +2082,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _typeofTopNGenes.fromParentVariantMap(variantMap);
     _clusterCountSortingType.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
- 
+    _applyLogTransformation.fromParentVariantMap(variantMap);
 
 }
 
@@ -2116,5 +2117,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
     _clusterCountSortingType.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
+    _applyLogTransformation.insertIntoVariantMap(variantMap);
     return variantMap;
 }
