@@ -759,14 +759,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
     _settingsAction.getGeneTableView()->setModel(proxyModel);
     //auto tempVal = _settingsAction.getSearchBox()->text();
 
-    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [proxyModel](const QString& text) {
-        if (text.isEmpty()) {
-            proxyModel->setFilterWildcard("*"); // Reset filter to show all items
-        }
-        else {
-            proxyModel->setFilterWildcard("*" + text + "*");
-        }
+    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [this, proxyModel](const QString& text) {
+        QTimer::singleShot(300, this, [this, proxyModel, text]() {
+            if (text.isEmpty()) {
+                proxyModel->setFilterWildcard("*"); // Reset filter to show all items
+            }
+            else {
+                proxyModel->setFilterWildcard("*" + text + "*");
+            }
+            });
         });
+
+
     _settingsAction.getSearchBox()->setText("");
 
 
