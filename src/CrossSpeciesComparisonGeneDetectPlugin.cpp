@@ -212,9 +212,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
         {
  
             //TODO: ;
+            
+            geneExplorer();
             _settingsAction.enableDisableButtonsAutomatically();
-
-
         };
 
     connect(&_settingsAction.getSpeciesExplorerInMapTrigger(), &TriggerAction::triggered, this, updateSpeciesExplorerInMap);
@@ -235,7 +235,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                         if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
                         {
                             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
-                            //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                            geneExplorer();
                         }
                         
                     }
@@ -243,7 +244,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 }
 
             }
-            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+            //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
 
 
         };
@@ -420,8 +421,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
-    tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
-    tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
+    //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     
     
@@ -520,6 +521,150 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
+{
+    std::vector<std::seed_seq::result_type> selectedSpeciesIndices;
+    auto speciesDataset = _settingsAction.getSpeciesNamesDataset().getCurrentDataset();
+    auto umapDataset = _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset();
+    auto mainPointsDataset = _settingsAction.getMainPointsDataset().getCurrentDataset();
+    std::vector<std::seed_seq::result_type> filtSelectInndx;
+    QString gene = _settingsAction.getSelectedGeneAction().getString();
+    QStringList finalsettingSpeciesNamesArray = _settingsAction.getSpeciesExplorerInMap().getSelectedOptions();
+
+    if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid())
+    {
+        qDebug() << "One of the datasets is not valid";
+        return;
+    }
+    if (gene == "")
+    {
+        qDebug() << "Gene is not selected";
+        return;
+    }
+
+
+    if (finalsettingSpeciesNamesArray.isEmpty())
+    {
+        qDebug() << "Species names are not selected";
+        return;
+    }
+
+
+    {
+        auto speciesClusterDataset = mv::data().getDataset<Clusters>(speciesDataset.getDatasetId());
+        auto umapPointsDataset = mv::data().getDataset<Points>(umapDataset.getDatasetId());
+        auto fullMainPointsDataset = mv::data().getDataset<Points>(mainPointsDataset.getDatasetId());
+
+        std::unordered_set<QString> speciesNamesSet(finalsettingSpeciesNamesArray.begin(), finalsettingSpeciesNamesArray.end());
+        for (const auto& species : speciesClusterDataset->getClusters()) {
+            if (speciesNamesSet.find(species.getName()) != speciesNamesSet.end()) {
+                const auto& indices = species.getIndices();
+                selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
+            }
+        }
+
+
+        std::vector<std::seed_seq::result_type>& selectedIndicesFromStorage = _settingsAction.getSelectedIndicesFromStorage();
+        std::unordered_set<std::seed_seq::result_type> indicesSet(selectedIndicesFromStorage.begin(), selectedIndicesFromStorage.end());
+        filtSelectInndx.reserve(selectedSpeciesIndices.size());
+        for (int i = 0; i < selectedSpeciesIndices.size(); ++i) {
+            if (indicesSet.find(selectedSpeciesIndices[i]) != indicesSet.end()) {
+                filtSelectInndx.push_back(i);
+            }
+        }
+        auto dimensionNamesUmap = umapPointsDataset->getDimensionNames();
+        auto numDimensions = umapPointsDataset->getNumDimensions();
+        std::vector<int> geneIndicesSpecies(numDimensions);
+        std::iota(geneIndicesSpecies.begin(), geneIndicesSpecies.end(), 0);
+
+
+        if (selectedSpeciesIndices.size() > 0)
+        {
+            std::vector<float> resultContainerSpeciesUMAP(selectedSpeciesIndices.size() * umapPointsDataset->getNumDimensions());
+            umapPointsDataset->populateDataForDimensions(resultContainerSpeciesUMAP, geneIndicesSpecies, selectedSpeciesIndices);
+            auto speciesDataId = _settingsAction.getFilteredUMAPDatasetPoints().getDatasetId();
+            int tempnumPoints = selectedSpeciesIndices.size();
+            int tempNumDimensions = geneIndicesSpecies.size();
+            _settingsAction.populatePointData(speciesDataId, resultContainerSpeciesUMAP, tempnumPoints, tempNumDimensions, dimensionNamesUmap);
+
+
+
+            std::vector<float> resultContainerSpeciesColors(selectedSpeciesIndices.size());
+            std::vector<int> selectedGeneIndex;
+
+            auto dimensionNames = fullMainPointsDataset->getDimensionNames();
+            auto it = std::find(dimensionNames.begin(), dimensionNames.end(), gene);
+            if (it != dimensionNames.end()) {
+                selectedGeneIndex.push_back(std::distance(dimensionNames.begin(), it));
+            }
+
+
+            fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
+            auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
+            int tempnumPointsColors = selectedSpeciesIndices.size();
+
+            std::vector<QString> columnGeneColors = { gene };
+            int tempNumDimensionsColors = columnGeneColors.size();
+            if (_settingsAction.getApplyLogTransformation().isChecked())
+            {
+                applyLogTransformation(resultContainerSpeciesColors);
+            }
+            _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+
+
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                        //plugin->printChildren();
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetPoints());
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+
+                            }
+
+                            auto focusSelectionAction = dynamic_cast<ToggleAction*>(plugin->findChildByPath("Settings/Plot/Point/Focus selection"));
+
+                            if (focusSelectionAction)
+                            {
+                                focusSelectionAction->setChecked(true);
+
+                            }
+
+                            auto opacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Plot/Point/Point opacity/Point opacity"));
+                            if (opacityAction)
+                            {
+                                opacityAction->setValue(20.0);
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
+
+            _settingsAction.getFilteredUMAPDatasetPoints()->setSelectionIndices(filtSelectInndx);
+            mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getFilteredUMAPDatasetPoints());
+
+
+        }
+
+
+    }
 }
 
 void CrossSpeciesComparisonGeneDetectPlugin::adjustTableWidths(const QString& value) {
@@ -1145,7 +1290,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
         node["children"] = children; // Update the modified array back into the parent JSON object
     }
 }
-
+/*
 void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
 {
     // Get smart pointer to dataset that changed
@@ -1212,7 +1357,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::onDataEvent(mv::DatasetEvent* dataE
             break;
     }
 }
-
+*/
 
 void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& variantMap)
 {
