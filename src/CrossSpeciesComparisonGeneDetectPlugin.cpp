@@ -301,6 +301,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     connect(&_settingsAction.getHiddenShowncolumns(), &OptionsAction::selectedOptionsChanged, this, updateHideShowColumns);
 
 
+    const auto triggerInit = [this]() -> void
+        {
+
+            _settingsAction.getStartComputationTriggerAction().trigger();
+        };
+
+    connect(&mv::projects(), &AbstractProjectManager::projectOpened , this, triggerInit);
+
+    
 
     //change height of headers
 
@@ -1380,7 +1389,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& v
     mv::util::variantMapMustContain(variantMap, "CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _settingsAction.fromVariantMap(variantMap["CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings"].toMap());
    // modifyTableData();
-    _settingsAction.getStartComputationTriggerAction().trigger();
+   // _settingsAction.getStartComputationTriggerAction().trigger();
 
 }
 
