@@ -40,6 +40,40 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
+
+
+// Function to sort by count (descending)
+bool sortByCount(const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+    return a.count > b.count;
+}
+
+// Function to sort by name (ascending)
+bool sortByName(const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+    return a.name < b.name;
+}
+
+// Prepare a map for custom list sorting
+std::unordered_map<QString, int> prepareCustomSortMap(const std::vector<QString>& customOrder) {
+    std::unordered_map<QString, int> sortOrderMap;
+    for (size_t i = 0; i < customOrder.size(); ++i) {
+        sortOrderMap[customOrder[i]] = i;
+    }
+    return sortOrderMap;
+}
+
+// Function to sort by custom list
+bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContainer& b,
+    const std::unordered_map<QString, int>& sortOrderMap) {
+    auto posA = sortOrderMap.find(a.name);
+    auto posB = sortOrderMap.find(b.name);
+    int indexA = (posA != sortOrderMap.end()) ? posA->second : INT_MAX;
+    int indexB = (posB != sortOrderMap.end()) ? posB->second : INT_MAX;
+    return indexA < indexB;
+}
+
+
+
+
 Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
@@ -220,7 +254,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _speciesExplorerInMapTrigger(this, "Explore"),
-    _applyLogTransformation(this, "Gene mapping log")
+    _applyLogTransformation(this, "Gene mapping log"),
+    _clusterCountSortingType(this, "Cluster Count Sorting Type"),
+    _currentCellSelectionClusterInfoLabel(nullptr)
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -368,18 +404,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _tsnePerplexity.setValue(30);
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
-    _applyLogTransformation.setChecked(true);
+    _applyLogTransformation.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
+    _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
+    _applyLogTransformation.setSerializationName("CSCGDV:Apply Log Transformation");
     _performGeneTableTsneAction.setChecked(false);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
     _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
+    _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View"}, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
     QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
@@ -756,6 +795,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_typeofTopNGenes, &OptionAction::currentIndexChanged, this, updateTypeOfTopNGenesFilter);
+
+    const auto updateApplyLogTransformation = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_applyLogTransformation, &ToggleAction::toggled, this, updateApplyLogTransformation);
+
+    const auto updateClusterCountSortingType = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_clusterCountSortingType, &OptionAction::currentIndexChanged, this, updateClusterCountSortingType);
+
     const auto updateTopGenesSlider = [this]() -> void {
         _statusColorAction.setString("M");
 
@@ -1309,6 +1361,49 @@ void SettingsAction::updateButtonTriggered()
                             _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
 
 
+                            std::vector<ClusterOrderContainer> orderedClustersSet;
+
+                            for (const auto& cluster : clusterValues) {
+                                ClusterOrderContainer temp{
+                                    cluster.getIndices().size(),
+                                    cluster.getColor(),
+                                    cluster.getName()
+                                };
+                                orderedClustersSet.push_back(std::move(temp));
+                            }
+
+                            const auto& currentText = _clusterCountSortingType.getCurrentText();
+                            if (currentText == "Name") {
+                                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByName);
+                            }
+                            else if (currentText == "Hierarchy View" && !_customOrderClustersFromHierarchy.empty()) {
+                                if (_customOrderClustersFromHierarchyMap.empty()) {
+                                    _customOrderClustersFromHierarchyMap = prepareCustomSortMap(_customOrderClustersFromHierarchy);
+                                }
+                                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), [&](const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+                                    return sortByCustomList(a, b, _customOrderClustersFromHierarchyMap);
+                                    });
+                            }
+                            else {
+                                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByCount);
+                                if (currentText != "Count") {
+                                    _clusterCountSortingType.setCurrentText("Count");
+                                }
+                            }
+
+                            for (const auto& clustersFromSet : orderedClustersSet)
+                            {
+                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clustersFromSet.name).arg(clustersFromSet.count));
+                                QColor textColor = clustersFromSet.color.lightness() > 127 ? Qt::black : Qt::white;
+                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                                    .arg(textColor.name()).arg(clustersFromSet.color.name(QColor::HexArgb)).arg(textColor.name()));
+                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+                            }
+
+
+
+                            /*
+
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
                                 auto clusterIndicesSize = cluster.getIndices().size();
@@ -1329,7 +1424,7 @@ void SettingsAction::updateButtonTriggered()
                                     .arg(textColor).arg(backgroundColor).arg(textColor));
                                 _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
                             }
-
+                            */
 
                         }
 
@@ -1669,6 +1764,7 @@ void SettingsAction::enableActions()
     //_startComputationTriggerAction.setDisabled(false);
     _topNGenesFilter.setDisabled(false);
     _typeofTopNGenes.setDisabled(false);
+    _clusterCountSortingType.setDisabled(false);
     _scatterplotReembedColorOption.setDisabled(false);
     _applyLogTransformation.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
@@ -1699,6 +1795,7 @@ void SettingsAction::disableActions()
     _startComputationTriggerAction.setDisabled(true);
     _topNGenesFilter.setDisabled(true);
     _typeofTopNGenes.setDisabled(true);
+    _clusterCountSortingType.setDisabled(true);
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
     _revertRowSelectionChangesToInitial.setDisabled(true);
@@ -2061,8 +2158,9 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
     _statusColorAction.fromParentVariantMap(variantMap);
     _typeofTopNGenes.fromParentVariantMap(variantMap);
+    _clusterCountSortingType.fromParentVariantMap(variantMap);
     _usePreComputedTSNE.fromParentVariantMap(variantMap);
- 
+    _applyLogTransformation.fromParentVariantMap(variantMap);
 
 }
 
@@ -2095,6 +2193,8 @@ QVariantMap SettingsAction::toVariantMap() const
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
     _statusColorAction.insertIntoVariantMap(variantMap);
     _typeofTopNGenes.insertIntoVariantMap(variantMap);
+    _clusterCountSortingType.insertIntoVariantMap(variantMap);
     _usePreComputedTSNE.insertIntoVariantMap(variantMap);
+    _applyLogTransformation.insertIntoVariantMap(variantMap);
     return variantMap;
 }

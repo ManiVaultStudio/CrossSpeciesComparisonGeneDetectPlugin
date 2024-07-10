@@ -210,9 +210,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto updateSpeciesExplorerInMap = [this]() -> void
         {
- 
-            //TODO: ;
-            
+          
             geneExplorer();
             _settingsAction.enableDisableButtonsAutomatically();
         };
@@ -303,6 +301,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     connect(&_settingsAction.getHiddenShowncolumns(), &OptionsAction::selectedOptionsChanged, this, updateHideShowColumns);
 
 
+    const auto triggerInit = [this]() -> void
+        {
+
+            _settingsAction.getStartComputationTriggerAction().trigger();
+        };
+
+    connect(&mv::projects(), &AbstractProjectManager::projectOpened , this, triggerInit);
+
+    
 
     //change height of headers
 
@@ -423,6 +430,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
+    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     
     
@@ -441,7 +450,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
     
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
-    mainOptionsGroup2->addAction(&_settingsAction.getScatterplotReembedColorOption());
     mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getRevertRowSelectionChangesToInitial());
     
@@ -759,14 +767,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
     _settingsAction.getGeneTableView()->setModel(proxyModel);
     //auto tempVal = _settingsAction.getSearchBox()->text();
 
-    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [proxyModel](const QString& text) {
-        if (text.isEmpty()) {
-            proxyModel->setFilterWildcard("*"); // Reset filter to show all items
-        }
-        else {
-            proxyModel->setFilterWildcard("*" + text + "*");
-        }
+    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [this, proxyModel](const QString& text) {
+        QTimer::singleShot(300, this, [this, proxyModel, text]() {
+            if (text.isEmpty()) {
+                proxyModel->setFilterWildcard("*"); // Reset filter to show all items
+            }
+            else {
+                proxyModel->setFilterWildcard("*" + text + "*");
+            }
+            });
         });
+
+
     _settingsAction.getSearchBox()->setText("");
 
 
@@ -1377,7 +1389,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::fromVariantMap(const QVariantMap& v
     mv::util::variantMapMustContain(variantMap, "CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _settingsAction.fromVariantMap(variantMap["CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings"].toMap());
    // modifyTableData();
-    _settingsAction.getStartComputationTriggerAction().trigger();
+   // _settingsAction.getStartComputationTriggerAction().trigger();
 
 }
 
