@@ -35,6 +35,10 @@
 #include <QSplitter>
 #include <QTableView>
 #include <QListView>
+#include <vector>
+#include <set>
+
+#include <QColor>
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -44,6 +48,19 @@ namespace mv
 {
     class CoreInterface;
 }
+
+
+
+
+
+
+struct ClusterOrderContainer {
+    int count;
+    QColor color;
+    QString name;
+};
+
+
 struct SpeciesDetailsStats {
     int rank;
     float meanSelected;
@@ -54,6 +71,7 @@ struct SpeciesDetailsStats {
     //int countAll;
 
 };
+
 struct Stats {
     
     float meanSelected;
@@ -176,6 +194,7 @@ public: // Action getters
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorageVals> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
+    std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -268,4 +287,7 @@ protected:
     //bool _erroredOutFlag;
     bool _meanMapComputed;
     OptionAction                _clusterCountSortingType;
+
+    std::vector<QString> _customOrderClustersFromHierarchy;
+    std::unordered_map<QString, int> _customOrderClustersFromHierarchyMap;
 };

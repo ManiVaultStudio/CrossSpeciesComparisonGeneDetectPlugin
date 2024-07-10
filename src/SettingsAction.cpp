@@ -40,6 +40,40 @@ using namespace mv::gui;
 
 std::map<std::string, std::chrono::high_resolution_clock::time_point> timers;
 
+
+
+// Function to sort by count (descending)
+bool sortByCount(const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+    return a.count > b.count;
+}
+
+// Function to sort by name (ascending)
+bool sortByName(const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+    return a.name < b.name;
+}
+
+// Prepare a map for custom list sorting
+std::unordered_map<QString, int> prepareCustomSortMap(const std::vector<QString>& customOrder) {
+    std::unordered_map<QString, int> sortOrderMap;
+    for (size_t i = 0; i < customOrder.size(); ++i) {
+        sortOrderMap[customOrder[i]] = i;
+    }
+    return sortOrderMap;
+}
+
+// Function to sort by custom list
+bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContainer& b,
+    const std::unordered_map<QString, int>& sortOrderMap) {
+    auto posA = sortOrderMap.find(a.name);
+    auto posB = sortOrderMap.find(b.name);
+    int indexA = (posA != sortOrderMap.end()) ? posA->second : INT_MAX;
+    int indexB = (posB != sortOrderMap.end()) ? posB->second : INT_MAX;
+    return indexA < indexB;
+}
+
+
+
+
 Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
@@ -221,7 +255,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _speciesExplorerInMapTrigger(this, "Explore"),
     _applyLogTransformation(this, "Gene mapping log"),
-    _clusterCountSortingType(this, "Cluster Count Sorting Type")
+    _clusterCountSortingType(this, "Cluster Count Sorting Type"),
+    _currentCellSelectionClusterInfoLabel(nullptr)
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -1324,7 +1359,72 @@ void SettingsAction::updateButtonTriggered()
                             descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
                             // Add the description label to the layout
                             _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
+                            std::vector<ClusterOrderContainer> orderedClustersSet;
 
+                            for (auto cluster : clusterValues) {
+                                auto clusterName = cluster.getName();
+                                auto clusterIndicesSize = cluster.getIndices().size();
+                                auto clusterColor = cluster.getColor();
+                                ClusterOrderContainer temp;
+                                temp.name = clusterName;
+                                temp.count = clusterIndicesSize;
+                                temp.color = clusterColor;
+                                orderedClustersSet.push_back(temp);
+                            }
+
+
+                            const auto& currentText = _clusterCountSortingType.getCurrentText();
+                            if (currentText == "Name") {
+                                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByName);
+                            }
+                            else if (currentText == "Hierarchy View" && !_customOrderClustersFromHierarchy.empty()) {
+                                if (_customOrderClustersFromHierarchyMap.empty()) {
+                                    _customOrderClustersFromHierarchyMap = prepareCustomSortMap(_customOrderClustersFromHierarchy);
+                                }
+                                if (!_customOrderClustersFromHierarchyMap.empty()) {
+                                    std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), [&](const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+                                        return sortByCustomList(a, b, _customOrderClustersFromHierarchyMap);
+                                        });
+                                }
+                                else {
+                                    std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByCount);
+                                    _clusterCountSortingType.setCurrentText("Count");
+                                }
+                            }
+                            else {
+                                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByCount);
+                                if (currentText != "Count") {
+                                    _clusterCountSortingType.setCurrentText("Count");
+                                }
+                            }
+
+
+                            for (auto clustersFromSet : orderedClustersSet)
+                            {
+                                auto clusterName = clustersFromSet.name;
+                                auto clusterIndicesSize = clustersFromSet.count;
+                                auto clusterColor = clustersFromSet.color; // Assuming getColor() returns a QColor
+
+                                // Calculate luminance
+                                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+                                // Choose text color based on luminance
+                                QString textColor = (luminance > 0.5) ? "black" : "white";
+
+                                // Convert QColor to hex string for stylesheet
+                                QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+                                // Add text color and background color to clusterLabel with padding and border for better styling
+                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                                    .arg(textColor).arg(backgroundColor).arg(textColor));
+                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+
+
+                            }
+
+
+                            /*
 
                             for (auto cluster : clusterValues) {
                                 auto clusterName = cluster.getName();
@@ -1346,7 +1446,7 @@ void SettingsAction::updateButtonTriggered()
                                     .arg(textColor).arg(backgroundColor).arg(textColor));
                                 _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
                             }
-
+                            */
 
                         }
 
