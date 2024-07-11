@@ -709,7 +709,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             _startComputationTriggerAction.setDisabled(false);
         }
-
+        if (string == "M")
+        {
+            _removeRowSelection.trigger();
+        }
 
         if (string == "C") {
             labelText = "Updated";
@@ -717,12 +720,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             
         }
         else if (string == "M") {
-            labelText = "Pending";
+            labelText = "Pending updation";
             backgroundColor = "#ffc107"; // Gold
 
         }
         else if (string == "E") {
-            labelText ="Error Occurred! Try updating again";
+            labelText ="Error occurred during update";
             backgroundColor = "#dc3545"; // Red
         }
         else if (string == "R")
