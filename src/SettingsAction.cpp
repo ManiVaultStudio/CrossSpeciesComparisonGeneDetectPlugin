@@ -1273,7 +1273,12 @@ void SettingsAction::updateButtonTriggered()
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
+
+                                // Access shared data in a thread-safe manner
+                                QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
                                 const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                locker.unlock();
+
                                 int allCellCounts = nonSelectionDetails.first;
                                 float allCellMean = nonSelectionDetails.second;
 
@@ -1286,46 +1291,40 @@ void SettingsAction::updateButtonTriggered()
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
+
                                     float allCellTotal = allCellMean * allCellCounts;
 
                                     nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
-                                    
+
                                     // Check to prevent division by zero
                                     if (nonSelectedCells > 0) {
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
                                     }
                                     else {
                                         nonSelectedMean = 0.0f;
-                                        //nonSelectedCells = 0;
                                     }
                                 }
                                 else {
                                     nonSelectedMean = allCellMean;
                                     nonSelectedCells = allCellCounts;
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                                //StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
-                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot/*,calculateStatisticsAll*/);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
                             }
 
-
-
-                            {
-                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
-                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                }
+                            // Merge results in a thread-safe manner
+                            QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
+                            for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                             }
                             });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
                     }
 
                     synchronizer.waitForFinished();
+
 
 
                     //stopCodeTimer("Part12.2");
