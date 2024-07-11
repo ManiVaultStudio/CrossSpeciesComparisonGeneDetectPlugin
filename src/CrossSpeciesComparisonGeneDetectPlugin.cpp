@@ -1109,7 +1109,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
-
             // Calculate the brightness of the background color
             qreal brightness = backgroundColor.lightnessF();
 
@@ -1208,15 +1207,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
                 rowItems << item; //6 Mean\nNon\nSelected
-                /*
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.countAll), Qt::EditRole);
-                rowItems << item;  //5 Count\nNon\nSelected
-
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.meanAll), Qt::EditRole);
-                rowItems << item; //6 Mean\nNon\nSelected
-                */
 
 
             }

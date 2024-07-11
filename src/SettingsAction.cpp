@@ -100,7 +100,7 @@ StatisticsSingle calculateStatistics(const std::vector<float>& data) {
 #else
     sum = std::reduce(data.begin(), data.end(), 0.0f);
 #endif
-
+    //sum= std::accumulate(v.begin(), v.end(), 0.0);
     float mean = std::round((sum / count) * 100.0f) / 100.0f;
 
     return { mean, count };
@@ -112,10 +112,11 @@ StatisticsSingle calculateStatistics(const std::vector<float>& data) {
         
         #ifdef _WIN32
          float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
-    #else
+        #else
          float sum = std::reduce(v.begin(), v.end(), 0.0f);
-    #endif
-        
+        #endif
+        //float sum= std::accumulate(v.begin(), v.end(), 0.0);
+
         
         return sum / static_cast<float>(v.size());
     
@@ -1273,7 +1274,12 @@ void SettingsAction::updateButtonTriggered()
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
+
+                                // Access shared data in a thread-safe manner
+                                QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
                                 const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                locker.unlock();
+
                                 int allCellCounts = nonSelectionDetails.first;
                                 float allCellMean = nonSelectionDetails.second;
 
@@ -1286,46 +1292,42 @@ void SettingsAction::updateButtonTriggered()
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = commonSelectedIndices.size();
+
                                     float allCellTotal = allCellMean * allCellCounts;
 
                                     nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
-                                    
+
                                     // Check to prevent division by zero
                                     if (nonSelectedCells > 0) {
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
                                     }
                                     else {
                                         nonSelectedMean = 0.0f;
-                                        //nonSelectedCells = 0;
                                     }
                                 }
                                 else {
                                     nonSelectedMean = allCellMean;
                                     nonSelectedCells = allCellCounts;
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = 0;
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                                //StatisticsSingle calculateStatisticsAll = { allCellMean, allCellCounts };
-                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = nonSelectedCells;
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot/*,calculateStatisticsAll*/);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
                             }
 
-
-
-                            {
-                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
-                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                }
+                            // Merge results in a thread-safe manner
+                            QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
+                            for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
+                                _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
+                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
                             }
                             });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
                     }
 
                     synchronizer.waitForFinished();
+
 
 
                     //stopCodeTimer("Part12.2");
@@ -1465,9 +1467,11 @@ void SettingsAction::updateButtonTriggered()
     }
     catch (const std::exception& e) {
         qDebug() << "An exception occurred in coputation: " << e.what();
+        _statusColorAction.setString("E");
     }
     catch (...) {
         qDebug() << "An unknown exception occurred in coputation";
+        _statusColorAction.setString("E");
     }
 }
 
@@ -1475,10 +1479,10 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
 {
     if (!geneListTable.isNull())
     {
-        //startCodeTimer("Part15");
+        ////startCodeTimer("Part15");
         //_filteredGeneNamesVariant.setVariant(geneListTable);
         _listModel.setVariant(geneListTable);
-        //stopCodeTimer("Part15");
+        ////stopCodeTimer("Part15");
 
     }
     else
@@ -1523,7 +1527,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     if (map.empty() || n <= 0) {
         return QVariant();
     }
-    startCodeTimer("findTopNGenesPerCluster");
+    //startCodeTimer("findTopNGenesPerCluster");
     enum class SelectionOption {
         AbsoluteTopN,
         PositiveTopN,
@@ -1644,7 +1648,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
 
 
 
-    stopCodeTimer("findTopNGenesPerCluster");
+    //stopCodeTimer("findTopNGenesPerCluster");
     QVariant returnedmodel= createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap, n);
     return returnedmodel;
 }
@@ -1654,7 +1658,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     if (returnGeneList.isEmpty() || map.empty()) {
         return QVariant();
     }
-    startCodeTimer("createModelFromData");
+    //startCodeTimer("createModelFromData");
     QStandardItemModel* model = new QStandardItemModel();
     _initColumnNames = { "ID", "Species \nAppearance", "Gene Appearance Species Names", "Statistics" };
     model->setHorizontalHeaderLabels(_initColumnNames);
@@ -1721,7 +1725,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
         model->appendRow(row);
     }
 
-    stopCodeTimer("createModelFromData");
+    //stopCodeTimer("createModelFromData");
 
     return QVariant::fromValue(model);
 
