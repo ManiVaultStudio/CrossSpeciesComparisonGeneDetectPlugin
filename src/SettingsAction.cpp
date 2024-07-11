@@ -1344,6 +1344,12 @@ void SettingsAction::updateButtonTriggered()
                     populateClusterData(clusterColorDatasetId, selectedClustersMap);
                     //stopCodeTimer("Part12.4");
                     //stopCodeTimer("Part12");
+
+                    QLayoutItem* layoutItem;
+                    while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+                        delete layoutItem->widget();
+                        delete layoutItem;
+                    }
                     if (_tsneDatasetClusterColors.isValid())
                     {
 
@@ -1352,11 +1358,11 @@ void SettingsAction::updateButtonTriggered()
                         {
                             //startCodeTimer("Part13");
 
-                            QLayoutItem* layoutItem;
+                            /*QLayoutItem* layoutItem;
                             while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
                                 delete layoutItem->widget();
                                 delete layoutItem;
-                            }
+                            }*/
 
                             // Create a description label
                             auto descriptionLabel = new QLabel("Selected Cell Counts per " + clusterDatasetName + " :");
