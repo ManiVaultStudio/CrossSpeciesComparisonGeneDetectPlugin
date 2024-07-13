@@ -550,11 +550,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
-            
+            _totalGeneList.clear();
             auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
+            _totalGeneList = fullDataset->getDimensionNames();
             if (dimensions > 0) {
-                _topNGenesFilter.setMinimum(0);
+                _topNGenesFilter.setMinimum(1);
                 _topNGenesFilter.setMaximum(dimensions);
 
                 _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
@@ -811,12 +812,25 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_clusterCountSortingType, &OptionAction::currentIndexChanged, this, updateClusterCountSortingType);
+    QTimer* debounceTimer = new QTimer(this);
+    debounceTimer->setSingleShot(true);
+    debounceTimer->setInterval(500); // 500 milliseconds wait time
 
-    const auto updateTopGenesSlider = [this]() -> void {
-        _statusColorAction.setString("M");
+    const auto debouncelambda = [this]() -> void { // Capture debounceTimer by 
+        disableActions();
+        findTopNGenesPerCluster();
+        enableActions();
+        };
 
+    connect(debounceTimer, &QTimer::timeout, this, debouncelambda);
+
+    const auto updateTopGenesSlider = [this, debounceTimer]() -> void { // Capture debounceTimer by reference
+        //wait to see if any more updates are coming then call findTopNGenesPerCluster();
+        // Restart the timer every time the value changes
+        debounceTimer->start();
         };
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
+
 
     _statusColorAction.setString("M");
 }
@@ -1445,10 +1459,10 @@ void SettingsAction::updateButtonTriggered()
 
 
                     //startCodeTimer("Part14");
-                    QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
+                     findTopNGenesPerCluster();
                     //stopCodeTimer("Part14");
 
-                    setModifiedTriggeredData(geneListTable);
+                    
 
 
                 }
@@ -1531,10 +1545,12 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 }
 
-QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore) {
+void SettingsAction::findTopNGenesPerCluster() {
     
-    if (map.empty() || n <= 0) {
-        return QVariant();
+    int n = _topNGenesFilter.getValue();
+
+    if (_clusterNameToGeneNameToExpressionValue.empty() || n <= 0) {
+        return;
     }
 
     // startCodeTimer("findTopNGenesPerCluster");
@@ -1544,10 +1560,8 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         PositiveTopN,
         NegativeTopN
     };
-
     auto optionValue = _typeofTopNGenes.getCurrentText();
     SelectionOption option = SelectionOption::AbsoluteTopN;
-
     if (optionValue == "Positive") {
         option = SelectionOption::PositiveTopN;
     }
@@ -1555,66 +1569,93 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         option = SelectionOption::NegativeTopN;
     }
 
-    QSet<QString> geneList;
+    _uniqueReturnGeneList.clear();
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
     std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
 
-    for (const auto& outerPair : map) {
+    for (const auto& outerPair : _clusterNameToGeneNameToExpressionValue) {
         auto speciesName = outerPair.first;
         std::vector<std::pair<QString, float>> geneExpressionVec;
         geneExpressionVec.reserve(outerPair.second.size());
-
         for (const auto& innerPair : outerPair.second) {
             auto geneName = innerPair.first;
             auto differenceMeanValue = innerPair.second.meanSelected - innerPair.second.meanNonSelected;
             geneExpressionVec.push_back(std::make_pair(geneName, differenceMeanValue));
         }
 
-        // Sort the geneExpressionVec based on the mean value
+        // Sort the geneExpressionVec based on the mean value from highest to lowest
+        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+            return a.second > b.second;
+            });
+
         switch (option) {
-        case SelectionOption::AbsoluteTopN:
+        case SelectionOption::AbsoluteTopN: {
             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                 return std::abs(a.second) > std::abs(b.second);
                 });
-            break;
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
+                    //check if the selected counter in the mpa is greater than 0
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
 
-        case SelectionOption::PositiveTopN:
-            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-                return a.second > b.second;
-                });
-            break;
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
 
-        case SelectionOption::NegativeTopN:
-            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-                return a.second < b.second;
-                });
-            break;
-        }
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
 
-        for (int i = 0; i < geneExpressionVec.size() && i < n; ++i) {
-            auto geneName = geneExpressionVec[i].first;
-            geneList.insert(geneName);
-
-            if (outerPair.second.find(geneName)->second.meanSelected > 0) {
-                geneAppearanceCounter[geneName].push_back(speciesName);
             }
 
-            int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
-            rankingMap[geneName].emplace_back(speciesName, rank);
+
+            break;
+        }
+        case SelectionOption::PositiveTopN: {
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
+
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1
+            }
+            break;
+        }
+        case SelectionOption::NegativeTopN: {
+            std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
+            for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                if (i < n) {
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
+                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
+                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                    }
+
+                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
+                }
+                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, geneExpressionVec.size() - i); // Corrected rank calculation
+            }
+            break;
+        }
         }
     }
 
 
 
-
     //stopCodeTimer("findTopNGenesPerCluster");
-    QVariant returnedmodel= createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap, n);
-    return returnedmodel;
+    QVariant returnedmodel= createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
+
+    setModifiedTriggeredData(returnedmodel);
+
+    //return returnedmodel;
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
+QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QString, Stats>>& map,   const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
-    if (returnGeneList.isEmpty() || map.empty()) {
+    if (map.empty() || _totalGeneList.empty()) {
         return QVariant();
     }
     //startCodeTimer("createModelFromData");
@@ -1626,7 +1667,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setOptions(headers);
     _hiddenShowncolumns.setSelectedOptions({ headers[0], headers[1] });
 
-    for (const auto& gene : returnGeneList) {
+    for (const auto& gene : _totalGeneList) {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         numbers.reserve(map.size()); // Reserve capacity based on map size
@@ -1641,7 +1682,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             }
         }
 
-        row.push_back(new QStandardItem(gene)); // ID
+        row.push_back(new QStandardItem(gene)); // ID(string) should sort by string
 
         std::map<QString, int> rankcounter;
         if (auto rankit = rankingMap.find(gene); rankit != rankingMap.end()) {
@@ -1662,9 +1703,13 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             }
             speciesGeneAppearancesComb = speciesNames.join(";");
         }
+        auto* countItem = new QStandardItem(); // Gene Appearances (int) should sort by int
+        countItem->setData(count, Qt::DisplayRole);
+        countItem->setData(count, Qt::UserRole); // Use Qt::UserRole or another custom role for sorting by integer
+        row.push_back(countItem);
 
-        row.push_back(new QStandardItem(QString::number(count))); // Gene Appearances
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // Gene Appearance Species Names
+        //row.push_back(new QStandardItem(QString::number(count))); // Gene Appearances (int) should sort by int
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // Gene Appearance Species Names (string) should sort by string
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
@@ -1679,8 +1724,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
                 //.arg(stats.countAll)
                 ;
         }
-        row.push_back(new QStandardItem(formattedStatistics)); // Statistics
-
+        row.push_back(new QStandardItem(formattedStatistics)); // Statistics (string) should sort by string
         model->appendRow(row);
     }
 

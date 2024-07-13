@@ -34,6 +34,44 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
+void updateRowVisibility(QStandardItemModel* model, const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView) {
+    for (int i = 0; i < model->rowCount(); i++) {
+        QString geneName = model->index(i, 0).data().toString();
+        int geneAppearanceSpeciesNamesCount = model->index(i, 1).data().toInt();
+
+        if (!uniqueReturnGeneList.contains(geneName) || geneAppearanceSpeciesNamesCount < 1) {
+            geneTableView->hideRow(i);
+        }
+        else {
+            geneTableView->showRow(i);
+        }
+    }
+}
+
+void updateRowVisibility(QStandardItemModel* model, const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
+    for (int sourceRow = 0; sourceRow < model->rowCount(); ++sourceRow) {
+        QString geneName = model->index(sourceRow, 0).data().toString();
+        int geneAppearanceSpeciesNamesCount = model->index(sourceRow, 1).data().toInt();
+
+        // Map the source model row to the corresponding row in the proxy model
+        QModelIndex sourceIndex = model->index(sourceRow, 0);
+        QModelIndex proxyIndex = proxyModel->mapFromSource(sourceIndex);
+        int proxyRow = proxyIndex.row();
+
+        // Check if the row is valid in the proxy model
+        if (proxyIndex.isValid()) {
+            if (!uniqueReturnGeneList.contains(geneName) || geneAppearanceSpeciesNamesCount < 1) {
+                geneTableView->hideRow(proxyRow);
+            }
+            else {
+                geneTableView->showRow(proxyRow);
+            }
+        }
+    }
+}
+
+
+
 std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& formattedStatistics) {
     std::map<QString, SpeciesDetailsStats> statisticsMap;
 
@@ -733,69 +771,68 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 {
     try {
     //qDebug() << "It's here";
-    auto variant = _settingsAction.getListModelAction().getVariant();
-    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
+        auto variant = _settingsAction.getListModelAction().getVariant();
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(variant.value<QAbstractItemModel*>());
 
-    if (!_settingsAction.getGeneTableView()) {
-        //qDebug() << "_settingsAction.getGeneTableView() is null";
-        return;
-    }
-
-    if (!model) {
-        //qDebug() << "Model is null";
-        QAbstractItemModel* currentModel = _settingsAction.getGeneTableView()->model();
-        if (currentModel) {
-            currentModel->removeRows(0, currentModel->rowCount());
-            _settingsAction.getGeneTableView()->update();
+        if (!_settingsAction.getGeneTableView()) {
+            // qDebug() << "_settingsAction.getGeneTableView() is null";
+            return;
         }
-        else {
-            //qDebug() << "TableView model is null";
-        }
-        return;
-    }
 
-    //_settingsAction.getGeneTableView()->setModel(model);
-
-
-
-    QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel(this);
-    proxyModel->setSourceModel(model);
-    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    proxyModel->setFilterKeyColumn(-1); 
-
-
-    _settingsAction.getGeneTableView()->setModel(proxyModel);
-    //auto tempVal = _settingsAction.getSearchBox()->text();
-
-    connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [this, proxyModel](const QString& text) {
-        QTimer::singleShot(300, this, [this, proxyModel, text]() {
-            if (text.isEmpty()) {
-                proxyModel->setFilterWildcard("*"); // Reset filter to show all items
+        if (!model) {
+            // qDebug() << "Model is null";
+            QAbstractItemModel* currentModel = _settingsAction.getGeneTableView()->model();
+            if (currentModel) {
+                currentModel->removeRows(0, currentModel->rowCount());
+                _settingsAction.getGeneTableView()->update();
             }
             else {
-                proxyModel->setFilterWildcard("*" + text + "*");
+                // qDebug() << "TableView model is null";
             }
-            });
-        });
-
-
-    _settingsAction.getSearchBox()->setText("");
-
-
-
-
-    auto shownColumns= _settingsAction.getHiddenShowncolumns().getSelectedOptions();
-
-
-    for (int i = 0; i < _settingsAction.getGeneTableView()->model()->columnCount(); i++) {
-        if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
-            _settingsAction.getGeneTableView()->hideColumn(i);
-            
+            return;
         }
-    }
-     model->sort(1, Qt::DescendingOrder);
-    _settingsAction.getGeneTableView()->resizeColumnsToContents();
-    _settingsAction.getGeneTableView()->update();
+        QSortFilterProxyModel* proxyModel1 = new QSortFilterProxyModel(this);
+        proxyModel1->setSourceModel(model);
+        proxyModel1->setFilterCaseSensitivity(Qt::CaseInsensitive);
+        proxyModel1->setFilterKeyColumn(0);
+        _settingsAction.getGeneTableView()->setModel(proxyModel1);
+
+        //QSortFilterProxyModel* proxyModel2 = new QSortFilterProxyModel(this);
+        //proxyModel2->setSourceModel(model);
+        //proxyModel2->setFilterCaseSensitivity(Qt::CaseInsensitive);
+        //proxyModel2->setFilterKeyColumn(0);
+
+        connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [this, proxyModel1,model](const QString& text) {
+            QTimer::singleShot(300, this, [this, proxyModel1, text,model]() {
+                if (text.isEmpty()) {
+                    proxyModel1->setFilterWildcard("*");
+                    //updateRowVisibility(model, _settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView(), proxyModel1);
+                }
+                else {
+                    proxyModel1->setFilterWildcard("*" + text + "*");
+                }
+                });
+            });
+
+
+
+        _settingsAction.getSearchBox()->setText("");
+
+        updateRowVisibility(model, _settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView());
+
+        // Hide columns not in the shown columns list
+        auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
+        for (int i = 0; i < _settingsAction.getGeneTableView()->model()->columnCount(); i++) {
+            if (!shownColumns.contains(model->horizontalHeaderItem(i)->text())) {
+                _settingsAction.getGeneTableView()->hideColumn(i);
+            }
+        }
+
+        // Sort and update the table view
+        model->sort(1, Qt::DescendingOrder);
+        _settingsAction.getGeneTableView()->resizeColumnsToContents();
+        _settingsAction.getGeneTableView()->update();
+
 
 
     connect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {

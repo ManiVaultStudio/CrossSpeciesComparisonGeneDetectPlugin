@@ -197,6 +197,7 @@ public: // Action getters
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
+    QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -212,9 +213,11 @@ public: // Action getters
     void enableActions();
     void removeSelectionTableRows(QStringList* selectedLeaves);
     void enableDisableButtonsAutomatically();
+
+    QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
+    void findTopNGenesPerCluster();
 private:
-    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
-    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);
+
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
     void updateButtonTriggered();
     void setModifiedTriggeredData(QVariant geneListTable);
@@ -292,4 +295,6 @@ protected:
 
     std::vector<QString> _customOrderClustersFromHierarchy;
     std::unordered_map<QString, int> _customOrderClustersFromHierarchyMap;
+    std::vector<QString>     _totalGeneList;
+    QSet<QString>               _uniqueReturnGeneList;
 };
