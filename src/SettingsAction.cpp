@@ -418,7 +418,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
-    _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
+    _typeofTopNGenes.initialize({"Absolute","Negative","Positive"}, "Positive");
     _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View"}, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
@@ -1536,23 +1536,23 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     if (map.empty() || n <= 0) {
         return QVariant();
     }
-    //startCodeTimer("findTopNGenesPerCluster");
+
+    // startCodeTimer("findTopNGenesPerCluster");
+
     enum class SelectionOption {
         AbsoluteTopN,
         PositiveTopN,
-        NegativeTopN,
-        MixedTopN
+        NegativeTopN
     };
+
     auto optionValue = _typeofTopNGenes.getCurrentText();
     SelectionOption option = SelectionOption::AbsoluteTopN;
+
     if (optionValue == "Positive") {
         option = SelectionOption::PositiveTopN;
     }
     else if (optionValue == "Negative") {
         option = SelectionOption::NegativeTopN;
-    }
-    else if (optionValue == "Mixed") {
-        option = SelectionOption::MixedTopN;
     }
 
     QSet<QString> geneList;
@@ -1563,97 +1563,47 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         auto speciesName = outerPair.first;
         std::vector<std::pair<QString, float>> geneExpressionVec;
         geneExpressionVec.reserve(outerPair.second.size());
+
         for (const auto& innerPair : outerPair.second) {
             auto geneName = innerPair.first;
             auto differenceMeanValue = innerPair.second.meanSelected - innerPair.second.meanNonSelected;
             geneExpressionVec.push_back(std::make_pair(geneName, differenceMeanValue));
         }
 
-        // Sort the geneExpressionVec based on the mean value from highest to lowest
-        std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-            return a.second > b.second;
-            });
-
+        // Sort the geneExpressionVec based on the mean value
         switch (option) {
-        case SelectionOption::AbsoluteTopN: {
+        case SelectionOption::AbsoluteTopN:
             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                 return std::abs(a.second) > std::abs(b.second);
                 });
-            for (int i = 0; i < geneExpressionVec.size(); ++i) {
-                if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
-                    //check if the selected counter in the mpa is greater than 0
-                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                    }
-
-                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
-
-            }
-
-
             break;
-        }
-        case SelectionOption::PositiveTopN: {
-            for (int i = 0; i < geneExpressionVec.size(); ++i) {
-                if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
-                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                    }
 
-                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1); // Adding rank, incremented by 1
-            }
+        case SelectionOption::PositiveTopN:
+            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                return a.second > b.second;
+                });
             break;
-        }
-        case SelectionOption::NegativeTopN: {
-            std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
-            for (int i = 0; i < geneExpressionVec.size(); ++i) {
-                if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
-                    if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                        geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                    }
 
-                    //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, geneExpressionVec.size() - i); // Corrected rank calculation
-            }
-            break;
-        }
-        case SelectionOption::MixedTopN: {
-            int halfN = n / 2;
-            // Process top halfN genes
-            for (int i = 0; i < halfN; ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-
-                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
-            }
-            // Process bottom halfN genes, if n is odd, include the middle element
-            int startIdx = std::max(static_cast<int>(geneExpressionVec.size()) - halfN, halfN + (n % 2));
-            for (int i = startIdx; i < geneExpressionVec.size(); ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-
-                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
-            }
+        case SelectionOption::NegativeTopN:
+            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                return a.second < b.second;
+                });
             break;
         }
 
+        for (int i = 0; i < geneExpressionVec.size() && i < n; ++i) {
+            auto geneName = geneExpressionVec[i].first;
+            geneList.insert(geneName);
+
+            if (outerPair.second.find(geneName)->second.meanSelected > 0) {
+                geneAppearanceCounter[geneName].push_back(speciesName);
+            }
+
+            int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
+            rankingMap[geneName].emplace_back(speciesName, rank);
         }
     }
+
 
 
 
