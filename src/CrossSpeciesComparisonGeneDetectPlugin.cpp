@@ -794,18 +794,17 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
         connect(_settingsAction.getSearchBox(), &CustomLineEdit::textChanged, this, [this, proxyModel,model](const QString& text) {
             QTimer::singleShot(300, this, [this, proxyModel, text,model]() {
-                if (text.isEmpty()) {
-                    //proxyModel->setFilterRegularExpression(QRegularExpression());
-                    //proxyModel->setFilterWildcard("");
+                if (!text.isEmpty()) {
+                    //
+                    // proxyModel->setFilterWildcard("*" + text + "*");
+
+                    QRegularExpression regExp(text, QRegularExpression::CaseInsensitiveOption);
+                    proxyModel->setFilterRegularExpression(regExp);
 
                 }
-                else {
-                    
-                    proxyModel->setFilterWildcard("*" + text + "*");
-                }
+
                 });
             });
-
 
 
         _settingsAction.getSearchBox()->setText("");

@@ -87,7 +87,10 @@ protected:
 
 private slots:
     void defocusLineEdit() {
+        this->blockSignals(true); // Block signals to prevent textChanged from being emitted
         this->clear();
+        this->blockSignals(false); // Unblock signals
+
         this->clearFocus(); // Always clear focus when the defocus button is clicked
         // Optionally, clear the text here if needed
         //this->clear();
