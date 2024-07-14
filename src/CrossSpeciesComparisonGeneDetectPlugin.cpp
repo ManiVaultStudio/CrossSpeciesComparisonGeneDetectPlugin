@@ -848,9 +848,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         std::map<QString, SpeciesDetailsStats> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
         QString finalSpeciesNameString;
-        QJsonObject valueStringReference;
-        bool treeDataFound = false;
-        bool isEditTreePresent = _settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().isValid();
         const auto* model = current.model();
         const int columnCount = model->columnCount();
         const auto initColumnNamesSize = _settingsAction.getInitColumnNames().size(); 
@@ -1014,16 +1011,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
 
 
-
-        if (treeDataFound && isEditTreePresent) {
-            auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_settingsAction.getFilteringEditTreeDatasetAction().getCurrentDataset().getDatasetId());
-
-            if (!valueStringReference.isEmpty()) {
-                treeDataset->setTreeData(valueStringReference);
-                events().notifyDatasetDataChanged(treeDataset);
-            }
-
-        }
 
         auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();
         if (referenceTreeDataset.isValid()) {
