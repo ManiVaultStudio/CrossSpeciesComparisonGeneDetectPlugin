@@ -37,7 +37,7 @@
 #include <QListView>
 #include <vector>
 #include <set>
-
+#include <QLineEdit>
 #include <QColor>
 using namespace mv::gui;
 class QMenu;
@@ -50,6 +50,50 @@ namespace mv
 }
 
 
+
+
+class CustomLineEdit : public QLineEdit {
+    Q_OBJECT
+
+public:
+    explicit CustomLineEdit(QWidget* parent = nullptr) : QLineEdit(parent) {
+        // Assuming Application::getIconFont().getIcon() is a valid way to retrieve an icon
+        QIcon defocusIcon = Application::getIconFont("FontAwesome").getIcon("times-circle");
+        _action = addAction(defocusIcon, QLineEdit::TrailingPosition); // Add the action with the icon to the line edit
+        _action->setVisible(false); // Initially hide the action icon
+
+        // Connect the _action's triggered signal to the defocusLineEdit slot
+        connect(_action, &QAction::triggered, this, &CustomLineEdit::defocusLineEdit);
+    }
+
+signals:
+    void textboxSelectedForTyping();
+    void textboxDeselectedNotTypingAnymore();
+
+protected:
+    void focusInEvent(QFocusEvent* e) override {
+        _action->setVisible(true); // Make the defocus icon visible when the line edit gains focus
+        emit textboxSelectedForTyping(); // Emit signal when line edit gains focus
+        QLineEdit::focusInEvent(e); // Call base class implementation
+    }
+
+    void focusOutEvent(QFocusEvent* e) override {
+        _action->setVisible(false); // Hide the defocus icon when the line edit loses focus
+        emit textboxDeselectedNotTypingAnymore(); // Emit signal when line edit loses focus
+        QLineEdit::focusOutEvent(e); // Call base class implementation
+    }
+
+private slots:
+    void defocusLineEdit() {
+        // Clear focus from the line edit
+        this->clearFocus();
+        // Clear the text in the line edit
+        this->clear();
+    }
+
+private:
+    QAction* _action; // Action for the defocus icon
+};
 
 
 
@@ -166,6 +210,8 @@ public: // Action getters
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
     OptionAction& getClusterCountSortingType() { return _clusterCountSortingType; }
+    IntegralAction& getPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
+    //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -191,7 +237,7 @@ public: // Action getters
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getGeneTableView() const { return _geneTableView; }
-    QLineEdit* getSearchBox() const { return _searchBox; }
+    CustomLineEdit* getSearchBox() const { return _searchBox; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorageVals> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
@@ -297,7 +343,7 @@ protected:
     QTableView* _geneTableView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
-    QLineEdit* _searchBox;
+    CustomLineEdit* _searchBox;
     ToggleAction    _applyLogTransformation;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
@@ -307,4 +353,5 @@ protected:
     std::unordered_map<QString, int> _customOrderClustersFromHierarchyMap;
     std::vector<QString>     _totalGeneList;
     QSet<QString>               _uniqueReturnGeneList;
+    IntegralAction                _performGeneTableTsnePerplexity;
 };

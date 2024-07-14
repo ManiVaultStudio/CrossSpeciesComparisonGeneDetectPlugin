@@ -257,12 +257,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesExplorerInMapTrigger(this, "Explore"),
     _applyLogTransformation(this, "Gene mapping log"),
     _clusterCountSortingType(this, "Cluster Count Sorting Type"),
-    _currentCellSelectionClusterInfoLabel(nullptr)
+    _currentCellSelectionClusterInfoLabel(nullptr),
+    _performGeneTableTsnePerplexity(this, "Perform Gene Table TSNE Perplexity")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
-    _searchBox = new QLineEdit();
+    _searchBox = new CustomLineEdit();
     QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
     QAction* searchAction = new QAction(_searchBox);
     searchAction->setIcon(searchIcon);
@@ -274,7 +275,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
-    _searchBox->setClearButtonEnabled(true);
+    _searchBox->setClearButtonEnabled(false);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
     _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
@@ -399,6 +400,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedGene.setString("");
     _createRowMultiSelectTree.setSerializationName("CSCGDV:Create Row MultiSelect Tree");
     _performGeneTableTsneAction.setSerializationName("CSCGDV:Perform Gene Table TSNE");
+    _performGeneTableTsnePerplexity.setSerializationName("CSCGDV:Gene Table TSNE Perplexity");
+    _performGeneTableTsnePerplexity.setMinimum(1);
+    _performGeneTableTsnePerplexity.setMaximum(50);
+    _performGeneTableTsnePerplexity.setValue(15);
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -406,6 +411,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
     _applyLogTransformation.setChecked(false);
+    _performGeneTableTsneAction.setChecked(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
@@ -413,7 +419,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
     _applyLogTransformation.setSerializationName("CSCGDV:Apply Log Transformation");
-    _performGeneTableTsneAction.setChecked(false);
+    _performGeneTableTsneAction.setChecked(true);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
@@ -1791,6 +1797,7 @@ void SettingsAction::enableActions()
     _applyLogTransformation.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
     _tsnePerplexity.setDisabled(false);
+    _performGeneTableTsnePerplexity.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
@@ -1825,6 +1832,7 @@ void SettingsAction::disableActions()
     _usePreComputedTSNE.setDisabled(true);
     _applyLogTransformation.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
+    _performGeneTableTsnePerplexity.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);
@@ -2170,6 +2178,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedRowIndex.fromParentVariantMap(variantMap);
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
+    _performGeneTableTsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
@@ -2205,6 +2214,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedRowIndex.insertIntoVariantMap(variantMap);
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
+    _performGeneTableTsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);

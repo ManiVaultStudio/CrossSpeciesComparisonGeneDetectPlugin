@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <execution>
 #include<QTooltip>
+#include <QRegularExpression> 
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
@@ -34,10 +35,11 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
-void updateRowVisibility(QStandardItemModel* model, const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView) {
-    for (int i = 0; i < model->rowCount(); i++) {
-        QString geneName = model->index(i, 0).data().toString();
-        int geneAppearanceSpeciesNamesCount = model->index(i, 1).data().toInt();
+void updateRowVisibility(const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
+
+    for (int i = 0; i < proxyModel->rowCount(); i++) {
+        QString geneName = proxyModel->index(i, 0).data().toString();
+        int geneAppearanceSpeciesNamesCount = proxyModel->index(i, 1).data().toInt();
 
         if (!uniqueReturnGeneList.contains(geneName) || geneAppearanceSpeciesNamesCount < 1) {
             geneTableView->hideRow(i);
@@ -48,28 +50,12 @@ void updateRowVisibility(QStandardItemModel* model, const QSet<QString>& uniqueR
     }
 }
 
-void updateRowVisibility(QStandardItemModel* model, const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
-    for (int sourceRow = 0; sourceRow < model->rowCount(); ++sourceRow) {
-        QString geneName = model->index(sourceRow, 0).data().toString();
-        int geneAppearanceSpeciesNamesCount = model->index(sourceRow, 1).data().toInt();
-
-        // Map the source model row to the corresponding row in the proxy model
-        QModelIndex sourceIndex = model->index(sourceRow, 0);
-        QModelIndex proxyIndex = proxyModel->mapFromSource(sourceIndex);
-        int proxyRow = proxyIndex.row();
-
-        // Check if the row is valid in the proxy model
-        if (proxyIndex.isValid()) {
-            if (!uniqueReturnGeneList.contains(geneName) || geneAppearanceSpeciesNamesCount < 1) {
-                geneTableView->hideRow(proxyRow);
-            }
-            else {
-                geneTableView->showRow(proxyRow);
-            }
-        }
+void makeAllRowsVisible(QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
+    int rowCount = proxyModel->rowCount();
+    for (int row = 0; row < rowCount; ++row) {
+        geneTableView->showRow(row);
     }
 }
-
 
 
 std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& formattedStatistics) {
@@ -449,7 +435,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getOptionSelectionAction());
     extraOptionsGroup->addAction(&_settingsAction.getFilteredGeneNames());
     extraOptionsGroup->addAction(&_settingsAction.getCreateRowMultiSelectTree());
-    extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+    //extraOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
@@ -471,7 +457,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
-    
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
     
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
@@ -791,25 +778,29 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             }
             return;
         }
-        QSortFilterProxyModel* proxyModel1 = new QSortFilterProxyModel(this);
-        proxyModel1->setSourceModel(model);
-        proxyModel1->setFilterCaseSensitivity(Qt::CaseInsensitive);
-        proxyModel1->setFilterKeyColumn(0);
-        _settingsAction.getGeneTableView()->setModel(proxyModel1);
+        QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel(this);
+        proxyModel->setSourceModel(model);
+        proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+        proxyModel->setFilterKeyColumn(0);
+        _settingsAction.getGeneTableView()->setModel(proxyModel);
+        connect(_settingsAction.getSearchBox(), &CustomLineEdit::textboxSelectedForTyping, this, [this, proxyModel, model]() {
+            makeAllRowsVisible(_settingsAction.getGeneTableView(),proxyModel);
+            });
 
-        //QSortFilterProxyModel* proxyModel2 = new QSortFilterProxyModel(this);
-        //proxyModel2->setSourceModel(model);
-        //proxyModel2->setFilterCaseSensitivity(Qt::CaseInsensitive);
-        //proxyModel2->setFilterKeyColumn(0);
+        connect(_settingsAction.getSearchBox(), &CustomLineEdit::textboxDeselectedNotTypingAnymore, this, [this, proxyModel, model]() {
+            updateRowVisibility(_settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView(),proxyModel);
+            });
 
-        connect(_settingsAction.getSearchBox(), &QLineEdit::textChanged, this, [this, proxyModel1,model](const QString& text) {
-            QTimer::singleShot(300, this, [this, proxyModel1, text,model]() {
+        connect(_settingsAction.getSearchBox(), &CustomLineEdit::textChanged, this, [this, proxyModel,model](const QString& text) {
+            QTimer::singleShot(300, this, [this, proxyModel, text,model]() {
                 if (text.isEmpty()) {
-                    proxyModel1->setFilterWildcard("*");
-                    //updateRowVisibility(model, _settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView(), proxyModel1);
+                    proxyModel->setFilterRegularExpression(QRegularExpression());
+                    //proxyModel->setFilterWildcard("");
+
                 }
                 else {
-                    proxyModel1->setFilterWildcard("*" + text + "*");
+                    
+                    proxyModel->setFilterWildcard("*" + text + "*");
                 }
                 });
             });
@@ -818,7 +809,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
         _settingsAction.getSearchBox()->setText("");
 
-        updateRowVisibility(model, _settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView());
+        updateRowVisibility(_settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView(),proxyModel);
 
         // Hide columns not in the shown columns list
         auto shownColumns = _settingsAction.getHiddenShowncolumns().getSelectedOptions();
