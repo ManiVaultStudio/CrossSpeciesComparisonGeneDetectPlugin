@@ -198,6 +198,11 @@ public: // Action getters
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
+
+    Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
+    //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
+    Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }
+
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -267,8 +272,13 @@ protected:
     Dataset<Points>        _filteredUMAPDatasetColors;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
-    Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;  
     Dataset<Points>        _tsneDatasetExpressionColors;
+
+    Dataset<Points>             _geneSimilarityPoints;
+    //std::vector<QString>        _geneSimilarityClusters;
+    Dataset<Clusters>           _geneSimilarityClusterColoring;
+
     TriggerAction          _removeRowSelection;
     TriggerAction           _revertRowSelectionChangesToInitial;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;

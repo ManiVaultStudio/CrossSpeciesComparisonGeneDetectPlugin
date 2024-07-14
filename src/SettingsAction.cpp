@@ -965,8 +965,23 @@ void SettingsAction::updateButtonTriggered()
                         _tsneDatasetClusterColors->setGroupIndex(10);
                         mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                     }
+
+                    if (!_geneSimilarityPoints.isValid())
+                    {
+                        _geneSimilarityPoints = mv::data().createDataset("Points", "GeneSimilarityPoints");
+                        _geneSimilarityPoints->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_geneSimilarityPoints);
+                    }
+                    if (!_geneSimilarityClusterColoring.isValid())
+                    {
+                        _geneSimilarityClusterColoring = mv::data().createDataset("Cluster", "GeneSimilarityClusterColoring", _geneSimilarityPoints);
+                        _geneSimilarityClusterColoring->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_geneSimilarityClusterColoring);
+
+                    }
+                    //_geneSimilarityClusters.clear();
                     //stopCodeTimer("Part6.1");
-                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
+                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid() && _geneSimilarityPoints.isValid() && _geneSimilarityClusterColoring.isValid())
                     {
                         //startCodeTimer("Part6.2");
                         _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
