@@ -198,7 +198,7 @@ public: // Action getters
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
-
+    std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
     Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
     //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
     Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }

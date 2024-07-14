@@ -858,11 +858,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             const QString columnName = model->headerData(i, Qt::Horizontal).toString();
             const auto data = current.siblingAtColumn(i).data();
 
-            if (columnName == "Newick tree" && isEditTreePresent) {
-                treeDataFound = true;
-                valueStringReference = QJsonDocument::fromJson(data.toString().toUtf8()).object();
-            }
-            else if (columnName == "Gene Appearance Species Names") {
+            if (columnName == "Gene Appearance Species Names") {
                 finalsettingSpeciesNamesArray = data.toString().split(";");
                 finalSpeciesNameString = finalsettingSpeciesNamesArray.join(" @%$,$%@ ");
             }
