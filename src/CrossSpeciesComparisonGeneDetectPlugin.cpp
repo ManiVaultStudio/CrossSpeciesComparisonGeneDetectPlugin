@@ -788,13 +788,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             });
 
         connect(_settingsAction.getSearchBox(), &CustomLineEdit::textboxDeselectedNotTypingAnymore, this, [this, proxyModel, model]() {
+            proxyModel->setFilterRegularExpression(QRegularExpression());
             updateRowVisibility(_settingsAction.getUniqueReturnGeneList(), _settingsAction.getGeneTableView(),proxyModel);
             });
 
         connect(_settingsAction.getSearchBox(), &CustomLineEdit::textChanged, this, [this, proxyModel,model](const QString& text) {
             QTimer::singleShot(300, this, [this, proxyModel, text,model]() {
                 if (text.isEmpty()) {
-                    proxyModel->setFilterRegularExpression(QRegularExpression());
+                    //proxyModel->setFilterRegularExpression(QRegularExpression());
                     //proxyModel->setFilterWildcard("");
 
                 }

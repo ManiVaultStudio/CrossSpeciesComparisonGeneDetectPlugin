@@ -49,46 +49,50 @@ namespace mv
     class CoreInterface;
 }
 
-
-
-
 class CustomLineEdit : public QLineEdit {
     Q_OBJECT
 
 public:
     explicit CustomLineEdit(QWidget* parent = nullptr) : QLineEdit(parent) {
-        // Assuming Application::getIconFont().getIcon() is a valid way to retrieve an icon
         QIcon defocusIcon = Application::getIconFont("FontAwesome").getIcon("times-circle");
-        _action = addAction(defocusIcon, QLineEdit::TrailingPosition); // Add the action with the icon to the line edit
+        _action = addAction(defocusIcon, QLineEdit::TrailingPosition);
         _action->setVisible(false); // Initially hide the action icon
 
-        // Connect the _action's triggered signal to the defocusLineEdit slot
         connect(_action, &QAction::triggered, this, &CustomLineEdit::defocusLineEdit);
     }
 
 signals:
     void textboxSelectedForTyping();
     void textboxDeselectedNotTypingAnymore();
+    //void textValueChanged();
 
 protected:
     void focusInEvent(QFocusEvent* e) override {
-        _action->setVisible(true); // Make the defocus icon visible when the line edit gains focus
-        emit textboxSelectedForTyping(); // Emit signal when line edit gains focus
-        QLineEdit::focusInEvent(e); // Call base class implementation
+        _action->setVisible(true);
+        emit textboxSelectedForTyping();
+        QLineEdit::focusInEvent(e);
     }
 
     void focusOutEvent(QFocusEvent* e) override {
-        _action->setVisible(false); // Hide the defocus icon when the line edit loses focus
-        emit textboxDeselectedNotTypingAnymore(); // Emit signal when line edit loses focus
-        QLineEdit::focusOutEvent(e); // Call base class implementation
+        // Only hide the defocus icon and emit the deselection signal if the text box is empty
+        if (this->text().isEmpty()) {
+            _action->setVisible(false);
+            emit textboxDeselectedNotTypingAnymore();
+        }
+        QLineEdit::focusOutEvent(e);
     }
+
+ 
+
 
 private slots:
     void defocusLineEdit() {
-        // Clear focus from the line edit
-        this->clearFocus();
-        // Clear the text in the line edit
         this->clear();
+        this->clearFocus(); // Always clear focus when the defocus button is clicked
+        // Optionally, clear the text here if needed
+        //this->clear();
+        _action->setVisible(false); // Hide the defocus icon
+        emit textboxDeselectedNotTypingAnymore(); // Emit the deselection signal
     }
 
 private:
