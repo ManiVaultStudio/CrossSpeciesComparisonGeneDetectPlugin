@@ -1826,7 +1826,7 @@ void SettingsAction::findTopNGenesPerCluster() {
         _selectedPointsTSNEDatasetForGeneTable->setGroupIndex(groupID2);
         if (_selectedPointsTSNEDatasetForGeneTable.isValid())
         {
-            _selectedPointsTSNEDatasetForGeneTable->printChildren();
+            //_selectedPointsTSNEDatasetForGeneTable->printChildren();
             bool skip = false;
             int perplexity = std::min(static_cast<int>(geneOrder.size()), _tsnePerplexity.getValue());
             if (perplexity < 5)
@@ -1936,7 +1936,7 @@ void SettingsAction::removeDatasets(int groupId)
 
     for (auto dataset : datasetsFilteredAndSorted)
     {
-        qDebug() << dataset->getGuiName() << dataset->getId() << dataset->getDataHierarchyItem().getDepth();
+        //qDebug() << dataset->getGuiName() << dataset->getId() << dataset->getDataHierarchyItem().getDepth();
 
         if (dataset.isValid())
             mv::data().removeDataset(dataset);
