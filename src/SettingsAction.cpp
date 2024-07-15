@@ -822,6 +822,45 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_applyLogTransformation, &ToggleAction::toggled, this, updateApplyLogTransformation);
 
+
+    const auto recomputeGeneTableTSNE = [this]() -> void {
+        if (_selectedPointsTSNEDatasetForGeneTable.isValid())
+        {
+            
+            auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
+
+            if (runningAction)
+            {
+
+                if (runningAction->isChecked())
+                {
+                    auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                    if (stopAction)
+                    {
+                        stopAction->trigger();
+                        std::this_thread::sleep_for(std::chrono::seconds(5));
+                    }
+                }
+
+            }
+            
+
+            auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Start"));
+            if (startAction) {
+
+                startAction->trigger();
+            }
+
+        }
+
+        };
+    connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
+
+    const auto updateGeneTableTSNECheck = [this]() -> void {
+        _statusColorAction.setString("M");
+
+        };
+    connect(&_performGeneTableTsneAction, &ToggleAction::toggled, this, updateGeneTableTSNECheck);
     const auto updateClusterCountSortingType = [this]() -> void {
         _statusColorAction.setString("M");
 
@@ -1707,54 +1746,49 @@ void SettingsAction::findTopNGenesPerCluster() {
     //iterate std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
     // Iterating over the map
     if (_performGeneTableTsneAction.isChecked()) {
-    std::vector<float> rankOrder;
+        std::vector<float> rankOrder;
 
-    std::unordered_map<QString, std::unordered_map<QString, float>> geneSimilarityMap;
-    std::unordered_set<QString> speciesSet;
-    std::unordered_set<QString> geneSet;
+        std::unordered_map<QString, std::unordered_map<QString, float>> geneSimilarityMap;
+        std::unordered_set<QString> speciesSet;
+        std::unordered_set<QString> geneSet;
 
-    for (const auto& item : rankingMap) {
-        const QString& gene = item.first;
-        std::unordered_map<QString, float> rankCounter;
-        for (const auto& pair : item.second) {
-            const QString& species = pair.first;
-            const float rank = (pair.second <= n) ? 1.0f : 0.0f; // Use float directly
-            rankCounter[species] = rank;
-            speciesSet.insert(species);
+        for (const auto& item : rankingMap) {
+            const QString& gene = item.first;
+            std::unordered_map<QString, float> rankCounter;
+            for (const auto& pair : item.second) {
+                const QString& species = pair.first;
+                const float rank = (pair.second <= n) ? 1.0f : 0.0f; // Use float directly
+                rankCounter[species] = rank;
+                speciesSet.insert(species);
+            }
+            geneSimilarityMap[gene] = std::move(rankCounter);
+            geneSet.insert(gene);
         }
-        geneSimilarityMap[gene] = std::move(rankCounter);
-        geneSet.insert(gene);
-    }
 
-    std::vector<QString> speciesOrder(speciesSet.begin(), speciesSet.end());
-    std::vector<QString> geneOrder(geneSet.begin(), geneSet.end());
-    rankOrder.resize(geneOrder.size() * speciesOrder.size(), 0.0f); // Initialize with 0.0f for clarity
+        std::vector<QString> speciesOrder(speciesSet.begin(), speciesSet.end());
+        std::vector<QString> geneOrder(geneSet.begin(), geneSet.end());
+        rankOrder.resize(geneOrder.size() * speciesOrder.size(), 0.0f); // Initialize with 0.0f for clarity
 
-    std::unordered_map<QString, int> speciesIndexMap;
-    for (int i = 0; i < speciesOrder.size(); ++i) {
-        speciesIndexMap[speciesOrder[i]] = i;
-    }
-
-    for (int geneIndex = 0; geneIndex < geneOrder.size(); ++geneIndex) {
-        const QString& gene = geneOrder[geneIndex];
-        const auto& speciesRanks = geneSimilarityMap[gene];
-        for (const auto& speciesRank : speciesRanks) {
-            const QString& species = speciesRank.first;
-            const float rank = speciesRank.second; // Already a float, no need to cast
-            int speciesIndex = speciesIndexMap[species];
-            rankOrder[geneIndex * speciesOrder.size() + speciesIndex] = rank;
+        std::unordered_map<QString, int> speciesIndexMap;
+        for (int i = 0; i < speciesOrder.size(); ++i) {
+            speciesIndexMap[speciesOrder[i]] = i;
         }
-    }
 
+        for (int geneIndex = 0; geneIndex < geneOrder.size(); ++geneIndex) {
+            const QString& gene = geneOrder[geneIndex];
+            const auto& speciesRanks = geneSimilarityMap[gene];
+            for (const auto& speciesRank : speciesRanks) {
+                const QString& species = speciesRank.first;
+                const float rank = speciesRank.second; // Already a float, no need to cast
+                int speciesIndex = speciesIndexMap[species];
+                rankOrder[geneIndex * speciesOrder.size() + speciesIndex] = rank;
+            }
+        }
 
     QString pointDataId = _geneSimilarityPoints->getId();
-    int pointIndicesSize = geneOrder.size();
     int pointDimSize = speciesOrder.size();
-    QString clusterDataId = _geneSimilarityClusterColoring->getId();
+    int pointIndicesSize = geneOrder.size();
 
-    //std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
-    //selectedClusterMap["TopNSelectedGenes"] = {clusterColor, filteredIndices};
-    //selectedClusterMap["NonTopNGenes"] = { clusterColor, filteredIndices };
     if (_selectedPointsTSNEDatasetForGeneTable.isValid())
     {
         auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
@@ -1906,9 +1940,29 @@ void SettingsAction::findTopNGenesPerCluster() {
         //stopCodeTimer("Part10");
     }
 
+    std::vector<int> selectedIndices;
+    std::vector<int> nonselectedIndices;
+    selectedIndices.reserve(geneOrder.size()); // Pre-allocate memory
+    nonselectedIndices.reserve(geneOrder.size()); // Pre-allocate memory
+    for (int i = 0; i < geneOrder.size(); i++)
+    {
+        if (_uniqueReturnGeneList.find(geneOrder[i]) != _uniqueReturnGeneList.end())
+        {
+            selectedIndices.push_back(i);
+        }
+        else
+        {
+            nonselectedIndices.push_back(i);
+        }
+    }
+    QString clusterDataId = _geneSimilarityClusterColoring->getId();
+    QColor selectedColor = QColor("#00A2ED");
+    QColor nonSelectedColor = QColor("#ff5d12");
+    std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
+    selectedClusterMap["TopNSelectedGenes"] = { selectedColor, selectedIndices };
+    selectedClusterMap["NonTopNGenes"] = { nonSelectedColor, nonselectedIndices };
 
-
-        //populateClusterData(clusterDataId, selectedClusterMap);
+        populateClusterData(clusterDataId, selectedClusterMap);
 }
 
     //stopCodeTimer("findTopNGenesPerCluster");
