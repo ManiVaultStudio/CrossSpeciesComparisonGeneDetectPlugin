@@ -219,6 +219,11 @@ public: // Action getters
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
     OptionAction& getClusterCountSortingType() { return _clusterCountSortingType; }
     IntegralAction& getPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
+    OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
+    OptionAction& getPerformGeneTableTsneDistance() { return _performGeneTableTsneDistance; }
+    TriggerAction& getPerformGeneTableTsneTrigger() { return _performGeneTableTsneTrigger; }
+    Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
+
     //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
@@ -362,6 +367,12 @@ protected:
     std::vector<QString>     _totalGeneList;
     QSet<QString>               _uniqueReturnGeneList;
     IntegralAction                _performGeneTableTsnePerplexity;
+    
+    OptionAction                   _performGeneTableTsneKnn;
+    OptionAction                   _performGeneTableTsneDistance;
+    TriggerAction                  _performGeneTableTsneTrigger;
+    Dataset<Points>                _selectedPointsTSNEDatasetForGeneTable;
+    
     QStringList                   _deleteDatasetIds;
 
 

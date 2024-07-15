@@ -254,7 +254,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _applyLogTransformation(this, "Gene mapping log"),
     _clusterCountSortingType(this, "Cluster Count Sorting Type"),
     _currentCellSelectionClusterInfoLabel(nullptr),
-    _performGeneTableTsnePerplexity(this, "Perform Gene Table TSNE Perplexity")
+    _performGeneTableTsnePerplexity(this, "Perform Gene Table TSNE Perplexity"),
+    _performGeneTableTsneKnn(this, "Perform Gene Table TSNE Knn"),
+    _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
+    _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -403,6 +406,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsnePerplexity.setMinimum(1);
     _performGeneTableTsnePerplexity.setMaximum(50);
     _performGeneTableTsnePerplexity.setValue(15);
+    _performGeneTableTsneKnn.setSerializationName("CSCGDV:Gene Table TSNE Knn");
+    _performGeneTableTsneKnn.initialize({"FLANN","HNSW","ANNOY"},"ANNOY");
+    _performGeneTableTsneDistance.setSerializationName("CSCGDV:Gene Table TSNE Distance");
+    _performGeneTableTsneDistance.initialize({ "Euclidean","Cosine","Inner Product","Manhattan","Hamming","Dot"}, "Dot");
+    _performGeneTableTsneTrigger.setSerializationName("CSCGDV:Gene Table TSNE Trigger");
+    _performGeneTableTsneTrigger.setDisabled(true);
+
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -849,7 +859,10 @@ void SettingsAction::updateButtonTriggered()
         startCodeTimer("UpdateGeneFilteringTrigger");
         //startCodeTimer("Part1");
 
-
+        int groupIDDeletion = 10;
+        int groupID1 = 10 * 2;
+        int groupID2 = 10 * 3;
+        removeDatasets(groupIDDeletion);
         auto pointsDataset = _mainPointsDataset.getCurrentDataset();
         auto embeddingDataset = _embeddingDataset.getCurrentDataset();
         auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
@@ -920,9 +933,7 @@ void SettingsAction::updateButtonTriggered()
                 //stopCodeTimer("Part5");
                 if (!speciesValuesAll.empty() && !clustersValuesAll.empty())
                 {
-                    int groupIDDeletion = 10;
-                    int groupID1 = 10 * 2;
-                    int groupID2 = 10 * 3;
+
                     //if (_selectedPointsTSNEDataset.isValid())
                     //{
                         //auto datasetIDLowRem = _selectedPointsTSNEDataset.getDatasetId();
@@ -930,7 +941,7 @@ void SettingsAction::updateButtonTriggered()
                         //mv::data().removeDataset(_selectedPointsTSNEDataset);
                         //mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                     //}
-                    removeDatasets(groupIDDeletion);
+                    
                    // _selectedPointsDataset = Dataset<Points>();
                     //_selectedPointsEmbeddingDataset = Dataset<Points>();
                     //startCodeTimer("Part6.1");
@@ -1020,10 +1031,12 @@ void SettingsAction::updateButtonTriggered()
                     if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid() && _geneSimilarityPoints.isValid() && _geneSimilarityClusterColoring.isValid())
                     {
                         //startCodeTimer("Part6.2");
-                        _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
-                        events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
-                        _tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
-                        events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
+                        //_tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
+                        //events().notifyDatasetDataChanged(_tsneDatasetSpeciesColors);
+                        //_tsneDatasetClusterColors->getClusters() = QVector<Cluster>();
+                        //events().notifyDatasetDataChanged(_tsneDatasetClusterColors);
+                        _geneSimilarityClusterColoring->getClusters() = QVector<Cluster>();
+                        events().notifyDatasetDataChanged(_geneSimilarityClusterColoring);
                         //stopCodeTimer("Part6.2");
                         //startCodeTimer("Part7");
                         //startCodeTimer("Part7.1");
@@ -1688,8 +1701,59 @@ void SettingsAction::findTopNGenesPerCluster() {
     }
 
     //iterate std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
+    // Iterating over the map
+
+    std::vector<float> rankOrder;
+
+    std::unordered_map<QString, std::unordered_map<QString, float>> geneSimilarityMap;
+    std::unordered_set<QString> speciesSet;
+    std::unordered_set<QString> geneSet;
+
+    for (const auto& item : rankingMap) {
+        const QString& gene = item.first;
+        std::unordered_map<QString, float> rankCounter;
+        for (const auto& pair : item.second) {
+            const QString& species = pair.first;
+            const float rank = (pair.second <= n) ? 1.0f : 0.0f; // Use float directly
+            rankCounter[species] = rank;
+            speciesSet.insert(species);
+        }
+        geneSimilarityMap[gene] = std::move(rankCounter);
+        geneSet.insert(gene);
+    }
+
+    std::vector<QString> speciesOrder(speciesSet.begin(), speciesSet.end());
+    std::vector<QString> geneOrder(geneSet.begin(), geneSet.end());
+    rankOrder.resize(geneOrder.size() * speciesOrder.size(), 0.0f); // Initialize with 0.0f for clarity
+
+    std::unordered_map<QString, int> speciesIndexMap;
+    for (int i = 0; i < speciesOrder.size(); ++i) {
+        speciesIndexMap[speciesOrder[i]] = i;
+    }
+
+    for (int geneIndex = 0; geneIndex < geneOrder.size(); ++geneIndex) {
+        const QString& gene = geneOrder[geneIndex];
+        const auto& speciesRanks = geneSimilarityMap[gene];
+        for (const auto& speciesRank : speciesRanks) {
+            const QString& species = speciesRank.first;
+            const float rank = speciesRank.second; // Already a float, no need to cast
+            int speciesIndex = speciesIndexMap[species];
+            rankOrder[geneIndex * speciesOrder.size() + speciesIndex] = rank;
+        }
+    }
+
+
+    QString pointDataId = _geneSimilarityPoints->getId();
+    int pointIndicesSize = geneOrder.size();
+    int pointDimSize = speciesOrder.size();
+    QString clusterDataId = _geneSimilarityClusterColoring->getId();
+
+    //std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
+    //selectedClusterMap["TopNSelectedGenes"] = {clusterColor, filteredIndices};
+    //selectedClusterMap["NonTopNGenes"] = { clusterColor, filteredIndices };
     
-    
+    populatePointData(pointDataId, rankOrder, pointIndicesSize, pointDimSize, speciesOrder);
+    //populateClusterData(clusterDataId, selectedClusterMap);
 
     //stopCodeTimer("findTopNGenesPerCluster");
     QVariant returnedmodel= createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
@@ -1849,6 +1913,9 @@ void SettingsAction::enableActions()
     _usePreComputedTSNE.setDisabled(false);
     _tsnePerplexity.setDisabled(false);
     _performGeneTableTsnePerplexity.setDisabled(false);
+    _performGeneTableTsneKnn.setDisabled(false);
+    _performGeneTableTsneDistance.setDisabled(false);
+    _performGeneTableTsneTrigger.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
@@ -1884,6 +1951,9 @@ void SettingsAction::disableActions()
     _applyLogTransformation.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
     _performGeneTableTsnePerplexity.setDisabled(true);
+    _performGeneTableTsneKnn.setDisabled(true);
+    _performGeneTableTsneDistance.setDisabled(true);
+    _performGeneTableTsneTrigger.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);
@@ -2230,6 +2300,9 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
     _performGeneTableTsnePerplexity.fromParentVariantMap(variantMap);
+    _performGeneTableTsneKnn.fromParentVariantMap(variantMap);
+    _performGeneTableTsneDistance.fromParentVariantMap(variantMap);
+    _performGeneTableTsneTrigger.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);

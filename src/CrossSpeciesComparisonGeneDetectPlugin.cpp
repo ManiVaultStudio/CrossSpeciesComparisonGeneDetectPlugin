@@ -466,6 +466,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneKnn());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneDistance());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneTrigger());
     
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
