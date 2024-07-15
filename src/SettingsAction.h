@@ -261,6 +261,7 @@ public: // Action getters
     Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
     //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
     Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }
+    std::vector<QString>& getGeneOrder() { return _geneOrder; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -374,6 +375,6 @@ protected:
     Dataset<Points>                _selectedPointsTSNEDatasetForGeneTable;
     
     QStringList                   _deleteDatasetIds;
-
-
+    std::vector<QString> _geneOrder;
+    //std::vector<QString> _speciesOrder;
 };

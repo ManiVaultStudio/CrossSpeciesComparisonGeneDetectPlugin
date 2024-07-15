@@ -1764,18 +1764,18 @@ void SettingsAction::findTopNGenesPerCluster() {
             geneSimilarityMap[gene] = std::move(rankCounter);
             geneSet.insert(gene);
         }
-
+        _geneOrder.clear();
         std::vector<QString> speciesOrder(speciesSet.begin(), speciesSet.end());
-        std::vector<QString> geneOrder(geneSet.begin(), geneSet.end());
-        rankOrder.resize(geneOrder.size() * speciesOrder.size(), 0.0f); // Initialize with 0.0f for clarity
+        _geneOrder = std::vector<QString>(geneSet.begin(), geneSet.end());
+        rankOrder.resize(_geneOrder.size() * speciesOrder.size(), 0.0f); // Initialize with 0.0f for clarity
 
         std::unordered_map<QString, int> speciesIndexMap;
         for (int i = 0; i < speciesOrder.size(); ++i) {
             speciesIndexMap[speciesOrder[i]] = i;
         }
 
-        for (int geneIndex = 0; geneIndex < geneOrder.size(); ++geneIndex) {
-            const QString& gene = geneOrder[geneIndex];
+        for (int geneIndex = 0; geneIndex < _geneOrder.size(); ++geneIndex) {
+            const QString& gene = _geneOrder[geneIndex];
             const auto& speciesRanks = geneSimilarityMap[gene];
             for (const auto& speciesRank : speciesRanks) {
                 const QString& species = speciesRank.first;
@@ -1787,7 +1787,7 @@ void SettingsAction::findTopNGenesPerCluster() {
 
     QString pointDataId = _geneSimilarityPoints->getId();
     int pointDimSize = speciesOrder.size();
-    int pointIndicesSize = geneOrder.size();
+    int pointIndicesSize = _geneOrder.size();
 
     if (_selectedPointsTSNEDatasetForGeneTable.isValid())
     {
@@ -1862,7 +1862,7 @@ void SettingsAction::findTopNGenesPerCluster() {
         {
             //_selectedPointsTSNEDatasetForGeneTable->printChildren();
             bool skip = false;
-            int perplexity = std::min(static_cast<int>(geneOrder.size()), _tsnePerplexity.getValue());
+            int perplexity = std::min(static_cast<int>(_geneOrder.size()), _tsnePerplexity.getValue());
             if (perplexity < 5)
             {
                 qDebug() << "Perplexity is less than 5";
@@ -1942,11 +1942,11 @@ void SettingsAction::findTopNGenesPerCluster() {
 
     std::vector<int> selectedIndices;
     std::vector<int> nonselectedIndices;
-    selectedIndices.reserve(geneOrder.size()); // Pre-allocate memory
-    nonselectedIndices.reserve(geneOrder.size()); // Pre-allocate memory
-    for (int i = 0; i < geneOrder.size(); i++)
+    selectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
+    nonselectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
+    for (int i = 0; i < _geneOrder.size(); i++)
     {
-        if (_uniqueReturnGeneList.find(geneOrder[i]) != _uniqueReturnGeneList.end())
+        if (_uniqueReturnGeneList.find(_geneOrder[i]) != _uniqueReturnGeneList.end())
         {
             selectedIndices.push_back(i);
         }
@@ -2549,6 +2549,9 @@ QVariantMap SettingsAction::toVariantMap() const
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
     _performGeneTableTsnePerplexity.insertIntoVariantMap(variantMap);
+    _performGeneTableTsneDistance.insertIntoVariantMap(variantMap);
+    _performGeneTableTsneKnn.insertIntoVariantMap(variantMap);
+    _performGeneTableTsneTrigger.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);

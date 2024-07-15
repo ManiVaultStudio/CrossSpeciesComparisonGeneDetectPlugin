@@ -221,6 +221,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 qDebug() << "TableView or its selection model is null";
             }
 
+
+
+            if ( _settingsAction.getSelectedPointsTSNEDatasetForGeneTable().isValid())
+            {
+
+                {
+                    _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->setSelectionIndices({});
+                    mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getSelectedPointsTSNEDatasetForGeneTable());
+
+                }
+            }
+
+
+
+
             _settingsAction.getRemoveRowSelection().setDisabled(true);
             //_settingsAction.enableDisableButtonsAutomatically();
             _settingsAction.getStatusColorAction().setString(statusString);
@@ -845,7 +860,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
         //_settingsAction.enableDisableButtonsAutomatically();
-
+        
 
         std::map<QString, SpeciesDetailsStats> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
@@ -1094,6 +1109,26 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         else
         {
             //TODO: Add selected gene point selection to scatterplot
+            unsigned int selectedGeneIndex = -1;
+            if (_settingsAction.getGeneOrder().size() > 0 && _settingsAction.getSelectedPointsTSNEDatasetForGeneTable().isValid())
+            {
+                auto it = std::find(_settingsAction.getGeneOrder().begin(), _settingsAction.getGeneOrder().end(), gene);
+                if (it != _settingsAction.getGeneOrder().end()) {
+                    selectedGeneIndex = it - _settingsAction.getGeneOrder().begin();
+                }
+                //gene
+                unsigned int maxIndex = _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->getNumPoints();
+                if (selectedGeneIndex <= maxIndex)
+                {
+                    _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->setSelectionIndices({ selectedGeneIndex });
+                    mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getSelectedPointsTSNEDatasetForGeneTable());
+
+                }
+
+            }
+            
+
+
         }
 
         if (_settingsAction.getSelctedSpeciesVals().getString() == finalSpeciesNameString)
