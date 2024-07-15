@@ -221,6 +221,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 qDebug() << "TableView or its selection model is null";
             }
 
+
+
+            if ( _settingsAction.getSelectedPointsTSNEDatasetForGeneTable().isValid())
+            {
+
+                {
+                    _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->setSelectionIndices({});
+                    mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getSelectedPointsTSNEDatasetForGeneTable());
+
+                }
+            }
+
+
+
+
             _settingsAction.getRemoveRowSelection().setDisabled(true);
             //_settingsAction.enableDisableButtonsAutomatically();
             _settingsAction.getStatusColorAction().setString(statusString);
@@ -327,8 +342,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto triggerInit = [this]() -> void
         {
-
+            int groupIDDeletion = 10;
+            int groupId1 = 10 * 2;
+            int groupId2 = 10 * 3;
+            _settingsAction.removeDatasets(groupIDDeletion);
+            _settingsAction.removeDatasets(groupId1);
+            _settingsAction.removeDatasets(groupId2);
+            _settingsAction.removeDatasets(-1);
             _settingsAction.getStartComputationTriggerAction().trigger();
+
         };
 
     connect(&mv::projects(), &AbstractProjectManager::projectOpened , this, triggerInit);
@@ -459,6 +481,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneKnn());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneDistance());
+    tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneTrigger());
     
 
     auto mainOptionsGroupLayout = new QVBoxLayout();
@@ -825,6 +850,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getGeneTableView()->update();
 
 
+        //disconnect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, this, nullptr);
 
     connect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) return;
@@ -834,7 +860,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelectedRowIndexAction().setString(QString::number(current.row()));
         _settingsAction.getRemoveRowSelection().setEnabled(true);
         //_settingsAction.enableDisableButtonsAutomatically();
-
+        
 
         std::map<QString, SpeciesDetailsStats> speciesExpressionMap;
         QStringList finalsettingSpeciesNamesArray;
@@ -1024,11 +1050,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                     selectedPoints.insert(selectedPoints.end(), indices.begin(), indices.end());
                 }
             }
-            tsneDataset->setSelectionIndices(selectedPoints);
-            mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
+            //below two lines causing problems TODO: Test
+            //tsneDataset->setSelectionIndices(selectedPoints);
+            //mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
         }
 
-        if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression") {
+        if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression"&& !_settingsAction.getPerformGeneTableTsneAction().isChecked()) {
             
             
             
@@ -1079,6 +1106,30 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
             }
         }
+        else
+        {
+            //TODO: Add selected gene point selection to scatterplot
+            unsigned int selectedGeneIndex = -1;
+            if (_settingsAction.getGeneOrder().size() > 0 && _settingsAction.getSelectedPointsTSNEDatasetForGeneTable().isValid())
+            {
+                auto it = std::find(_settingsAction.getGeneOrder().begin(), _settingsAction.getGeneOrder().end(), gene);
+                if (it != _settingsAction.getGeneOrder().end()) {
+                    selectedGeneIndex = it - _settingsAction.getGeneOrder().begin();
+                }
+                //gene
+                unsigned int maxIndex = _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->getNumPoints();
+                if (selectedGeneIndex <= maxIndex)
+                {
+                    _settingsAction.getSelectedPointsTSNEDatasetForGeneTable()->setSelectionIndices({ selectedGeneIndex });
+                    mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getSelectedPointsTSNEDatasetForGeneTable());
+
+                }
+
+            }
+            
+
+
+        }
 
         if (_settingsAction.getSelctedSpeciesVals().getString() == finalSpeciesNameString)
         {
@@ -1087,8 +1138,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
 
         });
-
-
 
     emit model->layoutChanged();
 
