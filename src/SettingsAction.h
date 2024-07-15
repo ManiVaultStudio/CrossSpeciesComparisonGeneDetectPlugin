@@ -37,7 +37,7 @@
 #include <QListView>
 #include <vector>
 #include <set>
-
+#include <QLineEdit>
 #include <QColor>
 using namespace mv::gui;
 class QMenu;
@@ -49,7 +49,58 @@ namespace mv
     class CoreInterface;
 }
 
+class CustomLineEdit : public QLineEdit {
+    Q_OBJECT
 
+public:
+    explicit CustomLineEdit(QWidget* parent = nullptr) : QLineEdit(parent) {
+        QIcon defocusIcon = Application::getIconFont("FontAwesome").getIcon("times-circle");
+        _action = addAction(defocusIcon, QLineEdit::TrailingPosition);
+        _action->setVisible(false); // Initially hide the action icon
+
+        connect(_action, &QAction::triggered, this, &CustomLineEdit::defocusLineEdit);
+    }
+
+signals:
+    void textboxSelectedForTyping();
+    void textboxDeselectedNotTypingAnymore();
+    //void textValueChanged();
+
+protected:
+    void focusInEvent(QFocusEvent* e) override {
+        _action->setVisible(true);
+        emit textboxSelectedForTyping();
+        QLineEdit::focusInEvent(e);
+    }
+
+    void focusOutEvent(QFocusEvent* e) override {
+        // Only hide the defocus icon and emit the deselection signal if the text box is empty
+        if (this->text().isEmpty()) {
+            _action->setVisible(false);
+            emit textboxDeselectedNotTypingAnymore();
+        }
+        QLineEdit::focusOutEvent(e);
+    }
+
+ 
+
+
+private slots:
+    void defocusLineEdit() {
+        this->blockSignals(true); // Block signals to prevent textChanged from being emitted
+        this->clear();
+        this->blockSignals(false); // Unblock signals
+
+        this->clearFocus(); // Always clear focus when the defocus button is clicked
+        // Optionally, clear the text here if needed
+        //this->clear();
+        _action->setVisible(false); // Hide the defocus icon
+        emit textboxDeselectedNotTypingAnymore(); // Emit the deselection signal
+    }
+
+private:
+    QAction* _action; // Action for the defocus icon
+};
 
 
 
@@ -166,6 +217,8 @@ public: // Action getters
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
     OptionAction& getClusterCountSortingType() { return _clusterCountSortingType; }
+    IntegralAction& getPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
+    //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
         Dataset<Points>        _selectedPointsTSNEDataset;
@@ -191,12 +244,18 @@ public: // Action getters
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getGeneTableView() const { return _geneTableView; }
-    QLineEdit* getSearchBox() const { return _searchBox; }
+    CustomLineEdit* getSearchBox() const { return _searchBox; }
     QTableView* getSelectionDetailsTable() const { return _selectionDetailsTable; }
     std::map<QString, SpeciesColorCountStorageVals> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
+    QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
+    std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
+    Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
+    //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
+    Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }
+
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -212,9 +271,11 @@ public: // Action getters
     void enableActions();
     void removeSelectionTableRows(QStringList* selectedLeaves);
     void enableDisableButtonsAutomatically();
+
+    QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
+    void findTopNGenesPerCluster();
 private:
-    QVariant createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
-    QVariant findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore);
+
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
     void updateButtonTriggered();
     void setModifiedTriggeredData(QVariant geneListTable);
@@ -264,8 +325,13 @@ protected:
     Dataset<Points>        _filteredUMAPDatasetColors;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
-    Dataset<Clusters>        _tsneDatasetClusterColors;
+    Dataset<Clusters>        _tsneDatasetClusterColors;  
     Dataset<Points>        _tsneDatasetExpressionColors;
+
+    Dataset<Points>             _geneSimilarityPoints;
+    //std::vector<QString>        _geneSimilarityClusters;
+    Dataset<Clusters>           _geneSimilarityClusterColoring;
+
     TriggerAction          _removeRowSelection;
     TriggerAction           _revertRowSelectionChangesToInitial;
     DatasetPickerAction           _scatterplotEmbeddingPointsUMAPOption;
@@ -284,7 +350,7 @@ protected:
     QTableView* _geneTableView;                /** Table view for the data */
     QTableView* _selectionDetailsTable;    /** Table view for the selection details */
     QHBoxLayout* _splitter;
-    QLineEdit* _searchBox;
+    CustomLineEdit* _searchBox;
     ToggleAction    _applyLogTransformation;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
@@ -292,4 +358,7 @@ protected:
 
     std::vector<QString> _customOrderClustersFromHierarchy;
     std::unordered_map<QString, int> _customOrderClustersFromHierarchyMap;
+    std::vector<QString>     _totalGeneList;
+    QSet<QString>               _uniqueReturnGeneList;
+    IntegralAction                _performGeneTableTsnePerplexity;
 };

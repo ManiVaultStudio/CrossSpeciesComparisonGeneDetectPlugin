@@ -257,12 +257,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesExplorerInMapTrigger(this, "Explore"),
     _applyLogTransformation(this, "Gene mapping log"),
     _clusterCountSortingType(this, "Cluster Count Sorting Type"),
-    _currentCellSelectionClusterInfoLabel(nullptr)
+    _currentCellSelectionClusterInfoLabel(nullptr),
+    _performGeneTableTsnePerplexity(this, "Perform Gene Table TSNE Perplexity")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget  = new QStatusBar();
-    _searchBox = new QLineEdit();
+    _searchBox = new CustomLineEdit();
     QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
     QAction* searchAction = new QAction(_searchBox);
     searchAction->setIcon(searchIcon);
@@ -274,7 +275,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
     _searchBox->setStyleSheet("QLineEdit { background-color: white; }");
-    _searchBox->setClearButtonEnabled(true);
+    _searchBox->setClearButtonEnabled(false);
     _searchBox->setFocusPolicy(Qt::StrongFocus);
     _meanMapComputed = false;
     _statusBarActionWidget->setStatusTip("Status");
@@ -399,6 +400,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedGene.setString("");
     _createRowMultiSelectTree.setSerializationName("CSCGDV:Create Row MultiSelect Tree");
     _performGeneTableTsneAction.setSerializationName("CSCGDV:Perform Gene Table TSNE");
+    _performGeneTableTsnePerplexity.setSerializationName("CSCGDV:Gene Table TSNE Perplexity");
+    _performGeneTableTsnePerplexity.setMinimum(1);
+    _performGeneTableTsnePerplexity.setMaximum(50);
+    _performGeneTableTsnePerplexity.setValue(15);
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -406,6 +411,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
     _applyLogTransformation.setChecked(false);
+    _performGeneTableTsneAction.setChecked(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
@@ -413,12 +419,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
     _applyLogTransformation.setSerializationName("CSCGDV:Apply Log Transformation");
-    _performGeneTableTsneAction.setChecked(false);
+    _performGeneTableTsneAction.setChecked(true);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
     _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
-    _typeofTopNGenes.initialize({"Absolute","Negative","Positive","Mixed"}, "Positive");
+    _typeofTopNGenes.initialize({"Absolute","Negative","Positive"}, "Positive");
     _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View"}, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
@@ -550,11 +556,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
-            
+            _totalGeneList.clear();
             auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
+            _totalGeneList = fullDataset->getDimensionNames();
             if (dimensions > 0) {
-                _topNGenesFilter.setMinimum(0);
+                _topNGenesFilter.setMinimum(1);
                 _topNGenesFilter.setMaximum(dimensions);
 
                 _topNGenesFilter.setValue(std::min(10, static_cast<int>(dimensions)));
@@ -811,12 +818,25 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_clusterCountSortingType, &OptionAction::currentIndexChanged, this, updateClusterCountSortingType);
+    QTimer* debounceTimer = new QTimer(this);
+    debounceTimer->setSingleShot(true);
+    debounceTimer->setInterval(500); // 500 milliseconds wait time
 
-    const auto updateTopGenesSlider = [this]() -> void {
-        _statusColorAction.setString("M");
+    const auto debouncelambda = [this]() -> void { // Capture debounceTimer by 
+        disableActions();
+        findTopNGenesPerCluster();
+        enableActions();
+        };
 
+    connect(debounceTimer, &QTimer::timeout, this, debouncelambda);
+
+    const auto updateTopGenesSlider = [this, debounceTimer]() -> void { // Capture debounceTimer by reference
+        //wait to see if any more updates are coming then call findTopNGenesPerCluster();
+        // Restart the timer every time the value changes
+        debounceTimer->start();
         };
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
+
 
     _statusColorAction.setString("M");
 }
@@ -951,8 +971,23 @@ void SettingsAction::updateButtonTriggered()
                         _tsneDatasetClusterColors->setGroupIndex(10);
                         mv::events().notifyDatasetAdded(_tsneDatasetClusterColors);
                     }
+
+                    if (!_geneSimilarityPoints.isValid())
+                    {
+                        _geneSimilarityPoints = mv::data().createDataset("Points", "GeneSimilarityPoints");
+                        _geneSimilarityPoints->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_geneSimilarityPoints);
+                    }
+                    if (!_geneSimilarityClusterColoring.isValid())
+                    {
+                        _geneSimilarityClusterColoring = mv::data().createDataset("Cluster", "GeneSimilarityClusterColoring", _geneSimilarityPoints);
+                        _geneSimilarityClusterColoring->setGroupIndex(10);
+                        mv::events().notifyDatasetAdded(_geneSimilarityClusterColoring);
+
+                    }
+                    //_geneSimilarityClusters.clear();
                     //stopCodeTimer("Part6.1");
-                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid())
+                    if (_selectedPointsDataset.isValid() && _selectedPointsEmbeddingDataset.isValid() && _tsneDatasetSpeciesColors.isValid() && _tsneDatasetClusterColors.isValid() && _geneSimilarityPoints.isValid() && _geneSimilarityClusterColoring.isValid())
                     {
                         //startCodeTimer("Part6.2");
                         _tsneDatasetSpeciesColors->getClusters() = QVector<Cluster>();
@@ -1445,10 +1480,10 @@ void SettingsAction::updateButtonTriggered()
 
 
                     //startCodeTimer("Part14");
-                    QVariant geneListTable = findTopNGenesPerCluster(_clusterNameToGeneNameToExpressionValue, _topNGenesFilter.getValue(), referenceTreedatasetId, 1.0);
+                     findTopNGenesPerCluster();
                     //stopCodeTimer("Part14");
 
-                    setModifiedTriggeredData(geneListTable);
+                    
 
 
                 }
@@ -1531,17 +1566,20 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 }
 
-QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::map<QString, Stats>>& map, int n, QString datasetId, float treeSimilarityScore) {
+void SettingsAction::findTopNGenesPerCluster() {
     
-    if (map.empty() || n <= 0) {
-        return QVariant();
+    int n = _topNGenesFilter.getValue();
+
+    if (_clusterNameToGeneNameToExpressionValue.empty() || n <= 0) {
+        return;
     }
-    //startCodeTimer("findTopNGenesPerCluster");
+
+    // startCodeTimer("findTopNGenesPerCluster");
+
     enum class SelectionOption {
         AbsoluteTopN,
         PositiveTopN,
-        NegativeTopN,
-        MixedTopN
+        NegativeTopN
     };
     auto optionValue = _typeofTopNGenes.getCurrentText();
     SelectionOption option = SelectionOption::AbsoluteTopN;
@@ -1551,15 +1589,12 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
     else if (optionValue == "Negative") {
         option = SelectionOption::NegativeTopN;
     }
-    else if (optionValue == "Mixed") {
-        option = SelectionOption::MixedTopN;
-    }
 
-    QSet<QString> geneList;
+    _uniqueReturnGeneList.clear();
     std::map<QString, std::vector<QString>> geneAppearanceCounter;
     std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
 
-    for (const auto& outerPair : map) {
+    for (const auto& outerPair : _clusterNameToGeneNameToExpressionValue) {
         auto speciesName = outerPair.first;
         std::vector<std::pair<QString, float>> geneExpressionVec;
         geneExpressionVec.reserve(outerPair.second.size());
@@ -1581,7 +1616,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
                 });
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
                     //check if the selected counter in the mpa is greater than 0
                     if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
                         geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
@@ -1600,7 +1635,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
         case SelectionOption::PositiveTopN: {
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
                     if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
                         geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                     }
@@ -1615,7 +1650,7 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             std::reverse(geneExpressionVec.begin(), geneExpressionVec.end()); // Reverse to get the lowest values
             for (int i = 0; i < geneExpressionVec.size(); ++i) {
                 if (i < n) {
-                    geneList.insert(geneExpressionVec[i].first);
+                    _uniqueReturnGeneList.insert(geneExpressionVec[i].first);
                     if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
                         geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
                     }
@@ -1626,45 +1661,22 @@ QVariant SettingsAction::findTopNGenesPerCluster(const std::map<QString, std::ma
             }
             break;
         }
-        case SelectionOption::MixedTopN: {
-            int halfN = n / 2;
-            // Process top halfN genes
-            for (int i = 0; i < halfN; ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-
-                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
-            }
-            // Process bottom halfN genes, if n is odd, include the middle element
-            int startIdx = std::max(static_cast<int>(geneExpressionVec.size()) - halfN, halfN + (n % 2));
-            for (int i = startIdx; i < geneExpressionVec.size(); ++i) {
-                geneList.insert(geneExpressionVec[i].first);
-                if (outerPair.second.find(geneExpressionVec[i].first)->second.meanSelected > 0) {
-                    geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                }
-
-                //geneAppearanceCounter[geneExpressionVec[i].first].push_back(speciesName);
-                rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, i + 1);
-            }
-            break;
-        }
-
         }
     }
 
 
 
     //stopCodeTimer("findTopNGenesPerCluster");
-    QVariant returnedmodel= createModelFromData(geneList, map, datasetId, treeSimilarityScore, geneAppearanceCounter, rankingMap, n);
-    return returnedmodel;
+    QVariant returnedmodel= createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
+
+    setModifiedTriggeredData(returnedmodel);
+
+    //return returnedmodel;
 }
 
-QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList, const std::map<QString, std::map<QString, Stats>>& map, const QString& treeDatasetId, const float& treeSimilarityScore, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
+QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QString, Stats>>& map,   const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
-    if (returnGeneList.isEmpty() || map.empty()) {
+    if (map.empty() || _totalGeneList.empty()) {
         return QVariant();
     }
     //startCodeTimer("createModelFromData");
@@ -1676,7 +1688,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
     _hiddenShowncolumns.setOptions(headers);
     _hiddenShowncolumns.setSelectedOptions({ headers[0], headers[1] });
 
-    for (const auto& gene : returnGeneList) {
+    for (const auto& gene : _totalGeneList) {
         QList<QStandardItem*> row;
         std::vector<float> numbers;
         numbers.reserve(map.size()); // Reserve capacity based on map size
@@ -1691,7 +1703,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             }
         }
 
-        row.push_back(new QStandardItem(gene)); // ID
+        row.push_back(new QStandardItem(gene)); // ID(string) should sort by string
 
         std::map<QString, int> rankcounter;
         if (auto rankit = rankingMap.find(gene); rankit != rankingMap.end()) {
@@ -1712,9 +1724,13 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
             }
             speciesGeneAppearancesComb = speciesNames.join(";");
         }
+        auto* countItem = new QStandardItem(); // Gene Appearances (int) should sort by int
+        countItem->setData(count, Qt::DisplayRole);
+        countItem->setData(count, Qt::UserRole); // Use Qt::UserRole or another custom role for sorting by integer
+        row.push_back(countItem);
 
-        row.push_back(new QStandardItem(QString::number(count))); // Gene Appearances
-        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // Gene Appearance Species Names
+        //row.push_back(new QStandardItem(QString::number(count))); // Gene Appearances (int) should sort by int
+        row.push_back(new QStandardItem(speciesGeneAppearancesComb)); // Gene Appearance Species Names (string) should sort by string
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
@@ -1729,8 +1745,7 @@ QVariant SettingsAction::createModelFromData(const QSet<QString>& returnGeneList
                 //.arg(stats.countAll)
                 ;
         }
-        row.push_back(new QStandardItem(formattedStatistics)); // Statistics
-
+        row.push_back(new QStandardItem(formattedStatistics)); // Statistics (string) should sort by string
         model->appendRow(row);
     }
 
@@ -1782,6 +1797,7 @@ void SettingsAction::enableActions()
     _applyLogTransformation.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
     _tsnePerplexity.setDisabled(false);
+    _performGeneTableTsnePerplexity.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
@@ -1816,6 +1832,7 @@ void SettingsAction::disableActions()
     _usePreComputedTSNE.setDisabled(true);
     _applyLogTransformation.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
+    _performGeneTableTsnePerplexity.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);
@@ -2161,6 +2178,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedRowIndex.fromParentVariantMap(variantMap);
     _performGeneTableTsneAction.fromParentVariantMap(variantMap);
     _tsnePerplexity.fromParentVariantMap(variantMap);
+    _performGeneTableTsnePerplexity.fromParentVariantMap(variantMap);
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
@@ -2196,6 +2214,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedRowIndex.insertIntoVariantMap(variantMap);
     _performGeneTableTsneAction.insertIntoVariantMap(variantMap);
     _tsnePerplexity.insertIntoVariantMap(variantMap);
+    _performGeneTableTsnePerplexity.insertIntoVariantMap(variantMap);
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
