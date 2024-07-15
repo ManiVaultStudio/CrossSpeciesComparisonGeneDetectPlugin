@@ -818,6 +818,28 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_typeofTopNGenes, &OptionAction::currentIndexChanged, this, updateTypeOfTopNGenesFilter);
 
+
+    const auto updateClusterOrderHierarchy = [this]() -> void {
+        
+        _customOrderClustersFromHierarchy.clear();
+        if (_clusterOrderHierarchy.getString() != "")
+        {
+            QStringList clusterOrderHierarchyList = _clusterOrderHierarchy.getString().split(" @%$,$%@ ");
+            for (auto clusterOrderHierarchyItem : clusterOrderHierarchyList)
+            {
+
+                _customOrderClustersFromHierarchy.push_back(clusterOrderHierarchyItem);
+            }
+        }
+        
+        
+
+
+        };
+    connect(&_clusterOrderHierarchy, &StringAction::changed, this, updateClusterOrderHierarchy);
+
+
+
     const auto updateApplyLogTransformation = [this]() -> void {
         _statusColorAction.setString("M");
 
