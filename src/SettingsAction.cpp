@@ -1826,7 +1826,7 @@ void SettingsAction::findTopNGenesPerCluster() {
         _selectedPointsTSNEDatasetForGeneTable->setGroupIndex(groupID2);
         if (_selectedPointsTSNEDatasetForGeneTable.isValid())
         {
-            //_selectedPointsTSNEDatasetForGeneTable->printChildren();
+            _selectedPointsTSNEDatasetForGeneTable->printChildren();
             bool skip = false;
             int perplexity = std::min(static_cast<int>(geneOrder.size()), _tsnePerplexity.getValue());
             if (perplexity < 5)
@@ -1845,12 +1845,51 @@ void SettingsAction::findTopNGenesPerCluster() {
             auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Perplexity"));
             if (perplexityAction)
             {
-                qDebug() << "Perplexity: Found";
+                //qDebug() << "Perplexity: Found";
                 perplexityAction->setValue(perplexity);
             }
             else
             {
                 qDebug() << "Perplexity: Not Found";
+            }
+
+            QString knnAlgorithmValue = _performGeneTableTsneKnn.getCurrentText();
+            QString distanceMetricValue = _performGeneTableTsneDistance.getCurrentText();
+            if (knnAlgorithmValue != "")
+            {
+                auto knnAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/kNN Algorithm"));
+                if (knnAction)
+                {
+                    //qDebug() << "Knn: Found";
+                    try {
+                        knnAction->setCurrentText(knnAlgorithmValue);
+                    }
+                    catch (const std::exception& e) {
+                        qDebug() << "An exception occurred in setting knn value: " << e.what();
+                    }  
+                }
+                else
+                {
+                    qDebug() << "Knn: Not Found";
+                }
+            }
+            if (distanceMetricValue != "")
+            {
+                auto distanceAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Distance metric"));
+                if (distanceAction)
+                {
+                    //qDebug() << "Distance: Found";
+                    try {
+                        distanceAction->setCurrentText(distanceMetricValue);
+                    }
+                    catch (const std::exception& e) {
+                        qDebug() << "An exception occurred in setting distance value: " << e.what();
+                    }
+                }
+                else
+                {
+                    qDebug() << "Distance: Not Found";
+                }
             }
 
             scatterplotModificationsGeneSimilarity();
