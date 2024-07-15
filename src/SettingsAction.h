@@ -222,6 +222,10 @@ public: // Action getters
     OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
     OptionAction& getPerformGeneTableTsneDistance() { return _performGeneTableTsneDistance; }
     TriggerAction& getPerformGeneTableTsneTrigger() { return _performGeneTableTsneTrigger; }
+    StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
+
+
+
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
 
     //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
@@ -376,5 +380,6 @@ protected:
     
     QStringList                   _deleteDatasetIds;
     std::vector<QString> _geneOrder;
+    StringAction             _clusterOrderHierarchy;
     //std::vector<QString> _speciesOrder;
 };
