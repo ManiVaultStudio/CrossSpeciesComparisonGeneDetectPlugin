@@ -1040,7 +1040,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             //mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
         }
 
-        if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression") {
+        if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression"&& !_settingsAction.getPerformGeneTableTsneAction().isChecked()) {
             
             
             
@@ -1090,6 +1090,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
 
             }
+        }
+        else
+        {
+            //TODO: Add selected gene point selection to scatterplot
         }
 
         if (_settingsAction.getSelctedSpeciesVals().getString() == finalSpeciesNameString)

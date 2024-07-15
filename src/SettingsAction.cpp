@@ -1113,6 +1113,10 @@ void SettingsAction::updateButtonTriggered()
                         }
                         //stopCodeTimer("Part8");
                         //startCodeTimer("Part9");
+                        if (!_performGeneTableTsneAction.isChecked())
+                        {
+
+                        
                         mv::plugin::AnalysisPlugin* analysisPlugin;
                         bool usePreTSNE = _usePreComputedTSNE.isChecked();
 
@@ -1265,7 +1269,7 @@ void SettingsAction::updateButtonTriggered()
 
 
                         }
-
+                    }
 
 
                     }
@@ -1603,7 +1607,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
 }
 
 void SettingsAction::findTopNGenesPerCluster() {
-    
+
     int n = _topNGenesFilter.getValue();
 
     if (_clusterNameToGeneNameToExpressionValue.empty() || n <= 0) {
@@ -1702,7 +1706,7 @@ void SettingsAction::findTopNGenesPerCluster() {
 
     //iterate std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
     // Iterating over the map
-
+    if (_performGeneTableTsneAction.isChecked()) {
     std::vector<float> rankOrder;
 
     std::unordered_map<QString, std::unordered_map<QString, float>> geneSimilarityMap;
@@ -1751,9 +1755,122 @@ void SettingsAction::findTopNGenesPerCluster() {
     //std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
     //selectedClusterMap["TopNSelectedGenes"] = {clusterColor, filteredIndices};
     //selectedClusterMap["NonTopNGenes"] = { clusterColor, filteredIndices };
-    
+    if (_selectedPointsTSNEDatasetForGeneTable.isValid())
+    {
+        auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
+
+        if (runningAction)
+        {
+
+            if (runningAction->isChecked())
+            {
+                auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                if (stopAction)
+                {
+                    stopAction->trigger();
+                    //std::this_thread::sleep_for(std::chrono::seconds(5));
+                }
+            }
+
+        }
+        mv::data().removeDataset(_selectedPointsTSNEDatasetForGeneTable);
+    }
+
     populatePointData(pointDataId, rankOrder, pointIndicesSize, pointDimSize, speciesOrder);
-    //populateClusterData(clusterDataId, selectedClusterMap);
+
+    mv::plugin::AnalysisPlugin* analysisPlugin;
+    auto scatterplotModificationsGeneSimilarity = [this]() {
+        if (_selectedPointsTSNEDatasetForGeneTable.isValid()) {
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDatasetForGeneTable);
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+
+                                if (_geneSimilarityClusterColoring.isValid())
+                                {
+                                    colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        };
+
+
+
+    {
+        //startCodeTimer("Part10");
+        analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _geneSimilarityPoints });
+        if (!analysisPlugin) {
+            qDebug() << "Could not find create TSNE Analysis";
+            return;
+        }
+        _selectedPointsTSNEDatasetForGeneTable = analysisPlugin->getOutputDataset();
+        int groupID2 = 10 * 3;
+        _selectedPointsTSNEDatasetForGeneTable->setGroupIndex(groupID2);
+        if (_selectedPointsTSNEDatasetForGeneTable.isValid())
+        {
+            //_selectedPointsTSNEDatasetForGeneTable->printChildren();
+            bool skip = false;
+            int perplexity = std::min(static_cast<int>(geneOrder.size()), _tsnePerplexity.getValue());
+            if (perplexity < 5)
+            {
+                qDebug() << "Perplexity is less than 5";
+                skip = true;
+                //_startComputationTriggerAction.setDisabled(false);
+            }
+            if (!skip)
+            {
+            if (perplexity != _tsnePerplexity.getValue())
+            {
+                _tsnePerplexity.setValue(perplexity);
+            }
+
+            auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Perplexity"));
+            if (perplexityAction)
+            {
+                qDebug() << "Perplexity: Found";
+                perplexityAction->setValue(perplexity);
+            }
+            else
+            {
+                qDebug() << "Perplexity: Not Found";
+            }
+
+            scatterplotModificationsGeneSimilarity();
+
+            auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Start"));
+            if (startAction) {
+
+                startAction->trigger();
+
+                analysisPlugin->getOutputDataset()->setSelectionIndices({});
+            }
+        }
+        }
+        //stopCodeTimer("Part10");
+    }
+
+
+
+        //populateClusterData(clusterDataId, selectedClusterMap);
+}
 
     //stopCodeTimer("findTopNGenesPerCluster");
     QVariant returnedmodel= createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
