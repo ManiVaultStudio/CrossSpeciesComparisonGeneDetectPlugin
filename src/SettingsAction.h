@@ -49,6 +49,7 @@ namespace mv
     class CoreInterface;
 }
 
+
 class CustomLineEdit : public QLineEdit {
     Q_OBJECT
 
@@ -255,7 +256,6 @@ public: // Action getters
     Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
     //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
     Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }
-
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -271,6 +271,7 @@ public: // Action getters
     void enableActions();
     void removeSelectionTableRows(QStringList* selectedLeaves);
     void enableDisableButtonsAutomatically();
+    void removeDatasets(int groupId);
 
     QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     void findTopNGenesPerCluster();
@@ -361,4 +362,7 @@ protected:
     std::vector<QString>     _totalGeneList;
     QSet<QString>               _uniqueReturnGeneList;
     IntegralAction                _performGeneTableTsnePerplexity;
+    QStringList                   _deleteDatasetIds;
+
+
 };

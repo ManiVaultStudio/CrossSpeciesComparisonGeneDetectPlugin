@@ -327,8 +327,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     const auto triggerInit = [this]() -> void
         {
-
+            int groupIDDeletion = 10;
+            int groupId1 = 10 * 2;
+            int groupId2 = 10 * 3;
+            _settingsAction.removeDatasets(groupIDDeletion);
+            _settingsAction.removeDatasets(groupId1);
+            _settingsAction.removeDatasets(groupId2);
+            _settingsAction.removeDatasets(-1);
             _settingsAction.getStartComputationTriggerAction().trigger();
+
         };
 
     connect(&mv::projects(), &AbstractProjectManager::projectOpened , this, triggerInit);
@@ -825,6 +832,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getGeneTableView()->update();
 
 
+        //disconnect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, this, nullptr);
 
     connect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) return;
@@ -1024,8 +1032,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                     selectedPoints.insert(selectedPoints.end(), indices.begin(), indices.end());
                 }
             }
-            tsneDataset->setSelectionIndices(selectedPoints);
-            mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
+            //below two lines causing problems TODO: Test
+            //tsneDataset->setSelectionIndices(selectedPoints);
+            //mv::events().notifyDatasetDataSelectionChanged(tsneDataset);
         }
 
         if (_settingsAction.getScatterplotReembedColorOption().getCurrentText() == "Expression") {
@@ -1087,8 +1096,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         _settingsAction.getSelctedSpeciesVals().setString(finalSpeciesNameString);
 
         });
-
-
 
     emit model->layoutChanged();
 
