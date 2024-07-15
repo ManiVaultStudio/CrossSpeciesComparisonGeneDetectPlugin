@@ -257,7 +257,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsnePerplexity(this, "Perform Gene Table TSNE Perplexity"),
     _performGeneTableTsneKnn(this, "Perform Gene Table TSNE Knn"),
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
-    _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger")
+    _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
+    _clusterOrderHierarchy(this, "Cluster Order Hierarchy")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -391,6 +392,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedRowIndex.setSerializationName("CSCGDV:Selected Row Index");
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
+    _clusterOrderHierarchy.setSerializationName("CSCGDV:Cluster Order Hierarchy");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
     _revertRowSelectionChangesToInitial.setSerializationName("CSCGDV:Revert Row Selection Changes To Initial");
@@ -412,7 +414,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneDistance.initialize({ "Euclidean","Cosine","Inner Product","Manhattan","Hamming","Dot"}, "Dot");
     _performGeneTableTsneTrigger.setSerializationName("CSCGDV:Gene Table TSNE Trigger");
     _performGeneTableTsneTrigger.setDisabled(true);
-
+    _clusterOrderHierarchy.setString("");
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -2134,6 +2136,7 @@ void SettingsAction::enableActions()
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
+    _clusterOrderHierarchy.setDisabled(false);
     _statusColorAction.setDisabled(false);
     _searchBox->setDisabled(false);
     enableDisableButtonsAutomatically();
@@ -2172,6 +2175,7 @@ void SettingsAction::disableActions()
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
     _speciesExplorerInMap.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
+    _clusterOrderHierarchy.setDisabled(true);
     _statusColorAction.setDisabled(true);
     _searchBox->setDisabled(true);
 }
@@ -2518,6 +2522,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
+    _clusterOrderHierarchy.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
@@ -2557,6 +2562,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
+    _clusterOrderHierarchy.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
