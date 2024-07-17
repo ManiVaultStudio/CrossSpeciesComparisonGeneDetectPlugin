@@ -40,6 +40,8 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
 
+    requires = ("CrossSpeciesComparisonTreeData/hierarchy_viewer_1.0@lkeb/stable")
+        
     # Qt requirement is inherited from hdps-core
 
     scm = {"type": "git", "subfolder": "hdps/CrossSpeciesComparisonGeneDetectPlugin", "url": "auto", "revision": "auto"}
@@ -105,6 +107,13 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         print("MV_INSTALL_DIR: ", os.environ["MV_INSTALL_DIR"])
         self.install_dir = pathlib.Path(os.environ["MV_INSTALL_DIR"]).as_posix()
         # Give the installation directory to CMake
+        self.install_dir = pathlib.Path(os.environ["MV_INSTALL_DIR"]).as_posix()
+        
+        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+        print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
+        tc.variables["MV_INSTALL_DIR"] = self.install_dir
+        tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
+        
         tc.variables["MV_INSTALL_DIR"] = self.install_dir
 
         # Find ManiVault with find_package
