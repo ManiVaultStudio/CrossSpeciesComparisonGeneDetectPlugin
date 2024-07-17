@@ -14,9 +14,11 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
-#include <execution>
 #include<QTooltip>
 #include <QRegularExpression> 
+#ifdef _WIN32
+#include <execution>
+#endif
 Q_PLUGIN_METADATA(IID "studio.manivault.CrossSpeciesComparisonGeneDetectPlugin")
 
 using namespace mv;
