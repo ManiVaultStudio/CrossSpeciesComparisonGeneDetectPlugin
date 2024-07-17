@@ -31,6 +31,10 @@ if(NOT DEFINED MV_INSTALL_DIR)
 endif()
 file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 
+if(NOT DEFINED MV_CSCTD_INSTALL_DIR) 
+    set(MV_CSCTD_INSTALL_DIR ${MV_INSTALL_DIR} CACHE PATH "Directory where TreeData is installed")
+endif()
+
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
@@ -78,6 +82,7 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS})
 # -----------------------------------------------------------------------------
 # Include ManiVault headers, including system data plugins
 target_include_directories(${PROJECT_NAME} PRIVATE "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${CrossSpeciesComparisonPhyTVu} PRIVATE "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/include/")
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -104,12 +109,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Concurrent)
 # to adapt the MV_LINK_PATH and PLUGIN_LINK_PATH to your install folder
 set(MV_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/lib")
 set(PLUGIN_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+set(CSCTDPLUGIN_LINK_PATH "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
 set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
 
 set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
 set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
 set(CLUSTERDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ClusterData${MV_LINK_SUFFIX}") 
-set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}")
+set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}") 
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE "${MV_LINK_LIBRARY}")
