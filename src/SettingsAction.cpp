@@ -25,7 +25,7 @@
 #include <cmath> // Include for std::isnan and std::isinf
 #include <limits>
 #include <vector>
-
+#include <thread>
 #include <unordered_map>
 #include <QApplication>
 #include <QPalette>
