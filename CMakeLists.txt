@@ -82,7 +82,7 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS})
 # -----------------------------------------------------------------------------
 # Include ManiVault headers, including system data plugins
 target_include_directories(${PROJECT_NAME} PRIVATE "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/")
-target_include_directories(${CrossSpeciesComparisonPhyTVu} PRIVATE "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${PROJECT_NAME} PRIVATE "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/include/")
 
 # -----------------------------------------------------------------------------
 # Target properties
