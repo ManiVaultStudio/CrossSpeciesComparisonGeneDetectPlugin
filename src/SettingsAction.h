@@ -39,6 +39,8 @@
 #include <set>
 #include <QLineEdit>
 #include <QColor>
+
+#include <QMouseEvent>
 using namespace mv::gui;
 class QMenu;
 class CrossSpeciesComparisonGeneDetectPlugin;
@@ -49,6 +51,25 @@ namespace mv
     class CoreInterface;
 }
 
+class ClickableLabel : public QLabel {
+    Q_OBJECT
+
+public:
+    explicit ClickableLabel(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags())
+        : QLabel(parent, f) {
+    }
+
+    ~ClickableLabel() override = default;
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override {
+        Q_UNUSED(event);
+        emit clicked();
+    }
+
+signals:
+    void clicked();
+};
 
 class CustomLineEdit : public QLineEdit {
     Q_OBJECT
@@ -282,7 +303,7 @@ public: // Action getters
     void removeSelectionTableRows(QStringList* selectedLeaves);
     void enableDisableButtonsAutomatically();
     void removeDatasets(int groupId);
-
+    void updateClusterInfoStatusBar();
     QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     void findTopNGenesPerCluster();
 private:

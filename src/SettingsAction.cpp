@@ -887,7 +887,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_performGeneTableTsneAction, &ToggleAction::toggled, this, updateGeneTableTSNECheck);
     const auto updateClusterCountSortingType = [this]() -> void {
-        _statusColorAction.setString("M");
+        updateClusterInfoStatusBar();
 
         };
     connect(&_clusterCountSortingType, &OptionAction::currentIndexChanged, this, updateClusterCountSortingType);
@@ -1483,7 +1483,8 @@ void SettingsAction::updateButtonTriggered()
                     populateClusterData(clusterColorDatasetId, selectedClustersMap);
                     //stopCodeTimer("Part12.4");
                     //stopCodeTimer("Part12");
-
+                    updateClusterInfoStatusBar();
+                    /*
                     QLayoutItem* layoutItem;
                     while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
                         delete layoutItem->widget();
@@ -1497,11 +1498,11 @@ void SettingsAction::updateButtonTriggered()
                         {
                             //startCodeTimer("Part13");
 
-                            /*QLayoutItem* layoutItem;
-                            while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
-                                delete layoutItem->widget();
-                                delete layoutItem;
-                            }*/
+                            //QLayoutItem* layoutItem;
+                            //while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+                            //    delete layoutItem->widget();
+                            //    delete layoutItem;
+                            //}
 
                             // Create a description label
                             auto descriptionLabel = new QLabel("Selected Cell Counts per " + clusterDatasetName + " :");
@@ -1552,34 +1553,34 @@ void SettingsAction::updateButtonTriggered()
 
 
 
-                            /*
 
-                            for (auto cluster : clusterValues) {
-                                auto clusterName = cluster.getName();
-                                auto clusterIndicesSize = cluster.getIndices().size();
-                                auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
 
-                                // Calculate luminance
-                                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+                            //for (auto cluster : clusterValues) {
+                            //    auto clusterName = cluster.getName();
+                            //    auto clusterIndicesSize = cluster.getIndices().size();
+                            //    auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
 
-                                // Choose text color based on luminance
-                                QString textColor = (luminance > 0.5) ? "black" : "white";
+                            //    // Calculate luminance
+                            //    qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
 
-                                // Convert QColor to hex string for stylesheet
-                                QString backgroundColor = clusterColor.name(QColor::HexArgb);
+                            //    // Choose text color based on luminance
+                            //    QString textColor = (luminance > 0.5) ? "black" : "white";
 
-                                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
-                                // Add text color and background color to clusterLabel with padding and border for better styling
-                                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
-                                    .arg(textColor).arg(backgroundColor).arg(textColor));
-                                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
-                            }
-                            */
+                            //    // Convert QColor to hex string for stylesheet
+                            //    QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+                            //    auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+                            //    // Add text color and background color to clusterLabel with padding and border for better styling
+                            //    clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                            //        .arg(textColor).arg(backgroundColor).arg(textColor));
+                            //    _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+                            //}
+
 
                         }
 
                     }
-
+                    */
                     //the next line should only execute if all above are finished
 
 
@@ -1622,6 +1623,137 @@ void SettingsAction::updateButtonTriggered()
         _statusColorAction.setString("E");
     }
 }
+
+void SettingsAction::updateClusterInfoStatusBar()
+{
+    QLayoutItem* layoutItem;
+    while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+        delete layoutItem->widget();
+        delete layoutItem;
+    }
+    if (_tsneDatasetClusterColors.isValid() && _clusterNamesDataset.getCurrentDataset().isValid())
+    {
+        auto clusterDatasetName = _clusterNamesDataset.getCurrentDataset()->getGuiName();
+        auto clusterValues = _tsneDatasetClusterColors->getClusters();
+        if (!clusterValues.empty())
+        {
+            //startCodeTimer("Part13");
+
+            /*QLayoutItem* layoutItem;
+            while ((layoutItem = _selectedCellClusterInfoStatusBar->takeAt(0)) != nullptr) {
+                delete layoutItem->widget();
+                delete layoutItem;
+            }*/
+
+            // Create a description label
+            auto descriptionLabel = new QLabel("Selected Cell Counts per " + clusterDatasetName + " :");
+            // Optionally, set a stylesheet for the description label for styling
+            descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+            // Add the description label to the layout
+            _selectedCellClusterInfoStatusBar->addWidget(descriptionLabel);
+
+
+            std::vector<ClusterOrderContainer> orderedClustersSet;
+
+            for (const auto& cluster : clusterValues) {
+                ClusterOrderContainer temp{
+                    cluster.getIndices().size(),
+                    cluster.getColor(),
+                    cluster.getName()
+                };
+                orderedClustersSet.push_back(std::move(temp));
+            }
+
+            const auto& currentText = _clusterCountSortingType.getCurrentText();
+            if (currentText == "Name") {
+                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByName);
+            }
+            else if (currentText == "Hierarchy View" && !_customOrderClustersFromHierarchy.empty()) {
+                if (_customOrderClustersFromHierarchyMap.empty()) {
+                    _customOrderClustersFromHierarchyMap = prepareCustomSortMap(_customOrderClustersFromHierarchy);
+                }
+                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), [&](const ClusterOrderContainer& a, const ClusterOrderContainer& b) {
+                    return sortByCustomList(a, b, _customOrderClustersFromHierarchyMap);
+                    });
+            }
+            else {
+                std::sort(orderedClustersSet.begin(), orderedClustersSet.end(), sortByCount);
+                if (currentText != "Count") {
+                    _clusterCountSortingType.setCurrentText("Count");
+                }
+            }
+
+            for (const auto& clustersFromSet : orderedClustersSet)
+            {
+                auto clusterLabel = new ClickableLabel(); // Create the label without text
+                QString labelText = QString("%1: %2").arg(clustersFromSet.name).arg(clustersFromSet.count);
+                clusterLabel->setText(labelText); // Set the text on the label
+
+                QColor textColor = clustersFromSet.color.lightness() > 127 ? Qt::black : Qt::white;
+                clusterLabel->setStyleSheet(QString("ClickableLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                    .arg(textColor.name()).arg(clustersFromSet.color.name(QColor::HexArgb)).arg(textColor.name()));
+                connect(clusterLabel, &ClickableLabel::clicked, this, [this, clusterLabel]() {
+
+
+                    int current = _clusterCountSortingType.getCurrentIndex();
+                    int newIndex;
+                    if (current == 0)
+                    {
+                        newIndex = 1;
+                    }
+                    else if (current == 1)
+                    {
+
+                        if (!_customOrderClustersFromHierarchy.empty())
+                        {
+                            newIndex = 2;
+                        }
+                        else
+                        {
+                            newIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        newIndex = 0;
+                    }
+                    _clusterCountSortingType.setCurrentIndex(newIndex);
+                    });
+
+                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+            }
+
+
+
+            /*
+
+            for (auto cluster : clusterValues) {
+                auto clusterName = cluster.getName();
+                auto clusterIndicesSize = cluster.getIndices().size();
+                auto clusterColor = cluster.getColor(); // Assuming getColor() returns a QColor
+
+                // Calculate luminance
+                qreal luminance = 0.299 * clusterColor.redF() + 0.587 * clusterColor.greenF() + 0.114 * clusterColor.blueF();
+
+                // Choose text color based on luminance
+                QString textColor = (luminance > 0.5) ? "black" : "white";
+
+                // Convert QColor to hex string for stylesheet
+                QString backgroundColor = clusterColor.name(QColor::HexArgb);
+
+                auto clusterLabel = new QLabel(QString("%1: %2").arg(clusterName).arg(clusterIndicesSize));
+                // Add text color and background color to clusterLabel with padding and border for better styling
+                clusterLabel->setStyleSheet(QString("QLabel { color: %1; background-color: %2; padding: 2px; border: 0.5px solid %3; }")
+                    .arg(textColor).arg(backgroundColor).arg(textColor));
+                _selectedCellClusterInfoStatusBar->addWidget(clusterLabel);
+            }
+            */
+
+        }
+
+    }
+}
+
 
 void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
 {
