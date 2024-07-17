@@ -6,7 +6,6 @@
 #include <QWebEngineView>
 #include <CrossSpeciesComparisonTreeData.h>
 #include <numeric>   // for std::reduce
-#include <execution> // for std::execution::par
 //#include "lib/Distance/annoylib.h"
 //#include "lib/Distance/kissrandom.h"
 #include <QtConcurrent>
@@ -30,7 +29,9 @@
 #include <unordered_map>
 #include <QApplication>
 #include <QPalette>
-
+#ifdef _WIN32
+#include <execution>
+#endif
 using namespace mv;
 using namespace mv::gui;
 
