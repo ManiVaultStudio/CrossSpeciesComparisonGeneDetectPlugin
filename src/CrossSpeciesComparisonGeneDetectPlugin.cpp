@@ -14,7 +14,7 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
-#include<QTooltip>
+//#include<QTooltip>
 #include <QRegularExpression> 
 #ifdef _WIN32
 #include <execution>
@@ -554,8 +554,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
     connect(_settingsAction.getGeneTableView(), &QTableView::entered, [this](const QModelIndex& index) {
         if (index.isValid()) {
-            QString text = index.model()->data(index).toString();
-            QToolTip::showText(QCursor::pos(), text, _settingsAction.getGeneTableView());
+            //QString text = index.model()->data(index).toString();
+            //QToolTip::showText(QCursor::pos(), text, _settingsAction.getGeneTableView());
+            //alternative to above because of linux errors
+            QAbstractItemModel* model = _settingsAction.getGeneTableView()->model();
+            for (int row = 0; row < model->rowCount(); ++row) {
+                for (int column = 0; column < model->columnCount(); ++column) {
+                    QModelIndex index = model->index(row, column);
+                    QString text = model->data(index).toString();
+                    model->setData(index, text, Qt::ToolTipRole);
+                }
+            }
+
         }
         });
 
