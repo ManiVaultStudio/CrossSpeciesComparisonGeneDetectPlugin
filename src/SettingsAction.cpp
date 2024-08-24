@@ -739,17 +739,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             
         }
         else if (string == "M") {
-            labelText = "Pending updation";
+            labelText = "Outdated";
             backgroundColor = "#ffc107"; // Gold
 
         }
         else if (string == "E") {
-            labelText ="Error occurred during update";
+            labelText ="Error";
             backgroundColor = "#dc3545"; // Red
         }
         else if (string == "R")
         {
-            labelText = "Running updation";
+            labelText = "Processing";
             backgroundColor = "#007bff"; // Blue
         }
         else {
@@ -1646,7 +1646,7 @@ void SettingsAction::updateClusterInfoStatusBar()
             }*/
 
             // Create a description label
-            auto descriptionLabel = new QLabel("Selected Cell Counts per " + clusterDatasetName + " :");
+            auto descriptionLabel = new QLabel("Selected cell counts per " + clusterDatasetName + " , sorted based on "+ _clusterCountSortingType.getCurrentText() + " :");
             // Optionally, set a stylesheet for the description label for styling
             descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
             // Add the description label to the layout
