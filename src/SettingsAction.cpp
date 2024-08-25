@@ -1646,7 +1646,8 @@ void SettingsAction::updateClusterInfoStatusBar()
             }*/
 
             // Create a description label
-            auto descriptionLabel = new QLabel("Selected cell counts per " + clusterDatasetName + " , sorted based on "+ _clusterCountSortingType.getCurrentText() + " :");
+            auto descriptionLabel = new QLabel("Cell counts per " + clusterDatasetName + ", sorted by " + _clusterCountSortingType.getCurrentText() + ":");
+
             // Optionally, set a stylesheet for the description label for styling
             descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
             // Add the description label to the layout
