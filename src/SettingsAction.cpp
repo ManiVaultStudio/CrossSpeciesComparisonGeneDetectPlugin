@@ -2594,28 +2594,56 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     }
 
     // Generate HTML output
-    QString html = "<html><head><style>"
-        "table { border-collapse: collapse; width: 100%; font-size: 12px; }"
-        "th, td { border: 1px solid black; padding: 4px; text-align: left; }"
-        "th { background-color: #f2f2f2; }"
-        "</style></head><body>";
-    html += "<table>";
-    html += "<tr><th>Cluster Name</th><th>Count</th></tr>";
+    //QString html = "<html><head><style>"
+    //    "table { border-collapse: collapse; width: 100%; font-size: 12px; }"
+    //    "th, td { border: 1px solid black; padding: 4px; text-align: left; }"
+    //    "th { background-color: #f2f2f2; }"
+    //    "</style></head><body>";
+    //html += "<table>";
+    //html += "<tr><th>Cluster Name</th><th>Count</th></tr>";
 
-    // Populate the table with cluster data
+    //// Populate the table with cluster data
+    //for (const auto& entry : clusterCountMap) {
+    //    QString clusterName = entry.first;
+    //    int count = entry.second.first;
+    //    QString colorHex = entry.second.second.name();
+
+    //    html += "<tr>";
+    //    html += "<td style='background-color:" + colorHex + ";'>" + clusterName + "</td>";
+    //    html += "<td>" + QString::number(count) + "</td>";
+    //    html += "</tr>";
+    //}
+
+    //html += "</table></body></html>";
+    //return html;
+    QString html = "<html><head><style>"
+        "div { display: inline-block; padding: 4px; margin: 2px; border: 1px solid black; font-size: 12px; }"
+        "</style></head><body>";
+
+    // Function to determine if a color is dark
+    auto isDarkColor = [](const QColor& color) {
+        int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
+        return brightness < 128;
+        };
+
+    // Populate the divs with cluster data
     for (const auto& entry : clusterCountMap) {
         QString clusterName = entry.first;
         int count = entry.second.first;
         QString colorHex = entry.second.second.name();
+        QColor color(entry.second.second);
 
-        html += "<tr>";
-        html += "<td style='background-color:" + colorHex + ";'>" + clusterName + "</td>";
-        html += "<td>" + QString::number(count) + "</td>";
-        html += "</tr>";
+        QString textColor = isDarkColor(color) ? "white" : "black";
+
+        html += "<div style='background-color:" + colorHex + "; color:" + textColor + ";'>";
+        html += clusterName + ":" + QString::number(count);
+        html += "</div>";
     }
 
-    html += "</table></body></html>";
+    html += "</body></html>";
     return html;
+
+
 }
 
 
