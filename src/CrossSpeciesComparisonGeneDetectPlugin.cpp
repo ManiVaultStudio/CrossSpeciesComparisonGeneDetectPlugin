@@ -364,6 +364,49 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.removeDatasets(-1);
             _settingsAction.getStartComputationTriggerAction().trigger();
 
+
+
+
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
+
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                        if (pointDatasetPickerAction) {
+                            pointDatasetPickerAction->setCurrentText("");
+
+                            pointDatasetPickerAction->setCurrentDataset(_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset());
+
+                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                            if (colorDatasetPickerAction)
+                            {
+                                colorDatasetPickerAction->setCurrentText("");
+                                colorDatasetPickerAction->setCurrentDataset(_settingsAction.getClusterNamesDataset().getCurrentDataset());
+
+                            }
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
+                                    return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
+                                    });
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
+
+
+
         };
 
     connect(&mv::projects(), &AbstractProjectManager::projectOpened , this, triggerInit);
