@@ -711,7 +711,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             {
                                 samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                     });
                             }
                         }
@@ -1252,7 +1252,7 @@ void SettingsAction::updateButtonTriggered()
                                                 {
                                                     samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                                         QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                                        return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                                        return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                                         });
                                                 }
                                             }
@@ -2025,7 +2025,7 @@ void SettingsAction::findTopNGenesPerCluster() {
                             {
                                 samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                     });
                             }
                         }
@@ -2617,6 +2617,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     //html += "</table></body></html>";
     //return html;
     QString html = "<html><head><style>"
+        "body { display: flex; flex-wrap: wrap; max-width: 800px; }" // Set max-width to control wrapping
         "div { display: inline-block; padding: 4px; margin: 2px; border: 1px solid black; font-size: 12px; }"
         "</style></head><body>";
 
@@ -2642,6 +2643,8 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     html += "</body></html>";
     return html;
+
+
 
 
 }
