@@ -2627,8 +2627,16 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         return brightness < 128;
         };
 
+    // Convert the map to a vector of pairs for sorting
+    std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
+
+    // Sort the vector by count in descending order
+    std::sort(clusterVector.begin(), clusterVector.end(), [](const auto& a, const auto& b) {
+        return a.second.first > b.second.first;
+        });
+
     // Populate the divs with cluster data
-    for (const auto& entry : clusterCountMap) {
+    for (const auto& entry : clusterVector) {
         QString clusterName = entry.first;
         int count = entry.second.first;
         QString colorHex = entry.second.second.name();
