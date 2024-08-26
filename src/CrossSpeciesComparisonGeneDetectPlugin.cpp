@@ -193,6 +193,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                     auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
                     mv::gui::DatasetPickerAction* colorDatasetPickerAction;
                     mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                    mv::gui::ViewPluginSamplerAction* samplerActionAction;
 
 
                     if (scatterplotViewFactory) {
@@ -211,6 +212,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                         colorDatasetPickerAction->setCurrentDataset(_settingsAction.getClusterNamesDataset().getCurrentDataset());
 
                                     }
+                                    samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                                    if (samplerActionAction)
+                                    {
+                                        samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                            QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
+                                            return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                            });
+                                    }
+
                                 }
                             }
                         }
@@ -688,7 +699,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
             mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
 
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
@@ -721,7 +732,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                             {
                                 opacityAction->setValue(20.0);
                             }
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
 
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
+                                    return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                    });
+                            }
                         }
                     }
                 }
@@ -985,7 +1004,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
                 mv::gui::DatasetPickerAction* colorDatasetPickerAction;
                 mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-
+                mv::gui::ViewPluginSamplerAction* samplerActionAction;
 
                 if (scatterplotViewFactory) {
                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
@@ -1018,7 +1037,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                                 {
                                     opacityAction->setValue(20.0);
                                 }
+                                
+                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
 
+                                if (samplerActionAction)
+                                {
+                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                        QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId(); 
+                                        return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                        });
+                                }
                             }
                         }
                     }

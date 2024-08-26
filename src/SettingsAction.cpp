@@ -651,7 +651,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
             mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-            
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                     if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
@@ -703,6 +703,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
+                            }
+                            
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                    });
                             }
                         }
                         }
@@ -1189,6 +1199,7 @@ void SettingsAction::updateButtonTriggered()
                                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
                                 mv::gui::DatasetPickerAction* colorDatasetPickerAction;
                                 mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                                mv::gui::ViewPluginSamplerAction* samplerActionAction;
                                 if (scatterplotViewFactory) {
                                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                                         if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
@@ -1233,6 +1244,16 @@ void SettingsAction::updateButtonTriggered()
 
 
                                                     }
+                                                }
+                                                
+                                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                                                if (samplerActionAction)
+                                                {
+                                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                                        QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                                        return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                                        });
                                                 }
                                             }
                                         }
@@ -1976,6 +1997,7 @@ void SettingsAction::findTopNGenesPerCluster() {
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
             mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                     if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
@@ -1995,6 +2017,16 @@ void SettingsAction::findTopNGenesPerCluster() {
                                     colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
                                 }
 
+                            }
+                            
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "LocalPointIndices");
+                                    });
                             }
                         }
                     }
@@ -2472,6 +2504,121 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         }
     }
 
+}
+
+QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType) {
+    // Extract and convert GlobalPointIndices and ColorDatasetID from toolTipContext
+    auto raw_Global_Local_PointIndices = toolTipContext[indicesType];
+
+    // Declare variables
+    std::vector<std::seed_seq::result_type> global_local_PointIndices;
+    std::map<QString, std::pair<int, QColor>> clusterCountMap;
+
+    // Convert the list of global point indices to a vector of integers
+    for (const auto& global_local_PointIndex : raw_Global_Local_PointIndices.toList()) {
+        global_local_PointIndices.push_back(global_local_PointIndex.toInt());
+    }
+
+    // If the global point indices list is empty, return an empty result
+    if (global_local_PointIndices.empty()) {
+        return {};
+    }
+
+    // Get the size of global point indices
+    int global_local_IndicesSize = global_local_PointIndices.size();
+
+    // If there are no global indices, return an empty result
+    if (global_local_IndicesSize < 1) {
+        return {};
+    }
+
+    // If there is no cluster dataset ID, return a summary of total points
+    if (clusterDatasetId.isEmpty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_IndicesSize);
+    }
+
+    // Retrieve the cluster dataset
+    auto clusterFullDataset = mv::data().getDataset<Clusters>(clusterDatasetId);
+
+    // If the dataset is invalid, return a summary of total points
+    if (!clusterFullDataset.isValid()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_IndicesSize);
+    }
+
+    // Get the clusters from the dataset
+    auto clusterValuesData = clusterFullDataset->getClusters();
+
+    // If the clusters data is empty, return a summary of total points
+    if (clusterValuesData.isEmpty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_IndicesSize);
+    }
+
+    // Process each cluster and find intersections with global point indices
+    for (const auto& cluster : clusterValuesData) {
+        QString clusterName = cluster.getName();
+        QColor clusterColor = cluster.getColor();
+        std::vector<std::seed_seq::result_type> clusterIndices = cluster.getIndices();
+
+        std::vector<std::seed_seq::result_type> intersect;
+        std::set_intersection(clusterIndices.begin(), clusterIndices.end(),
+            global_local_PointIndices.begin(), global_local_PointIndices.end(),
+            std::back_inserter(intersect));
+
+        // If there is an intersection, store the result in the map
+        if (!intersect.empty()) {
+            clusterCountMap[clusterName] = std::make_pair(intersect.size(), clusterColor);
+        }
+    }
+
+    // If no clusters were found, return a summary of total points
+    if (clusterCountMap.empty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_IndicesSize);
+    }
+
+    // Generate HTML output
+    QString html = "<html><head><style>"
+        "table { border-collapse: collapse; width: 100%; font-size: 12px; }"
+        "th, td { border: 1px solid black; padding: 4px; text-align: left; }"
+        "th { background-color: #f2f2f2; }"
+        "</style></head><body>";
+    html += "<table>";
+    html += "<tr><th>Cluster Name</th><th>Count</th></tr>";
+
+    // Populate the table with cluster data
+    for (const auto& entry : clusterCountMap) {
+        QString clusterName = entry.first;
+        int count = entry.second.first;
+        QColor color = entry.second.second;
+        QString colorHex = color.name();
+
+        html += "<tr>";
+        html += "<td style='background-color:" + colorHex + ";'>" + clusterName + "</td>";
+        html += "<td>" + QString::number(count) + "</td>";
+        html += "</tr>";
+    }
+
+    html += "</table></body></html>";
+    return html;
 }
 
 void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap) {
