@@ -36,7 +36,28 @@ void applyLogTransformation(std::vector<float>& values) {
 #endif
 
 }
+void clearTableSelection(QTableView* tableView) {
+    if (tableView && tableView->selectionModel()) {
+        // Clear the current selection
+        tableView->clearSelection();
 
+        // Temporarily disable the selection mode to remove highlight
+        QAbstractItemView::SelectionMode oldMode = tableView->selectionMode();
+        tableView->setSelectionMode(QAbstractItemView::NoSelection);
+
+        // Clear the current index
+        tableView->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+
+        // Restore the original selection mode
+        tableView->setSelectionMode(oldMode);
+
+        // Update the view to ensure changes are reflected
+        tableView->update();
+    }
+    else {
+        qDebug() << "TableView or its selection model is null";
+    }
+}
 void updateRowVisibility(const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
 
     for (int i = 0; i < proxyModel->rowCount(); i++) {
@@ -1294,9 +1315,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
         model->sort(1, Qt::DescendingOrder);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
-        _settingsAction.getSelectionDetailsTable()->setModel(model);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
@@ -1413,19 +1434,57 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
             model->appendRow(rowItems);
         }
-
+        _settingsAction.getSelectionDetailsTable()->setModel(model);
         model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);////"Absolute","Negative","Positive","Mixed"
 
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
+        //_settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
 
-        _settingsAction.getSelectionDetailsTable()->setModel(model);
+        
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
         emit model->layoutChanged();
+
+
+        // Add a connect for row selection
+        connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
+            static QModelIndex lastSelectedIndex;
+
+            qDebug() << "Selection changed"; // Debug statement to check if the slot is triggered
+            if (selected.isEmpty()) {
+                qDebug() << "No selection"; // Debug statement to check if selection is empty
+                return;
+            }
+            QModelIndexList selectedIndexes = selected.indexes();
+            if (selectedIndexes.isEmpty()) {
+                qDebug() << "No selected indexes"; // Debug statement to check if selected indexes are empty
+                return;
+            }
+            QModelIndex selectedIndex = selectedIndexes.at(0);
+            if (!selectedIndex.isValid()) {
+                qDebug() << "Invalid index"; // Debug statement to check if the index is valid
+                return;
+            }
+
+            // Check if the same row is clicked a second time
+            if (selectedIndex == lastSelectedIndex) {
+                clearTableSelection(_settingsAction.getSelectionDetailsTable());
+                lastSelectedIndex = QModelIndex(); // Reset the last selected index
+                qDebug() << "Selection cleared"; // Debug statement to indicate selection is cleared
+                return;
+            }
+
+            lastSelectedIndex = selectedIndex; // Update the last selected index
+            QString species = selectedIndex.siblingAtColumn(0).data().toString();
+            qDebug() << "Species selected" << species; // Debug statement to print the selected species
+            });
+
+
     }
     adjustTableWidths("large");
 }
+
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
 {
