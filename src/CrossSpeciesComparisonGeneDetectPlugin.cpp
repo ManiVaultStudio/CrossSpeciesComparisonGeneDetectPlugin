@@ -659,7 +659,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
     QString gene = _settingsAction.getSelectedGeneAction().getString();
     QStringList finalsettingSpeciesNamesArray = _settingsAction.getSpeciesExplorerInMap().getSelectedOptions();
 
-    if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid())
+    if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid() || !_settingsAction.getFilteredUMAPDatasetClusters().isValid())
     {
         qDebug() << "One of the datasets is not valid";
         return;
@@ -729,6 +729,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
 
             fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
             auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
+            auto speciesClusterDataId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
             int tempnumPointsColors = selectedSpeciesIndices.size();
 
             std::vector<QString> columnGeneColors = { gene };
@@ -738,6 +739,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                 applyLogTransformation(resultContainerSpeciesColors);
             }
             _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
+            std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
+            //TODO: populate the selectedFilteredUMAPDatasetColorsMap
+
+            _settingsAction.populateClusterData(speciesClusterDataId, selectedFilteredUMAPDatasetColorsMap);
 
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
@@ -976,7 +981,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         std::vector<std::seed_seq::result_type> filtSelectInndx;
 
 
-        if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid())
+        if (!speciesDataset.isValid() || !umapDataset.isValid() || !mainPointsDataset.isValid() || !_settingsAction.getFilteredUMAPDatasetPoints().isValid() || !_settingsAction.getFilteredUMAPDatasetColors().isValid() || !_settingsAction.getFilteredUMAPDatasetClusters().isValid())
         {
             qDebug() << "One of the datasets is not valid";
             return;
@@ -1034,6 +1039,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
                 fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
                 auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
+                auto speciesClusterDataId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                 int tempnumPointsColors = selectedSpeciesIndices.size();
                 
                 std::vector<QString> columnGeneColors = { gene };
@@ -1043,6 +1049,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                     applyLogTransformation(resultContainerSpeciesColors);
                 }
                 _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
+
+                std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
+                //TODO: populate the selectedFilteredUMAPDatasetColorsMap
+
+                _settingsAction.populateClusterData(speciesClusterDataId, selectedFilteredUMAPDatasetColorsMap);
+
 
                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
                 mv::gui::DatasetPickerAction* colorDatasetPickerAction;

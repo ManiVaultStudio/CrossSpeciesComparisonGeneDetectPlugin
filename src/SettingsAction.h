@@ -271,6 +271,7 @@ public: // Action getters
     std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
     Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
+    Dataset<Points> & getFilteredUMAPDatasetClusters() { return _filteredUMAPDatasetClusters; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
@@ -356,6 +357,7 @@ protected:
     Dataset<Points>        _selectedPointsEmbeddingDataset;
     Dataset<Points>        _filteredUMAPDatasetPoints;
     Dataset<Points>        _filteredUMAPDatasetColors;
+    Dataset<Points>        _filteredUMAPDatasetClusters;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;  

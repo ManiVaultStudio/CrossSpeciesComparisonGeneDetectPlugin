@@ -1070,9 +1070,18 @@ void SettingsAction::updateButtonTriggered()
                             //need to delete
 
                         }
+                        if (!_filteredUMAPDatasetClusters.isValid())
+                        {
+                            //need to delete
+
+                        }
                         _filteredUMAPDatasetColors = mv::data().createDataset("Points", "Filtered UMAP Dataset Colors", _filteredUMAPDatasetPoints);
                         _filteredUMAPDatasetColors->setGroupIndex(groupID1);
                         mv::events().notifyDatasetAdded(_filteredUMAPDatasetColors);
+
+                        _filteredUMAPDatasetClusters = mv::data().createDataset("Cluster", "Filtered UMAP Dataset Clusters", _filteredUMAPDatasetPoints);
+                        _filteredUMAPDatasetClusters->setGroupIndex(groupID1);
+                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetClusters);
 
                     }
 
