@@ -684,10 +684,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
         auto fullMainPointsDataset = mv::data().getDataset<Points>(mainPointsDataset.getDatasetId());
 
         std::unordered_set<QString> speciesNamesSet(finalsettingSpeciesNamesArray.begin(), finalsettingSpeciesNamesArray.end());
+        std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
         for (const auto& species : speciesClusterDataset->getClusters()) {
             if (speciesNamesSet.find(species.getName()) != speciesNamesSet.end()) {
                 const auto& indices = species.getIndices();
                 selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
+                selectedFilteredUMAPDatasetColorsMap[species.getName()] = std::make_pair(species.getColor(), std::vector<int>(indices.begin(), indices.end()));
             }
         }
 
@@ -739,7 +741,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                 applyLogTransformation(resultContainerSpeciesColors);
             }
             _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
-            std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
+            //std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
             //TODO: populate the selectedFilteredUMAPDatasetColorsMap
 
             _settingsAction.populateClusterData(speciesClusterDataId, selectedFilteredUMAPDatasetColorsMap);
@@ -785,7 +787,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                             if (samplerActionAction)
                             {
                                 samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
-                                    QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
+                                    QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                     });
                             }
@@ -992,12 +994,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
             auto speciesClusterDataset = mv::data().getDataset<Clusters>(speciesDataset.getDatasetId());
             auto umapPointsDataset = mv::data().getDataset<Points>(umapDataset.getDatasetId());
             auto fullMainPointsDataset = mv::data().getDataset<Points>(mainPointsDataset.getDatasetId());
-
             std::unordered_set<QString> speciesNamesSet(finalsettingSpeciesNamesArray.begin(), finalsettingSpeciesNamesArray.end());
+            std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
             for (const auto& species : speciesClusterDataset->getClusters()) {
                 if (speciesNamesSet.find(species.getName()) != speciesNamesSet.end()) {
                     const auto& indices = species.getIndices();
+
                     selectedSpeciesIndices.insert(selectedSpeciesIndices.end(), indices.begin(), indices.end());
+                    selectedFilteredUMAPDatasetColorsMap[species.getName()] = std::make_pair(species.getColor(), std::vector<int>(indices.begin(), indices.end()));
                 }
             }
 
@@ -1050,8 +1054,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                 }
                 _settingsAction.populatePointData(speciesColorDataId, resultContainerSpeciesColors, tempnumPointsColors, tempNumDimensionsColors, columnGeneColors);
 
-                std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
+                //std::map<QString, std::pair<QColor, std::vector<int>>> selectedFilteredUMAPDatasetColorsMap;
                 //TODO: populate the selectedFilteredUMAPDatasetColorsMap
+
 
                 _settingsAction.populateClusterData(speciesClusterDataId, selectedFilteredUMAPDatasetColorsMap);
 
@@ -1098,7 +1103,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                                 if (samplerActionAction)
                                 {
                                     samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
-                                        QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId(); 
+                                        QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                         return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                         });
                                 }

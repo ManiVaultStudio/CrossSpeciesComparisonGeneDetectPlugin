@@ -2446,6 +2446,7 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
     auto colorDataset = mv::data().getDataset<Clusters>(datasetId);
     if (colorDataset.isValid())
     {
+        colorDataset->getClusters() = QVector<Cluster>();
         for (const auto& pair : clusterMap)
         {
             QString clusterName = pair.first;
