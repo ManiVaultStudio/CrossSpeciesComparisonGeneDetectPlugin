@@ -36,6 +36,7 @@ void applyLogTransformation(std::vector<float>& values) {
 #endif
 
 }
+
 void clearTableSelection(QTableView* tableView) {
     if (tableView && tableView->selectionModel()) {
         // Clear the current selection
@@ -306,7 +307,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                         if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
                         {
                             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
-                            _settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                            //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
                             geneExplorer();
                         }
                         
