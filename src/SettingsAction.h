@@ -271,6 +271,7 @@ public: // Action getters
     std::vector<std::seed_seq::result_type>& getSelectedIndicesFromStorage() { return _selectedIndicesFromStorage; }
     Dataset<Points> & getFilteredUMAPDatasetPoints() { return _filteredUMAPDatasetPoints; }
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
+    Dataset<Points> & getFilteredUMAPDatasetClusters() { return _filteredUMAPDatasetClusters; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
@@ -306,6 +307,7 @@ public: // Action getters
     void updateClusterInfoStatusBar();
     QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     void findTopNGenesPerCluster();
+    QString generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType);
 private:
 
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -355,6 +357,7 @@ protected:
     Dataset<Points>        _selectedPointsEmbeddingDataset;
     Dataset<Points>        _filteredUMAPDatasetPoints;
     Dataset<Points>        _filteredUMAPDatasetColors;
+    Dataset<Points>        _filteredUMAPDatasetClusters;
 
     Dataset<Clusters>        _tsneDatasetSpeciesColors;
     Dataset<Clusters>        _tsneDatasetClusterColors;  
