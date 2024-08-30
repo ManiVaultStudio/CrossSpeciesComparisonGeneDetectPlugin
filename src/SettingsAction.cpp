@@ -2392,33 +2392,45 @@ void SettingsAction::enableDisableButtonsAutomatically()
         std::sort(species.begin(), species.end());
         bothListsEqual = (temp == species);
     }
+    _revertRowSelectionChangesToInitial.setDisabled(false);
+    _speciesExplorerInMapTrigger.setDisabled(false);
+    //if (!stringActionHasOptions)
+    //{
+    //    _revertRowSelectionChangesToInitial.setDisabled(true);
+    //}
+    //else
+    //{
+    //    if (!optionsActionHasOptions)
+    //    {
 
-    if (!stringActionHasOptions)
-    {
-        _speciesExplorerInMapTrigger.setDisabled(true);
-        _revertRowSelectionChangesToInitial.setDisabled(true);
-    }
-    else
-    {
-        if (!optionsActionHasOptions)
-        {
-            _speciesExplorerInMapTrigger.setDisabled(true);
-            _revertRowSelectionChangesToInitial.setDisabled(false);
-        }
-        else
-        {
-            if (bothListsEqual)
-            {
-                _speciesExplorerInMapTrigger.setDisabled(false);
-                _revertRowSelectionChangesToInitial.setDisabled(true);
-            }
-            else
-            {
-                _speciesExplorerInMapTrigger.setDisabled(false);
-                _revertRowSelectionChangesToInitial.setDisabled(false);
-            }
-        }
-    }
+    //        _revertRowSelectionChangesToInitial.setDisabled(false);
+    //    }
+    //    else
+    //    {
+    //        if (bothListsEqual)
+    //        {
+
+    //            _revertRowSelectionChangesToInitial.setDisabled(true);
+    //        }
+    //        else
+    //        {
+
+    //            _revertRowSelectionChangesToInitial.setDisabled(false);
+    //        }
+    //    }
+    //}
+
+
+
+    //if (!optionsActionHasOptions)
+    //{
+    //    _speciesExplorerInMapTrigger.setDisabled(true);
+
+    //}
+    //else 
+    //{
+    //    _speciesExplorerInMapTrigger.setDisabled(false);
+    //}
 
 
 

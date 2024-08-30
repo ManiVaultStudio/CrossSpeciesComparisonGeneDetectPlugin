@@ -47,6 +47,7 @@ public:
     void selectedCellStatisticsStatusBarRemove();
     void selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies);
     void geneExplorer();
+    void geneExplorer(QString selectedSpecies);
     /**
      * Invoked when a data event occurs
      * @param dataEvent Data event which occurred
