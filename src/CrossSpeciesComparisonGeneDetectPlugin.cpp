@@ -1616,19 +1616,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
             static QModelIndex lastSelectedIndex;
 
-            qDebug() << "Selection changed"; // Debug statement to check if the slot is triggered
+            //qDebug() << "Selection changed"; // Debug statement to check if the slot is triggered
             if (selected.isEmpty()) {
-                qDebug() << "No selection"; // Debug statement to check if selection is empty
+               // qDebug() << "No selection"; // Debug statement to check if selection is empty
                 return;
             }
             QModelIndexList selectedIndexes = selected.indexes();
             if (selectedIndexes.isEmpty()) {
-                qDebug() << "No selected indexes"; // Debug statement to check if selected indexes are empty
+               // qDebug() << "No selected indexes"; // Debug statement to check if selected indexes are empty
                 return;
             }
             QModelIndex selectedIndex = selectedIndexes.at(0);
             if (!selectedIndex.isValid()) {
-                qDebug() << "Invalid index"; // Debug statement to check if the index is valid
+               // qDebug() << "Invalid index"; // Debug statement to check if the index is valid
                 return;
             }
 
@@ -1642,7 +1642,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
             lastSelectedIndex = selectedIndex; // Update the last selected index
             QString species = selectedIndex.siblingAtColumn(0).data().toString();
-            qDebug() << "Species selected" << species; // Debug statement to print the selected species
+            //qDebug() << "Species selected" << species; // Debug statement to print the selected species
             geneExplorer(species);
             });
         
