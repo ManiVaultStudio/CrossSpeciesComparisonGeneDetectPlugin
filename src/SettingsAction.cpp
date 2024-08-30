@@ -651,10 +651,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
             mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-            
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
 
@@ -703,6 +703,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
+                            }
+                            
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                    });
                             }
                         }
                         }
@@ -1060,9 +1070,18 @@ void SettingsAction::updateButtonTriggered()
                             //need to delete
 
                         }
+                        if (!_filteredUMAPDatasetClusters.isValid())
+                        {
+                            //need to delete
+
+                        }
                         _filteredUMAPDatasetColors = mv::data().createDataset("Points", "Filtered UMAP Dataset Colors", _filteredUMAPDatasetPoints);
                         _filteredUMAPDatasetColors->setGroupIndex(groupID1);
                         mv::events().notifyDatasetAdded(_filteredUMAPDatasetColors);
+
+                        _filteredUMAPDatasetClusters = mv::data().createDataset("Cluster", "Filtered UMAP Dataset Clusters", _filteredUMAPDatasetPoints);
+                        _filteredUMAPDatasetClusters->setGroupIndex(groupID1);
+                        mv::events().notifyDatasetAdded(_filteredUMAPDatasetClusters);
 
                     }
 
@@ -1189,9 +1208,10 @@ void SettingsAction::updateButtonTriggered()
                                 auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
                                 mv::gui::DatasetPickerAction* colorDatasetPickerAction;
                                 mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                                mv::gui::ViewPluginSamplerAction* samplerActionAction;
                                 if (scatterplotViewFactory) {
                                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                        if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                                        if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                                             pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                                             if (pointDatasetPickerAction) {
                                                 pointDatasetPickerAction->setCurrentText("");
@@ -1233,6 +1253,16 @@ void SettingsAction::updateButtonTriggered()
 
 
                                                     }
+                                                }
+                                                
+                                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                                                if (samplerActionAction)
+                                                {
+                                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                                        QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                                        return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                                        });
                                                 }
                                             }
                                         }
@@ -1646,7 +1676,8 @@ void SettingsAction::updateClusterInfoStatusBar()
             }*/
 
             // Create a description label
-            auto descriptionLabel = new QLabel("Selected cell counts per " + clusterDatasetName + " , sorted based on "+ _clusterCountSortingType.getCurrentText() + " :");
+            auto descriptionLabel = new QLabel("Cell counts per " + clusterDatasetName + ", sorted by " + _clusterCountSortingType.getCurrentText() + ":");
+
             // Optionally, set a stylesheet for the description label for styling
             descriptionLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
             // Add the description label to the layout
@@ -1975,9 +2006,10 @@ void SettingsAction::findTopNGenesPerCluster() {
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
             mv::gui::DatasetPickerAction* colorDatasetPickerAction;
             mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+            mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Gene Similarity View") {
+                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
@@ -1994,6 +2026,16 @@ void SettingsAction::findTopNGenesPerCluster() {
                                     colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
                                 }
 
+                            }
+                            
+                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                            if (samplerActionAction)
+                            {
+                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
+                                    });
                             }
                         }
                     }
@@ -2350,33 +2392,45 @@ void SettingsAction::enableDisableButtonsAutomatically()
         std::sort(species.begin(), species.end());
         bothListsEqual = (temp == species);
     }
+    _revertRowSelectionChangesToInitial.setDisabled(false);
+    _speciesExplorerInMapTrigger.setDisabled(false);
+    //if (!stringActionHasOptions)
+    //{
+    //    _revertRowSelectionChangesToInitial.setDisabled(true);
+    //}
+    //else
+    //{
+    //    if (!optionsActionHasOptions)
+    //    {
 
-    if (!stringActionHasOptions)
-    {
-        _speciesExplorerInMapTrigger.setDisabled(true);
-        _revertRowSelectionChangesToInitial.setDisabled(true);
-    }
-    else
-    {
-        if (!optionsActionHasOptions)
-        {
-            _speciesExplorerInMapTrigger.setDisabled(true);
-            _revertRowSelectionChangesToInitial.setDisabled(false);
-        }
-        else
-        {
-            if (bothListsEqual)
-            {
-                _speciesExplorerInMapTrigger.setDisabled(false);
-                _revertRowSelectionChangesToInitial.setDisabled(true);
-            }
-            else
-            {
-                _speciesExplorerInMapTrigger.setDisabled(false);
-                _revertRowSelectionChangesToInitial.setDisabled(false);
-            }
-        }
-    }
+    //        _revertRowSelectionChangesToInitial.setDisabled(false);
+    //    }
+    //    else
+    //    {
+    //        if (bothListsEqual)
+    //        {
+
+    //            _revertRowSelectionChangesToInitial.setDisabled(true);
+    //        }
+    //        else
+    //        {
+
+    //            _revertRowSelectionChangesToInitial.setDisabled(false);
+    //        }
+    //    }
+    //}
+
+
+
+    //if (!optionsActionHasOptions)
+    //{
+    //    _speciesExplorerInMapTrigger.setDisabled(true);
+
+    //}
+    //else 
+    //{
+    //    _speciesExplorerInMapTrigger.setDisabled(false);
+    //}
 
 
 
@@ -2404,6 +2458,7 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
     auto colorDataset = mv::data().getDataset<Clusters>(datasetId);
     if (colorDataset.isValid())
     {
+        colorDataset->getClusters() = QVector<Cluster>();
         for (const auto& pair : clusterMap)
         {
             QString clusterName = pair.first;
@@ -2472,6 +2527,158 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
     }
 
 }
+
+QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType) {
+    // Extract and convert GlobalPointIndices and ColorDatasetID from toolTipContext
+    auto raw_Global_Local_PointIndices = toolTipContext[indicesType].toList();
+
+    // Convert the list of global point indices to a vector of integers
+    std::vector<std::seed_seq::result_type> global_local_PointIndices;
+    global_local_PointIndices.reserve(raw_Global_Local_PointIndices.size());
+    for (const auto& global_local_PointIndex : raw_Global_Local_PointIndices) {
+        global_local_PointIndices.push_back(global_local_PointIndex.toInt());
+    }
+
+    // If the global point indices list is empty, return an empty result
+    if (global_local_PointIndices.empty()) {
+        return {};
+    }
+
+    // If there is no cluster dataset ID, return a summary of total points
+    if (clusterDatasetId.isEmpty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_PointIndices.size());
+    }
+
+    // Retrieve the cluster dataset
+    auto clusterFullDataset = mv::data().getDataset<Clusters>(clusterDatasetId);
+
+    // If the dataset is invalid, return a summary of total points
+    if (!clusterFullDataset.isValid()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_PointIndices.size());
+    }
+
+    // Get the clusters from the dataset
+    auto clusterValuesData = clusterFullDataset->getClusters();
+
+    // If the clusters data is empty, return a summary of total points
+    if (clusterValuesData.isEmpty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_PointIndices.size());
+    }
+
+    // Process each cluster and find intersections with global point indices
+    std::map<QString, std::pair<int, QColor>> clusterCountMap;
+    for (const auto& cluster : clusterValuesData) {
+        QString clusterName = cluster.getName();
+        QColor clusterColor = cluster.getColor();
+        const auto& clusterIndices = cluster.getIndices();
+
+        std::vector<std::seed_seq::result_type> sortedClusterIndices = clusterIndices;
+        std::vector<std::seed_seq::result_type> sortedGlobalLocalPointIndices = global_local_PointIndices;
+
+        std::sort(sortedClusterIndices.begin(), sortedClusterIndices.end());
+        std::sort(sortedGlobalLocalPointIndices.begin(), sortedGlobalLocalPointIndices.end());
+
+        std::vector<std::seed_seq::result_type> intersect;
+        intersect.reserve(std::min(sortedClusterIndices.size(), sortedGlobalLocalPointIndices.size()));
+        std::set_intersection(sortedClusterIndices.begin(), sortedClusterIndices.end(),
+            sortedGlobalLocalPointIndices.begin(), sortedGlobalLocalPointIndices.end(),
+            std::back_inserter(intersect));
+
+        // If there is an intersection, store the result in the map
+        if (!intersect.empty()) {
+            clusterCountMap[clusterName] = std::make_pair(intersect.size(), clusterColor);
+        }
+    }
+
+    // If no clusters were found, return a summary of total points
+    if (clusterCountMap.empty()) {
+        return QString("<table> \
+<tr> \
+<td><b>Total points: </b></td> \
+<td>%1</td> \
+</tr> \
+</table>").arg(global_local_PointIndices.size());
+    }
+
+    // Generate HTML output
+    //QString html = "<html><head><style>"
+    //    "table { border-collapse: collapse; width: 100%; font-size: 12px; }"
+    //    "th, td { border: 1px solid black; padding: 4px; text-align: left; }"
+    //    "th { background-color: #f2f2f2; }"
+    //    "</style></head><body>";
+    //html += "<table>";
+    //html += "<tr><th>Cluster Name</th><th>Count</th></tr>";
+
+    //// Populate the table with cluster data
+    //for (const auto& entry : clusterCountMap) {
+    //    QString clusterName = entry.first;
+    //    int count = entry.second.first;
+    //    QString colorHex = entry.second.second.name();
+
+    //    html += "<tr>";
+    //    html += "<td style='background-color:" + colorHex + ";'>" + clusterName + "</td>";
+    //    html += "<td>" + QString::number(count) + "</td>";
+    //    html += "</tr>";
+    //}
+
+    //html += "</table></body></html>";
+    //return html;
+    QString html = "<html><head><style>"
+        "body { display: flex; flex-wrap: wrap; max-width: 800px; }" // Set max-width to control wrapping
+        "div { display: inline-block; padding: 4px; margin: 2px; border: 1px solid black; font-size: 12px; }"
+        "</style></head><body>";
+
+    // Function to determine if a color is dark
+    auto isDarkColor = [](const QColor& color) {
+        int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
+        return brightness < 128;
+        };
+
+    // Convert the map to a vector of pairs for sorting
+    std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
+
+    // Sort the vector by count in descending order
+    std::sort(clusterVector.begin(), clusterVector.end(), [](const auto& a, const auto& b) {
+        return a.second.first > b.second.first;
+        });
+
+    // Populate the divs with cluster data
+    for (const auto& entry : clusterVector) {
+        QString clusterName = entry.first;
+        int count = entry.second.first;
+        QString colorHex = entry.second.second.name();
+        QColor color(entry.second.second);
+
+        QString textColor = isDarkColor(color) ? "white" : "black";
+
+        html += "<div style='background-color:" + colorHex + "; color:" + textColor + ";'>";
+        html += clusterName + ":" + QString::number(count);
+        html += "</div>";
+    }
+
+    html += "</body></html>";
+    return html;
+
+
+
+
+}
+
 
 void SettingsAction::updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap) {
     // Check if the "name" key exists in the current node
