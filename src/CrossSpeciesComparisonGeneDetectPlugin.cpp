@@ -1464,7 +1464,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             // replace underscore with space in species
             QString speciesCopy = species; // Make a copy if species is const
             speciesCopy.replace("_", " ");
+            // Create a new QStandardItem for the species
             QStandardItem* speciesItem = new QStandardItem(speciesCopy);
+
+            // Set the display value to speciesCopy
+            speciesItem->setText(speciesCopy);
+
+            // Store the actual value (species) using Qt::UserRole
+            speciesItem->setData(species, Qt::UserRole);
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor); // Set text color
             rowItems << speciesItem;
@@ -1521,10 +1528,17 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             // replace underscore with space in species
             QString speciesCopy = species; // Make a copy if species is const
             speciesCopy.replace("_", " ");
-            QStandardItem* item = new QStandardItem(speciesCopy);
-            item->setBackground(backgroundColor);
-            item->setForeground(textColor); // Set text color
-            rowItems << item; //0 Species
+            // Create a new QStandardItem for the species
+            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
+
+            // Set the display value to speciesCopy
+            speciesItem->setText(speciesCopy);
+
+            // Store the actual value (species) using Qt::UserRole
+            speciesItem->setData(species, Qt::UserRole);
+            speciesItem->setBackground(backgroundColor);
+            speciesItem->setForeground(textColor); // Set text color
+            rowItems << speciesItem; //0 Species
 
 
             // Find statistics for the species
