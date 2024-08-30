@@ -287,6 +287,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
           
             geneExplorer();
             _settingsAction.enableDisableButtonsAutomatically();
+            clearTableSelection(_settingsAction.getSelectionDetailsTable());
         };
 
     connect(&_settingsAction.getSpeciesExplorerInMapTrigger(), &TriggerAction::triggered, this, updateSpeciesExplorerInMap);
