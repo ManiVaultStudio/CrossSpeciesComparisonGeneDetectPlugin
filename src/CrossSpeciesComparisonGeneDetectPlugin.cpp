@@ -1458,10 +1458,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             qreal brightness = backgroundColor.lightnessF();
 
             // Choose text color based on the brightness of the background color
-            QColor textColor = (brightness > 0.5) ? Qt::black : Qt::white;
+            QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-            QStandardItem* speciesItem = new QStandardItem(species);
+            // replace underscore with space in species
+            QString speciesCopy = species; // Make a copy if species is const
+            speciesCopy.replace("_", " ");
+            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor); // Set text color
             rowItems << speciesItem;
