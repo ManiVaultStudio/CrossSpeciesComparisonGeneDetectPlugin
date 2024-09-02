@@ -1644,7 +1644,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             lastSelectedIndex = selectedIndex; // Update the last selected index
             QString species = selectedIndex.siblingAtColumn(0).data().toString();
             //qDebug() << "Species selected" << species; // Debug statement to print the selected species
-            geneExplorer(species);
+            QStringList autoSpecies = { species };
+
+            if (!(autoSpecies.size() == 1 && autoSpecies.first().isEmpty())) {
+                if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
+                {
+                    _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
+                    //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
+                    geneExplorer();
+                }
+            }
+            //_settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autopspecies);
+            //_settingsAction.getSelctedSpeciesVals().setString(species);
+            //geneExplorer(species);
             });
         
 
