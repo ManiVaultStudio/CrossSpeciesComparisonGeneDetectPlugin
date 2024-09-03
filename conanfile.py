@@ -40,7 +40,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
 
-    requires = ("CrossSpeciesComparisonTreeData/hierarchy_viewer_1.0@lkeb/stable")
+    requires = ("CrossSpeciesComparisonTreeData/comparison_viewer_1.1@lkeb/stable")
         
     # Qt requirement is inherited from hdps-core
 
