@@ -53,7 +53,7 @@ bool sortByName(const ClusterOrderContainer& a, const ClusterOrderContainer& b) 
 std::unordered_map<QString, int> prepareCustomSortMap(const std::vector<QString>& customOrder) {
     std::unordered_map<QString, int> sortOrderMap;
     for (size_t i = 0; i < customOrder.size(); ++i) {
-        sortOrderMap[customOrder[i]] = i;
+        sortOrderMap[customOrder[i]] = static_cast<int>(i);
     }
     return sortOrderMap;
 }
@@ -86,7 +86,7 @@ Stats combineStatisticsSingle(const StatisticsSingle& selected, const Statistics
 }
 
 StatisticsSingle calculateStatistics(const std::vector<float>& data) {
-    const int count = data.size();
+    const int count = static_cast<int>(data.size());
     if (count == 0) {
         return { 0.0f, 0 }; // Return early if data is empty to avoid division by zero
     }
@@ -213,7 +213,7 @@ bool areSameIgnoreOrder(const QStringList& list1, const QStringList& list2) {
 
 int findIndex(const std::vector<std::seed_seq::result_type>& vec, int value) {
     auto it = std::find(vec.begin(), vec.end(), value);
-    return (it != vec.end()) ? std::distance(vec.begin(), it) : -1;
+    return (it != vec.end()) ? static_cast<int>(std::distance(vec.begin(), it)) : -1;
 }
 
 
@@ -1123,9 +1123,9 @@ void SettingsAction::updateButtonTriggered()
                         //stopCodeTimer("Part6.2");
                         //startCodeTimer("Part7");
                         //startCodeTimer("Part7.1");
-                        int selectedIndicesFromStorageSize = _selectedIndicesFromStorage.size();
-                        int pointsDatasetColumnsSize = pointsDatasetallColumnIndices.size();
-                        int embeddingDatasetColumnsSize = embeddingDatasetColumnIndices.size();
+                        int selectedIndicesFromStorageSize = static_cast<int>(_selectedIndicesFromStorage.size());
+                        int pointsDatasetColumnsSize = static_cast<int>(pointsDatasetallColumnIndices.size());
+                        int embeddingDatasetColumnsSize = static_cast<int>(embeddingDatasetColumnIndices.size());
                         //QString datasetIdEmb = _selectedPointsDataset->getId();
                         //QString datasetId = _selectedPointsEmbeddingDataset->getId();
                         int dimofDatasetExp = 1;
@@ -1688,7 +1688,7 @@ void SettingsAction::updateClusterInfoStatusBar()
 
             for (const auto& cluster : clusterValues) {
                 ClusterOrderContainer temp{
-                    cluster.getIndices().size(),
+                    static_cast<int>(cluster.getIndices().size()),
                     cluster.getColor(),
                     cluster.getName()
                 };
@@ -1974,8 +1974,8 @@ void SettingsAction::findTopNGenesPerCluster() {
         }
 
     QString pointDataId = _geneSimilarityPoints->getId();
-    int pointDimSize = speciesOrder.size();
-    int pointIndicesSize = _geneOrder.size();
+    int pointDimSize = static_cast<int>(speciesOrder.size());
+    int pointIndicesSize = static_cast<int>(_geneOrder.size());
 
     if (_selectedPointsTSNEDatasetForGeneTable.isValid())
     {
@@ -2241,7 +2241,7 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
         int count = 0;
         if (auto it = geneCounter.find(gene); it != geneCounter.end()) {
             const auto& speciesDetails = it->second;
-            count = speciesDetails.size();
+            count = static_cast<int>(speciesDetails.size());
             QStringList speciesNames;
             for (const auto& speciesDetail : speciesDetails) {
                 speciesNames << speciesDetail;
@@ -2297,7 +2297,7 @@ QStringList SettingsAction::getSystemModeColor() {
 
 void SettingsAction::populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames)
 {
-    QtConcurrent::run([this, datasetId, pointVector, numPoints, numDimensions, dimensionNames]() {
+    (void)QtConcurrent::run([this, datasetId, pointVector, numPoints, numDimensions, dimensionNames]() {
         auto pointDataset = mv::data().getDataset<Points>(datasetId);
 
         if (pointDataset.isValid())
