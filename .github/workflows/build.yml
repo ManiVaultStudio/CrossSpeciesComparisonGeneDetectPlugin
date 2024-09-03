@@ -8,7 +8,7 @@ on:
       forceMacBuild:
         description: 'If set true override the ENABLE_MACOS_BUILD to force a build'
         type: boolean
-        default: false
+        default: true
         
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
