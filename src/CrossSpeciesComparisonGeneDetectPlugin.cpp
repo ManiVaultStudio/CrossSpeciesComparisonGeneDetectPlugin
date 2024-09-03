@@ -736,8 +736,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
             std::vector<float> resultContainerSpeciesUMAP(selectedSpeciesIndices.size() * umapPointsDataset->getNumDimensions());
             umapPointsDataset->populateDataForDimensions(resultContainerSpeciesUMAP, geneIndicesSpecies, selectedSpeciesIndices);
             auto speciesDataId = _settingsAction.getFilteredUMAPDatasetPoints().getDatasetId();
-            int tempnumPoints = selectedSpeciesIndices.size();
-            int tempNumDimensions = geneIndicesSpecies.size();
+            int tempnumPoints = static_cast<int>(selectedSpeciesIndices.size());
+            int tempNumDimensions = static_cast<int>(geneIndicesSpecies.size());
             _settingsAction.populatePointData(speciesDataId, resultContainerSpeciesUMAP, tempnumPoints, tempNumDimensions, dimensionNamesUmap);
 
 
@@ -755,10 +755,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
             fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
             auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
             auto speciesClusterDataId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
-            int tempnumPointsColors = selectedSpeciesIndices.size();
+            int tempnumPointsColors = static_cast<int>(selectedSpeciesIndices.size());
 
             std::vector<QString> columnGeneColors = { gene };
-            int tempNumDimensionsColors = columnGeneColors.size();
+            int tempNumDimensionsColors = static_cast<int>(columnGeneColors.size());
             if (_settingsAction.getApplyLogTransformation().isChecked())
             {
                 applyLogTransformation(resultContainerSpeciesColors);
@@ -897,8 +897,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
             std::vector<float> resultContainerSpeciesUMAP(selectedSpeciesIndices.size() * umapPointsDataset->getNumDimensions());
             umapPointsDataset->populateDataForDimensions(resultContainerSpeciesUMAP, geneIndicesSpecies, selectedSpeciesIndices);
             auto speciesDataId = _settingsAction.getFilteredUMAPDatasetPoints().getDatasetId();
-            int tempnumPoints = selectedSpeciesIndices.size();
-            int tempNumDimensions = geneIndicesSpecies.size();
+            int tempnumPoints = static_cast<int>(selectedSpeciesIndices.size());
+            int tempNumDimensions = static_cast<int>(geneIndicesSpecies.size());
             _settingsAction.populatePointData(speciesDataId, resultContainerSpeciesUMAP, tempnumPoints, tempNumDimensions, dimensionNamesUmap);
 
 
@@ -916,10 +916,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
             fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
             auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
             auto speciesClusterDataId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
-            int tempnumPointsColors = selectedSpeciesIndices.size();
+            int tempnumPointsColors = static_cast<int>(selectedSpeciesIndices.size());
 
             std::vector<QString> columnGeneColors = { gene };
-            int tempNumDimensionsColors = columnGeneColors.size();
+            int tempNumDimensionsColors = static_cast<int>(columnGeneColors.size());
             if (_settingsAction.getApplyLogTransformation().isChecked())
             {
                 applyLogTransformation(resultContainerSpeciesColors);
@@ -1209,8 +1209,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                 std::vector<float> resultContainerSpeciesUMAP(selectedSpeciesIndices.size()* umapPointsDataset->getNumDimensions());
                 umapPointsDataset->populateDataForDimensions(resultContainerSpeciesUMAP, geneIndicesSpecies, selectedSpeciesIndices);
                 auto speciesDataId= _settingsAction.getFilteredUMAPDatasetPoints().getDatasetId();
-                int tempnumPoints = selectedSpeciesIndices.size();
-                int tempNumDimensions = geneIndicesSpecies.size();
+                int tempnumPoints = static_cast<int>(selectedSpeciesIndices.size());
+                int tempNumDimensions = static_cast<int>(geneIndicesSpecies.size());
                 _settingsAction.populatePointData(speciesDataId, resultContainerSpeciesUMAP, tempnumPoints, tempNumDimensions, dimensionNamesUmap);
 
 
@@ -1228,10 +1228,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                 fullMainPointsDataset->populateDataForDimensions(resultContainerSpeciesColors, selectedGeneIndex, selectedSpeciesIndices);
                 auto speciesColorDataId = _settingsAction.getFilteredUMAPDatasetColors().getDatasetId();
                 auto speciesClusterDataId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
-                int tempnumPointsColors = selectedSpeciesIndices.size();
+                int tempnumPointsColors = static_cast<int>(selectedSpeciesIndices.size());
                 
                 std::vector<QString> columnGeneColors = { gene };
-                int tempNumDimensionsColors = columnGeneColors.size();
+                int tempNumDimensionsColors = static_cast<int>(columnGeneColors.size());
                 if (_settingsAction.getApplyLogTransformation().isChecked())
                 {
                     applyLogTransformation(resultContainerSpeciesColors);
