@@ -1688,6 +1688,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             node["differential"] = std::round(differentialVal * 100.0) / 100.0; // Round to 2 decimal places
             int rank = it->second.rank;
             node["rank"] = rank;
+            node["gene"] = _settingsAction.getSelectedGeneAction().getString();
             
         }
         if (it != speciesExpressionMap.end()) {
