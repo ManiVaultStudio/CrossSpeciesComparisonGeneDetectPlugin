@@ -748,7 +748,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
             auto dimensionNames = fullMainPointsDataset->getDimensionNames();
             auto it = std::find(dimensionNames.begin(), dimensionNames.end(), gene);
             if (it != dimensionNames.end()) {
-                selectedGeneIndex.push_back(std::distance(dimensionNames.begin(), it));
+                selectedGeneIndex.push_back(static_cast<int>(std::distance(dimensionNames.begin(), it)));
             }
 
 
@@ -1363,7 +1363,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                     auto dimsValsTemp = selectedPointsMain->getDimensionNames();
                     auto it = std::find(dimsValsTemp.begin(), dimsValsTemp.end(), gene);
                     if (it != dimsValsTemp.end()) {
-                        indexOfGene.push_back(it - dimsValsTemp.begin());
+                        indexOfGene.push_back(static_cast<int>(it - dimsValsTemp.begin()));
                     }
 
                     std::vector<int> tempselectIndices(selectedPointsMain->getNumPoints());
