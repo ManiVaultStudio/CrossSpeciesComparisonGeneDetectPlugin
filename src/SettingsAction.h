@@ -288,6 +288,8 @@ public: // Action getters
     //std::vector<QString>& getGeneSimilarityClusters() { return _geneSimilarityClusters; }
     Dataset<Clusters>& getGeneSimilarityClusterColoring() { return _geneSimilarityClusterColoring; }
     std::vector<QString>& getGeneOrder() { return _geneOrder; }
+    bool& getPauseStatusUpdates() { return _pauseStatusUpdates; }
+    bool& setPauseStatusUpdates(bool flag) { return _pauseStatusUpdates = flag; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
@@ -401,7 +403,7 @@ protected:
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;
     Dataset<Points>                _selectedPointsTSNEDatasetForGeneTable;
-    
+    bool                           _pauseStatusUpdates=false;
     QStringList                   _deleteDatasetIds;
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
