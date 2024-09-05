@@ -346,6 +346,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //else
             //{
                 _settingsAction.getRemoveRowSelection().trigger();
+                _settingsAction.setPauseStatusUpdates(false);
                 _settingsAction.getStatusColorAction().setString("C");
             //}
             

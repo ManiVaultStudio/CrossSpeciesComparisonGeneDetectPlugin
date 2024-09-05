@@ -502,6 +502,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateGeneFilteringTrigger = [this]() -> void
         {
             disableActions();
+            _pauseStatusUpdates = true;
             _speciesExplorerInMap.setSelectedOptions({});
             //_erroredOutFlag = false;
             updateButtonTriggered();
@@ -727,6 +728,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     
     
     const auto updateStatus = [this]() -> void {
+        if (_pauseStatusUpdates)
+        {
+            return;
+        }
         auto string = _statusColorAction.getString();
         QString labelText = "";
         QString backgroundColor = "none";
