@@ -654,7 +654,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
+                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
 
@@ -1215,7 +1215,7 @@ void SettingsAction::updateButtonTriggered()
                                 mv::gui::ViewPluginSamplerAction* samplerActionAction;
                                 if (scatterplotViewFactory) {
                                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                        if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
+                                        if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                                             pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                                             if (pointDatasetPickerAction) {
                                                 pointDatasetPickerAction->setCurrentText("");
@@ -2013,7 +2013,7 @@ void SettingsAction::findTopNGenesPerCluster() {
             mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
+                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
