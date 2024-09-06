@@ -423,7 +423,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
     _applyLogTransformation.setChecked(false);
-    _performGeneTableTsneAction.setChecked(true);
+    _performGeneTableTsneAction.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
@@ -431,7 +431,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
     _clusterCountSortingType.setSerializationName("CSCGDV:Cluster Count Sorting Type");
     _applyLogTransformation.setSerializationName("CSCGDV:Apply Log Transformation");
-    _performGeneTableTsneAction.setChecked(true);
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
@@ -655,7 +654,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
+                    if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
 
@@ -1216,7 +1215,7 @@ void SettingsAction::updateButtonTriggered()
                                 mv::gui::ViewPluginSamplerAction* samplerActionAction;
                                 if (scatterplotViewFactory) {
                                     for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                        if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
+                                        if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
                                             pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                                             if (pointDatasetPickerAction) {
                                                 pointDatasetPickerAction->setCurrentText("");
@@ -2014,7 +2013,7 @@ void SettingsAction::findTopNGenesPerCluster() {
             mv::gui::ViewPluginSamplerAction* samplerActionAction;
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
+                    if (plugin->getGuiName() == "Scatterplot Cell selection Overview1") {
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
