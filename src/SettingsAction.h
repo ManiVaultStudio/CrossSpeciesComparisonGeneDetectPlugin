@@ -238,6 +238,7 @@ public: // Action getters
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
+    ToggleAction& getToggleScatterplotSelection() { return _toggleScatterplotSelection; }
     OptionAction& getClusterCountSortingType() { return _clusterCountSortingType; }
     IntegralAction& getPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
@@ -389,6 +390,7 @@ protected:
     QHBoxLayout* _splitter;
     CustomLineEdit* _searchBox;
     ToggleAction    _applyLogTransformation;
+    ToggleAction    _toggleScatterplotSelection;
     //bool _erroredOutFlag;
     bool _meanMapComputed;
     OptionAction                _clusterCountSortingType;

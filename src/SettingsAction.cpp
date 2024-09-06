@@ -259,7 +259,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneKnn(this, "Perform Gene Table TSNE Knn"),
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
-    _clusterOrderHierarchy(this, "Cluster Order Hierarchy")
+    _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
+    _toggleScatterplotSelection(this, "Toggle Scatterplot Selection")
 {
     
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -423,6 +424,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE.setSerializationName("CSCGDV:Use Precomputed TSNE");
     _usePreComputedTSNE.setChecked(true);
     _applyLogTransformation.setChecked(false);
+    _toggleScatterplotSelection.setChecked(false);
     _performGeneTableTsneAction.setChecked(false);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
@@ -860,6 +862,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_applyLogTransformation, &ToggleAction::toggled, this, updateApplyLogTransformation);
+
+        const auto updateToggleScatterplotSelection = [this]() -> void {
+        
+
+        };
+    connect(&_toggleScatterplotSelection, &ToggleAction::toggled, this, updateToggleScatterplotSelection);
 
 
     const auto recomputeGeneTableTSNE = [this]() -> void {
@@ -2323,6 +2331,7 @@ void SettingsAction::enableActions()
     _clusterCountSortingType.setDisabled(false);
     _scatterplotReembedColorOption.setDisabled(false);
     _applyLogTransformation.setDisabled(false);
+    _toggleScatterplotSelection.setDisabled(false);
     _usePreComputedTSNE.setDisabled(false);
     _tsnePerplexity.setDisabled(false);
     _performGeneTableTsnePerplexity.setDisabled(false);
@@ -2334,6 +2343,9 @@ void SettingsAction::enableActions()
     _embeddingDataset.setDisabled(false);
     _speciesNamesDataset.setDisabled(false);
     _clusterNamesDataset.setDisabled(false);
+    _speciesExplorerInMap.setDisabled(false);
+    _speciesExplorerInMapTrigger.setDisabled(false);
+    _revertRowSelectionChangesToInitial.setDisabled(false);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
@@ -2349,6 +2361,7 @@ void SettingsAction::enableActions()
     {
         _startComputationTriggerAction.setDisabled(false);
     }
+    _toggleScatterplotSelection.setChecked(true);
 }
 void SettingsAction::disableActions()
 {
@@ -2359,10 +2372,12 @@ void SettingsAction::disableActions()
     _clusterCountSortingType.setDisabled(true);
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
-    _revertRowSelectionChangesToInitial.setDisabled(true);
     _speciesExplorerInMapTrigger.setDisabled(true);
     _usePreComputedTSNE.setDisabled(true);
     _applyLogTransformation.setDisabled(true);
+    _speciesExplorerInMap.setDisabled(true);
+    _revertRowSelectionChangesToInitial.setDisabled(true);
+    _toggleScatterplotSelection.setDisabled(true);
     _tsnePerplexity.setDisabled(true);
     _performGeneTableTsnePerplexity.setDisabled(true);
     _performGeneTableTsneKnn.setDisabled(true);

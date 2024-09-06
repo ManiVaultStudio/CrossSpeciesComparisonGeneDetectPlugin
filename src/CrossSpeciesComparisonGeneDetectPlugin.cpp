@@ -584,6 +584,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsGroup2->addAction(&_settingsAction.getRemoveRowSelection());
     mainOptionsGroup2->addAction(&_settingsAction.getSpeciesExplorerInMapTrigger());
     mainOptionsGroup2->addAction(&_settingsAction.getRevertRowSelectionChangesToInitial());
+    //mainOptionsGroup2->addAction(&_settingsAction.getToggleScatterplotSelection()); TODO
     
 
     auto group1Widget = mainOptionsGroup1->createWidget(&getWidget());
