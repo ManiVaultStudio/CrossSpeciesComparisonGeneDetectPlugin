@@ -303,6 +303,7 @@ public: // Action getters
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
 
     void computeGeneMeanExpressionMap();
+    void computeGeneMeanExpressionMapExperimental();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
@@ -320,7 +321,8 @@ public: // Action getters
     void findTopNGenesPerCluster();
     QString generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType);
     void createClusterPositionMap();
-    void computeGeneMeanExpressionMapForHierarchyItemsChange(QString hierarchyType);
+    void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
+    void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -350,6 +352,7 @@ protected:
     TriggerAction              _startComputationTriggerAction;
     DatasetPickerAction    _referenceTreeDataset;
     std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString,std::pair<int,float>>>> _clusterGeneMeanExpressionMap;
+    std::unordered_map<QString,  std::unordered_map<QString, int>> _clusterSpeciesFrequencyMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _bottomClusterNamesDataset;

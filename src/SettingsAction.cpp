@@ -527,13 +527,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             bottomTimer->start(delayMs);
         };
     connect(bottomTimer, &QTimer::timeout, this, [this]() {
-        if (_meanMapComputed)
+
         {
-            computeGeneMeanExpressionMapForHierarchyItemsChange("bottom");
-        }
-        else
-        {
-            computeGeneMeanExpressionMap();
+            computeFrequencyMapForHierarchyItemsChange("bottom");
         }
         });
     connect(&_bottomHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateBottomHierarchyClusterNamesFrequencyInclusionList);
@@ -545,14 +541,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             middleTimer->start(delayMs);
         };
     connect(middleTimer, &QTimer::timeout, this, [this]() {
-        if (_meanMapComputed)
+
         {
-            computeGeneMeanExpressionMapForHierarchyItemsChange("middle");
+            computeFrequencyMapForHierarchyItemsChange("middle");
         }
-        else
-        {
-            computeGeneMeanExpressionMap();
-        }
+
         });
     connect(&_middleHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateMiddleHierarchyClusterNamesFrequencyInclusionList);
 
@@ -563,14 +556,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             topTimer->start(delayMs);
         };
     connect(topTimer, &QTimer::timeout, this, [this]() {
-        if (_meanMapComputed)
+
         {
-            computeGeneMeanExpressionMapForHierarchyItemsChange("top");
+            computeFrequencyMapForHierarchyItemsChange("top");
         }
-        else
-        {
-            computeGeneMeanExpressionMap();
-        }
+
         });
     connect(&_topHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateTopHierarchyClusterNamesFrequencyInclusionList);
 
@@ -2036,7 +2026,6 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
         qDebug() << "QVariant empty";
     }
 }
-
 void SettingsAction::computeGeneMeanExpressionMap()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -2046,51 +2035,14 @@ void SettingsAction::computeGeneMeanExpressionMap()
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing gene mean expression map";
 
-    
-    _clusterGeneMeanExpressionMap.clear(); 
+
+    _clusterGeneMeanExpressionMap.clear();
 
     if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
 
         auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
         auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         auto numOfPoints = mainPointDatasetFull->getNumPoints();
-        std::vector<bool> topClusterNames(numOfPoints,true);
-        std::vector<bool> middleClusterNames(numOfPoints,true);
-        std::vector<bool>  bottomClusterNames(numOfPoints,true);
-        QStringList topInclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-        QStringList middleInclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-        QStringList bottomInclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-        if (_topClusterNamesDataset.getCurrentDataset().isValid() && _middleClusterNamesDataset.getCurrentDataset().isValid() && _bottomClusterNamesDataset.getCurrentDataset().isValid())
-
-        {
-            auto topClusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
-            auto middleClusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
-            auto bottomClusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
-
-            auto processCluster = [&](const Clusters& dataset, std::vector<bool>& clusterNames) {
-                for (const auto& cluster : dataset.getClusters()) {
-                    auto clusterIndices = cluster.getIndices();
-                    auto clusterName = cluster.getName();
-                    if (!topInclusionList.contains(clusterName)) {
-                        for (auto index : clusterIndices) {
-                            if (index < clusterNames.size()) {
-                                clusterNames[index] = false;
-                            }
-                        }
-                    }
-                }
-                };
-
-            QFuture<void> topFuture = QtConcurrent::run([&]() { processCluster(*topClusterDataset, topClusterNames); });
-            QFuture<void> middleFuture = QtConcurrent::run([&]() { processCluster(*middleClusterDataset, middleClusterNames); });
-            QFuture<void> bottomFuture = QtConcurrent::run([&]() { processCluster(*bottomClusterDataset, bottomClusterNames); });
-
-            topFuture.waitForFinished();
-            middleFuture.waitForFinished();
-            bottomFuture.waitForFinished();
-        }
-
-
 
         // Ensure that the types match
         QMutex mapMutex; // Mutex to protect shared access to _clusterGeneMeanExpressionMap
@@ -2104,24 +2056,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
 
-                std::vector<uint32_t> topIndices;
-                std::vector<uint32_t> middleIndices;
-                std::vector<uint32_t> bottomIndices;
-
-                // Determine cluster membership for the species
-                for (uint32_t i = 0; i < speciesIndices.size(); ++i) {
-                    if (std::binary_search(topClusterNames.begin(), topClusterNames.end(), speciesIndices[i])) {
-                        topIndices.push_back(i);
-                    }
-                    if (std::binary_search(middleClusterNames.begin(), middleClusterNames.end(), speciesIndices[i])) {
-                        middleIndices.push_back(i);
-                    }
-                    if (std::binary_search(bottomClusterNames.begin(), bottomClusterNames.end(), speciesIndices[i])) {
-                        bottomIndices.push_back(i);
-                    }
-                }
-
-                // Parallel processing of gene expressions within each species
+               // Parallel processing of gene expressions within each species
                 QtConcurrent::blockingMap(mainPointDimensionNames, [&](const auto& geneName) {
                     // Manually find the index of the geneName
                     int geneIndex = std::distance(mainPointDimensionNames.begin(),
@@ -2132,7 +2067,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     return; // Skip processing if the index is invalid
                 }
 
-                auto processCells = [&](const std::vector<uint32_t>& indices, const QString& cellType) {
+                auto processCellsMean = [&](const std::vector<uint32_t>& indices, const QString& cellType) {
                     std::vector<float> resultContainer(indices.size());
                     mainPointDatasetFull->populateDataForDimensions(resultContainer, std::vector<int>{geneIndex}, indices);
                     float mean = calculateMean(resultContainer);
@@ -2140,10 +2075,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     _clusterGeneMeanExpressionMap[speciesName][geneName][cellType] = std::make_pair(indices.size(), mean);
                     };
 
-                processCells(speciesIndices, "allCells");
-                processCells(topIndices, "topCells");
-                processCells(middleIndices, "middleCells");
-                processCells(bottomIndices, "bottomCells");
+                processCellsMean(speciesIndices, "allCells");
                     });
                 });
 
@@ -2152,21 +2084,148 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 
 
+
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
-
+    _clusterSpeciesFrequencyMap.clear();
+    computeFrequencyMapForHierarchyItemsChange("top");
+    computeFrequencyMapForHierarchyItemsChange("middle");
+    computeFrequencyMapForHierarchyItemsChange("bottom");
 }
 
-void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString hierarchyType)
+void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarchyType)
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
     {
         return;
     }
     auto startTimer = std::chrono::high_resolution_clock::now();
-    qDebug() << "computeGeneMeanExpressionMapForHierarchyItemsChange Start for " + hierarchyType;
+    qDebug() << "computeFrequencyMapForHierarchyItemsChange Start for " + hierarchyType;
+    if (hierarchyType == "")
+    {
+        return;
+    }
+
+
+    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
+
+        auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+        auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+        auto numOfPoints = mainPointDatasetFull->getNumPoints();
+        std::vector<bool> clusterNames(numOfPoints, true);
+        bool datasetCheck = false;
+        QStringList inclusionList;
+        if (hierarchyType == "top")
+        {
+            inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+            if (_topClusterNamesDataset.getCurrentDataset().isValid())
+            {
+                datasetCheck = true;
+            }
+        }
+        else if (hierarchyType == "middle")
+        {
+            inclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+            if (_middleClusterNamesDataset.getCurrentDataset().isValid())
+            {
+                datasetCheck = true;
+            }
+        }
+        else if (hierarchyType == "bottom")
+        {
+            inclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+            if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
+            {
+                datasetCheck = true;
+            }
+        }
+
+        if (datasetCheck)
+        {
+            mv::Dataset<Clusters> clusterDataset;
+
+            if (hierarchyType == "top")
+            {
+                clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+            }
+            else if (hierarchyType == "middle")
+            {
+                clusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+            }
+            else if (hierarchyType == "bottom")
+            {
+                clusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
+            }
+
+            for (auto cluster : clusterDataset->getClusters())
+            {
+                auto clusterIndices = cluster.getIndices();
+                auto clusterName = cluster.getName();
+                if (!inclusionList.contains(clusterName))
+                {
+                    for (auto index : clusterIndices)
+                    {
+                        clusterNames[index] = false;
+                    }
+                }
+
+            }
+        }
+
+
+
+        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
+        {
+            auto speciesclusters = speciesClusterDatasetFull->getClusters();
+            auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
+            for (auto species : speciesclusters) {
+                auto speciesIndices = species.getIndices();
+                auto speciesName = species.getName();
+                std::vector<int> indices;
+
+                // Loop through all species indices to determine if they are in respective clusters
+                for (int i = 0; i < speciesIndices.size(); ++i) {
+                    // Check if the current species index is present in the cluster and only include those that are true
+                    if (std::find(clusterNames.begin(), clusterNames.end(), speciesIndices[i]) != clusterNames.end()) {
+                        indices.push_back(i);
+                    }
+
+                }
+
+                    if (hierarchyType == "top")
+                    {
+                        _clusterSpeciesFrequencyMap[speciesName]["topCells"] = indices.size();
+                    }
+                    else if (hierarchyType == "middle")
+                    {
+                        _clusterSpeciesFrequencyMap[speciesName]["middleCells"] = indices.size();
+                    }
+                    else if (hierarchyType == "bottom")
+                    {
+                        _clusterSpeciesFrequencyMap[speciesName]["bottomCells"] = indices.size();
+                    }
+
+
+            }
+
+
+        }
+    }
+    auto endTimer = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+    qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
+
+}
+void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType)
+{
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        return;
+    }
+    auto startTimer = std::chrono::high_resolution_clock::now();
+    qDebug() << "computeGeneMeanExpressionMapForHierarchyItemsChange Experimental Start for " + hierarchyType;
     if (hierarchyType == "")
     {
         return;
@@ -2289,10 +2348,130 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
     }
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
-    qDebug() << "Time taken for computeGeneMeanExpressionMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
+    qDebug() << "Time taken for computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
 
 }
+void SettingsAction::computeGeneMeanExpressionMapExperimental()
+{
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        return;
+    }
+    auto start = std::chrono::high_resolution_clock::now();
+    qDebug() << "Computing gene mean expression map";
 
+
+    _clusterGeneMeanExpressionMap.clear();
+
+    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
+
+        auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+        auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+        auto numOfPoints = mainPointDatasetFull->getNumPoints();
+        std::vector<bool> topClusterNames(numOfPoints, true);
+        std::vector<bool> middleClusterNames(numOfPoints, true);
+        std::vector<bool>  bottomClusterNames(numOfPoints, true);
+        QStringList topInclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        QStringList middleInclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        QStringList bottomInclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        if (_topClusterNamesDataset.getCurrentDataset().isValid() && _middleClusterNamesDataset.getCurrentDataset().isValid() && _bottomClusterNamesDataset.getCurrentDataset().isValid())
+
+        {
+            auto topClusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+            auto middleClusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+            auto bottomClusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
+
+            auto processCluster = [&](const Clusters& dataset, std::vector<bool>& clusterNames) {
+                for (const auto& cluster : dataset.getClusters()) {
+                    auto clusterIndices = cluster.getIndices();
+                    auto clusterName = cluster.getName();
+                    if (!topInclusionList.contains(clusterName)) {
+                        for (auto index : clusterIndices) {
+                            if (index < clusterNames.size()) {
+                                clusterNames[index] = false;
+                            }
+                        }
+                    }
+                }
+                };
+
+            QFuture<void> topFuture = QtConcurrent::run([&]() { processCluster(*topClusterDataset, topClusterNames); });
+            QFuture<void> middleFuture = QtConcurrent::run([&]() { processCluster(*middleClusterDataset, middleClusterNames); });
+            QFuture<void> bottomFuture = QtConcurrent::run([&]() { processCluster(*bottomClusterDataset, bottomClusterNames); });
+
+            topFuture.waitForFinished();
+            middleFuture.waitForFinished();
+            bottomFuture.waitForFinished();
+        }
+
+
+
+        // Ensure that the types match
+        QMutex mapMutex; // Mutex to protect shared access to _clusterGeneMeanExpressionMap
+
+        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
+            auto speciesclusters = speciesClusterDatasetFull->getClusters();
+            auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
+
+            // Parallel processing of species clusters
+            QtConcurrent::blockingMap(speciesclusters, [&](const auto& species) {
+                auto speciesIndices = species.getIndices();
+                auto speciesName = species.getName();
+
+                std::vector<uint32_t> topIndices;
+                std::vector<uint32_t> middleIndices;
+                std::vector<uint32_t> bottomIndices;
+
+                // Determine cluster membership for the species
+                for (uint32_t i = 0; i < speciesIndices.size(); ++i) {
+                    if (std::binary_search(topClusterNames.begin(), topClusterNames.end(), speciesIndices[i])) {
+                        topIndices.push_back(i);
+                    }
+                    if (std::binary_search(middleClusterNames.begin(), middleClusterNames.end(), speciesIndices[i])) {
+                        middleIndices.push_back(i);
+                    }
+                    if (std::binary_search(bottomClusterNames.begin(), bottomClusterNames.end(), speciesIndices[i])) {
+                        bottomIndices.push_back(i);
+                    }
+                }
+
+                // Parallel processing of gene expressions within each species
+                QtConcurrent::blockingMap(mainPointDimensionNames, [&](const auto& geneName) {
+                    // Manually find the index of the geneName
+                    int geneIndex = std::distance(mainPointDimensionNames.begin(),
+                    std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName));
+
+                if (geneIndex == mainPointDimensionNames.size()) {
+                    // Handle case where geneName is not found if necessary
+                    return; // Skip processing if the index is invalid
+                }
+
+                auto processCells = [&](const std::vector<uint32_t>& indices, const QString& cellType) {
+                    std::vector<float> resultContainer(indices.size());
+                    mainPointDatasetFull->populateDataForDimensions(resultContainer, std::vector<int>{geneIndex}, indices);
+                    float mean = calculateMean(resultContainer);
+                    QMutexLocker locker(&mapMutex);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName][cellType] = std::make_pair(indices.size(), mean);
+                    };
+
+                processCells(speciesIndices, "allCells");
+                processCells(topIndices, "topCells");
+                processCells(middleIndices, "middleCells");
+                processCells(bottomIndices, "bottomCells");
+                    });
+                });
+
+            _meanMapComputed = true;
+        }
+
+
+
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
+
+}
 void SettingsAction::findTopNGenesPerCluster() {
 
     int n = _topNGenesFilter.getValue();
