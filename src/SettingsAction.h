@@ -301,7 +301,7 @@ public: // Action getters
     bool& setPauseStatusUpdates(bool flag) { return _pauseStatusUpdates = flag; }
     //bool getErroredOutFlag() const { return _erroredOutFlag; }
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
-
+    void triggerTrippleHierarchyFrequencyChange();
     void computeGeneMeanExpressionMap();
     void computeGeneMeanExpressionMapExperimental();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);

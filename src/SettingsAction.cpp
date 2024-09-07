@@ -1038,7 +1038,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
-            computeGeneMeanExpressionMap();
+            // Run both methods in parallel
+            QFuture<void> future1 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
+            QFuture<void> future2 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+
+            // Wait for both to complete
+            future1.waitForFinished();
+            future2.waitForFinished();
             _startComputationTriggerAction.trigger();
         }
         else
@@ -1143,7 +1149,110 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusColorAction.setString("M");
 }
 
+void SettingsAction::triggerTrippleHierarchyFrequencyChange()
+{
+    
 
+
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        return;
+    }
+    _clusterSpeciesFrequencyMap.clear();
+    auto startTimer = std::chrono::high_resolution_clock::now();
+    qDebug() << "computeFrequencyMapForHierarchyItemsChange for all 3  levels  Start " ;
+
+    if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid() || !_topClusterNamesDataset.getCurrentDataset().isValid() || !_middleClusterNamesDataset.getCurrentDataset().isValid() || !_bottomClusterNamesDataset.getCurrentDataset().isValid()) {
+        qDebug() << "Datasets are not valid";
+        return;
+    }
+
+    auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+    auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+    auto numOfPoints = mainPointDatasetFull->getNumPoints();
+    std::vector<bool> topClusterNames(numOfPoints, true);
+    std::vector<bool> middleClusterNames(numOfPoints, true);
+    std::vector<bool> bottomClusterNames(numOfPoints, true);
+    QStringList topInclusionList;
+    QStringList middleInclusionList;
+    QStringList bottomInclusionList;
+    auto topClusterDataset =mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+    auto middleClusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+    auto bottomClusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
+
+    if (topClusterDataset.isValid())
+    {
+        for (const auto& cluster : topClusterDataset->getClusters())
+        {
+            if (!topInclusionList.contains(cluster.getName()))
+            {
+                for (const auto& index : cluster.getIndices())
+                {
+                    topClusterNames[index] = false;
+                }
+            }
+        }
+    }
+
+    if (middleClusterDataset.isValid())
+    {
+        for (const auto& cluster : middleClusterDataset->getClusters())
+        {
+            if (!middleInclusionList.contains(cluster.getName()))
+            {
+                for (const auto& index : cluster.getIndices())
+                {
+                    middleClusterNames[index] = false;
+                }
+            }
+        }
+    }
+
+    if (bottomClusterDataset.isValid())
+    {
+        for (const auto& cluster : bottomClusterDataset->getClusters())
+        {
+            if (!bottomInclusionList.contains(cluster.getName()))
+            {
+                for (const auto& index : cluster.getIndices())
+                {
+                    bottomClusterNames[index] = false;
+                }
+            }
+        }
+    }
+
+    if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
+    {
+        auto speciesclusters = speciesClusterDatasetFull->getClusters();
+        for (const auto& species : speciesclusters) {
+            auto speciesIndices = species.getIndices();
+            auto speciesName = species.getName();
+            int topCount = std::count_if(speciesIndices.begin(), speciesIndices.end(), [&topClusterNames](int index) {
+                return topClusterNames[index];
+                });
+            int middleCount = std::count_if(speciesIndices.begin(), speciesIndices.end(), [&middleClusterNames](int index) {
+                return middleClusterNames[index];
+                });
+            int bottomCount = std::count_if(speciesIndices.begin(), speciesIndices.end(), [&bottomClusterNames](int index) {
+                return bottomClusterNames[index];
+                });
+
+            _clusterSpeciesFrequencyMap[speciesName]["topCells"] = topCount;
+            _clusterSpeciesFrequencyMap[speciesName]["middleCells"] = middleCount;
+            _clusterSpeciesFrequencyMap[speciesName]["bottomCells"] = bottomCount;
+        }
+    }
+
+    auto endTimer = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+    qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for all 3  levels : " + QString::number(duration / 1000.0) + " s";
+
+
+
+
+
+}
 
 void SettingsAction::updateButtonTriggered()
 {
@@ -2035,10 +2144,6 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 
     _clusterGeneMeanExpressionMap.clear();
-    _clusterSpeciesFrequencyMap.clear();
-    computeFrequencyMapForHierarchyItemsChange("top");
-    computeFrequencyMapForHierarchyItemsChange("middle");
-    computeFrequencyMapForHierarchyItemsChange("bottom");
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing gene mean expression map";
     if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
@@ -2093,127 +2198,85 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarchyType)
 {
-    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked() || hierarchyType.isEmpty())
     {
         return;
     }
+
     auto startTimer = std::chrono::high_resolution_clock::now();
     qDebug() << "computeFrequencyMapForHierarchyItemsChange Start for " + hierarchyType;
-    if (hierarchyType == "")
-    {
+
+    if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid()) {
         return;
     }
 
+    auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+    auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+    auto numOfPoints = mainPointDatasetFull->getNumPoints();
+    std::vector<bool> clusterNames(numOfPoints, true);
+    QStringList inclusionList;
+    mv::Dataset<Clusters> clusterDataset;
 
-    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
+    if (hierarchyType == "top" && _topClusterNamesDataset.getCurrentDataset().isValid())
+    {
+        inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+    }
+    else if (hierarchyType == "middle" && _middleClusterNamesDataset.getCurrentDataset().isValid())
+    {
+        inclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        clusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+    }
+    else if (hierarchyType == "bottom" && _bottomClusterNamesDataset.getCurrentDataset().isValid())
+    {
+        inclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+        clusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
+    }
 
-        auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
-        auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
-        auto numOfPoints = mainPointDatasetFull->getNumPoints();
-        std::vector<bool> clusterNames(numOfPoints, true);
-        bool datasetCheck = false;
-        QStringList inclusionList;
-        if (hierarchyType == "top")
+    if (clusterDataset.isValid())
+    {
+        for (const auto& cluster : clusterDataset->getClusters())
         {
-            inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-            if (_topClusterNamesDataset.getCurrentDataset().isValid())
+            if (!inclusionList.contains(cluster.getName()))
             {
-                datasetCheck = true;
+                for (const auto& index : cluster.getIndices())
+                {
+                    clusterNames[index] = false;
+                }
             }
         }
-        else if (hierarchyType == "middle")
-        {
-            inclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-            if (_middleClusterNamesDataset.getCurrentDataset().isValid())
-            {
-                datasetCheck = true;
-            }
-        }
-        else if (hierarchyType == "bottom")
-        {
-            inclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-            if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
-            {
-                datasetCheck = true;
-            }
-        }
+    }
 
-        if (datasetCheck)
-        {
-            mv::Dataset<Clusters> clusterDataset;
+    if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
+    {
+        auto speciesclusters = speciesClusterDatasetFull->getClusters();
+        for (const auto& species : speciesclusters) {
+            auto speciesIndices = species.getIndices();
+            auto speciesName = species.getName();
+            int count = std::count_if(speciesIndices.begin(), speciesIndices.end(), [&clusterNames](int index) {
+                return clusterNames[index];
+                });
 
             if (hierarchyType == "top")
             {
-                clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+                _clusterSpeciesFrequencyMap[speciesName]["topCells"] = count;
             }
             else if (hierarchyType == "middle")
             {
-                clusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+                _clusterSpeciesFrequencyMap[speciesName]["middleCells"] = count;
             }
             else if (hierarchyType == "bottom")
             {
-                clusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
+                _clusterSpeciesFrequencyMap[speciesName]["bottomCells"] = count;
             }
-
-            for (auto cluster : clusterDataset->getClusters())
-            {
-                auto clusterIndices = cluster.getIndices();
-                auto clusterName = cluster.getName();
-                if (!inclusionList.contains(clusterName))
-                {
-                    for (auto index : clusterIndices)
-                    {
-                        clusterNames[index] = false;
-                    }
-                }
-
-            }
-        }
-
-
-
-        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
-        {
-            auto speciesclusters = speciesClusterDatasetFull->getClusters();
-            auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
-            for (auto species : speciesclusters) {
-                auto speciesIndices = species.getIndices();
-                auto speciesName = species.getName();
-                std::vector<int> indices;
-
-                // Loop through all species indices to determine if they are in respective clusters
-                for (int i = 0; i < speciesIndices.size(); ++i) {
-                    // Check if the current species index is present in the cluster and only include those that are true
-                    if (std::find(clusterNames.begin(), clusterNames.end(), speciesIndices[i]) != clusterNames.end()) {
-                        indices.push_back(i);
-                    }
-
-                }
-
-                    if (hierarchyType == "top")
-                    {
-                        _clusterSpeciesFrequencyMap[speciesName]["topCells"] = indices.size();
-                    }
-                    else if (hierarchyType == "middle")
-                    {
-                        _clusterSpeciesFrequencyMap[speciesName]["middleCells"] = indices.size();
-                    }
-                    else if (hierarchyType == "bottom")
-                    {
-                        _clusterSpeciesFrequencyMap[speciesName]["bottomCells"] = indices.size();
-                    }
-
-
-            }
-
-
         }
     }
+
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
     qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
-
 }
+
 void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType)
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
