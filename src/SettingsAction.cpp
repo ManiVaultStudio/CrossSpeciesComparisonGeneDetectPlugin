@@ -233,7 +233,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //_hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
     //_hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
     _speciesNamesDataset(this, "Species Names"),
-    _bottomClusterNamesDataset(this, "Cluster Names"),
+    _bottomClusterNamesDataset(this, "Bottom Cluster Names"),
+    _middleClusterNamesDataset(this, "Middle Cluster Names"),
+    _topClusterNamesDataset(this, "Top Cluster Names"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N"),
@@ -260,11 +262,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
-    _toggleScatterplotSelection(this, "Toggle Scatterplot Selection")
+    _toggleScatterplotSelection(this, "Show Scatterplot Selection")
 {
-    
+
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
-    _statusBarActionWidget  = new QStatusBar();
+    _statusBarActionWidget = new QStatusBar();
     _searchBox = new CustomLineEdit();
     QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
     QAction* searchAction = new QAction(_searchBox);
@@ -330,10 +332,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //only highlight multiple rows if shiuft is pressed
     _geneTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-   // removeDatasets(groupIDDeletion);
-    //removeDatasets(groupId1);
-    //removeDatasets(groupId2);
-    //removeDatasets(groupId3);
+    // removeDatasets(groupIDDeletion);
+     //removeDatasets(groupId1);
+     //removeDatasets(groupId2);
+     //removeDatasets(groupId3);
 
     _selectionDetailsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -383,10 +385,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _listModel.setSerializationName("CSCGDV:List Model");
     _selectedGene.setSerializationName("CSCGDV:Selected Gene");
-    _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
+    _mainPointsDataset.setSerializationName("CSCGDV:Main Points Dataset");
     _embeddingDataset.setSerializationName("CSCGDV:Embedding Dataset");
     _speciesNamesDataset.setSerializationName("CSCGDV:Species Names Dataset");
     _bottomClusterNamesDataset.setSerializationName("CSCGDV:Cluster Names Dataset");
+    _middleClusterNamesDataset.setSerializationName("CSCGDV:Middle Cluster Names Dataset");
+    _topClusterNamesDataset.setSerializationName("CSCGDV:Top Cluster Names Dataset");
     _filteredGeneNamesVariant.setSerializationName("CSCGDV:Filtered Gene Names");
     _topNGenesFilter.setSerializationName("CSCGDV:Top N Genes Filter");
     _filteringEditTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
@@ -411,9 +415,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsnePerplexity.setMaximum(50);
     _performGeneTableTsnePerplexity.setValue(15);
     _performGeneTableTsneKnn.setSerializationName("CSCGDV:Gene Table TSNE Knn");
-    _performGeneTableTsneKnn.initialize({"FLANN","HNSW","ANNOY"},"ANNOY");
+    _performGeneTableTsneKnn.initialize({ "FLANN","HNSW","ANNOY" }, "ANNOY");
     _performGeneTableTsneDistance.setSerializationName("CSCGDV:Gene Table TSNE Distance");
-    _performGeneTableTsneDistance.initialize({ "Euclidean","Cosine","Inner Product","Manhattan","Hamming","Dot"}, "Dot");
+    _performGeneTableTsneDistance.initialize({ "Euclidean","Cosine","Inner Product","Manhattan","Hamming","Dot" }, "Dot");
     _performGeneTableTsneTrigger.setSerializationName("CSCGDV:Gene Table TSNE Trigger");
     _performGeneTableTsneTrigger.setDisabled(true);
     _clusterOrderHierarchy.setString("");
@@ -436,9 +440,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _createRowMultiSelectTree.setDisabled(true);
     _selectedRowIndex.setDisabled(true);
     _selectedRowIndex.setString("");
-    _scatterplotReembedColorOption.initialize({"Species","Cluster","Expression"}, "Species");
-    _typeofTopNGenes.initialize({"Absolute","Negative","Positive"}, "Positive");
-    _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View"}, "Count");
+    _scatterplotReembedColorOption.initialize({ "Species","Cluster","Expression" }, "Species");
+    _typeofTopNGenes.initialize({ "Absolute","Negative","Positive" }, "Positive");
+    _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View" }, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
     QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
@@ -473,6 +477,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         return dataset->getDataType() == ClusterType;
         });
     _bottomClusterNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == ClusterType;
+        });
+    _middleClusterNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+        return dataset->getDataType() == ClusterType;
+        });
+    _topClusterNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
     _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
@@ -512,7 +522,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
     const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
-        
+
         if (_filteringEditTreeDataset.getCurrentDataset().isValid())
         {
             auto treeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_filteringEditTreeDataset.getCurrentDataset().getDatasetId());
@@ -566,12 +576,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             computeGeneMeanExpressionMap();
         }
-        
-        
+
+
         if (_mainPointsDataset.getCurrentDataset().isValid())
         {
             _totalGeneList.clear();
-            auto fullDataset=mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+            auto fullDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
             auto dimensions = fullDataset->getNumDimensions();
             _totalGeneList = fullDataset->getDimensionNames();
             if (dimensions > 0) {
@@ -591,7 +601,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setObjectName("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setWhatsThis("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
-
+            const auto mainSelectionChanged = [this]() -> void {
+                _toggleScatterplotSelection.setChecked(true);
+                };
+            connect(&fullDataset, &Dataset<Points>::dataSelectionChanged, this, mainSelectionChanged);
 
         }
         else
@@ -604,12 +617,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topNGenesFilter.setIconText("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setObjectName("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
             _topNGenesFilter.setWhatsThis("Top N genes: 0 to " + QString::number(_topNGenesFilter.getMaximum()) + " (Current: " + QString::number(_topNGenesFilter.getValue()) + ")");
-            
+
         }
-        
- };
+
+        };
 
     connect(&_mainPointsDataset, &DatasetPickerAction::currentIndexChanged, this, updateMainPointsDataset);
+
 
     const auto updateSpeciesNameDataset = [this]() -> void {
         _selectedSpeciesCellCountMap.clear();
@@ -865,6 +879,28 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         const auto updateToggleScatterplotSelection = [this]() -> void {
         
+            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+            mv::gui::DecimalAction* overlayopacityAction;
+
+            if (scatterplotViewFactory) {
+                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                    if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                        overlayopacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Selection/Opacity"));
+                        if (overlayopacityAction)
+                        {
+                            qDebug() << "Overlay opacity action found";
+                            if (_toggleScatterplotSelection.isChecked())
+                            {
+                                overlayopacityAction->setValue(100.0);
+                            }
+                            else
+                            {
+                                overlayopacityAction->setValue(0.0);
+                            }   
+                        }
+                    }
+                }
+            }
 
         };
     connect(&_toggleScatterplotSelection, &ToggleAction::toggled, this, updateToggleScatterplotSelection);
@@ -2346,6 +2382,8 @@ void SettingsAction::enableActions()
     _embeddingDataset.setDisabled(false);
     _speciesNamesDataset.setDisabled(false);
     _bottomClusterNamesDataset.setDisabled(false);
+    _middleClusterNamesDataset.setDisabled(false);
+    _topClusterNamesDataset.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
@@ -2391,6 +2429,8 @@ void SettingsAction::disableActions()
     _embeddingDataset.setDisabled(true);
     _speciesNamesDataset.setDisabled(true);
     _bottomClusterNamesDataset.setDisabled(true);
+    _middleClusterNamesDataset.setDisabled(true);
+    _topClusterNamesDataset.setDisabled(true);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
     _speciesExplorerInMap.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
@@ -2890,6 +2930,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _embeddingDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
     _bottomClusterNamesDataset.fromParentVariantMap(variantMap);
+    _middleClusterNamesDataset.fromParentVariantMap(variantMap);
+    _topClusterNamesDataset.fromParentVariantMap(variantMap);
     _filteredGeneNamesVariant.fromParentVariantMap(variantMap);
     _topNGenesFilter.fromParentVariantMap(variantMap);
     _filteringEditTreeDataset.fromParentVariantMap(variantMap);
@@ -2930,6 +2972,8 @@ QVariantMap SettingsAction::toVariantMap() const
     _embeddingDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
     _bottomClusterNamesDataset.insertIntoVariantMap(variantMap);
+    _middleClusterNamesDataset.insertIntoVariantMap(variantMap);
+    _topClusterNamesDataset.insertIntoVariantMap(variantMap);
     _filteredGeneNamesVariant.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);
     _filteringEditTreeDataset.insertIntoVariantMap(variantMap);

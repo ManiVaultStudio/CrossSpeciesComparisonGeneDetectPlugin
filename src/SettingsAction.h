@@ -220,6 +220,8 @@ public: // Action getters
     DatasetPickerAction& getEmbeddingDataset() { return _embeddingDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
     DatasetPickerAction& getBottomClusterNamesDataset() { return _bottomClusterNamesDataset; }
+    DatasetPickerAction& getMiddleClusterNamesDataset() { return _middleClusterNamesDataset; }
+    DatasetPickerAction& getTopClusterNamesDataset() { return _topClusterNamesDataset; }
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
     StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
@@ -346,6 +348,8 @@ protected:
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
     DatasetPickerAction    _bottomClusterNamesDataset;
+    DatasetPickerAction    _middleClusterNamesDataset;
+    DatasetPickerAction    _topClusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
     std::map<QString, std::map<QString, Stats>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
