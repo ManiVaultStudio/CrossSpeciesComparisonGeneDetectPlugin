@@ -1151,16 +1151,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 void SettingsAction::triggerTrippleHierarchyFrequencyChange()
 {
-    
-
-
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
     {
         return;
     }
     _clusterSpeciesFrequencyMap.clear();
     auto startTimer = std::chrono::high_resolution_clock::now();
-    qDebug() << "computeFrequencyMapForHierarchyItemsChange for all 3  levels  Start " ;
+    qDebug() << "computeFrequencyMapForHierarchyItemsChange for all 3 levels Start";
 
     if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid() || !_topClusterNamesDataset.getCurrentDataset().isValid() || !_middleClusterNamesDataset.getCurrentDataset().isValid() || !_bottomClusterNamesDataset.getCurrentDataset().isValid()) {
         qDebug() << "Datasets are not valid";
@@ -1176,51 +1173,67 @@ void SettingsAction::triggerTrippleHierarchyFrequencyChange()
     QStringList topInclusionList;
     QStringList middleInclusionList;
     QStringList bottomInclusionList;
-    auto topClusterDataset =mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+    auto topClusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
     auto middleClusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
     auto bottomClusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
 
-    if (topClusterDataset.isValid())
-    {
-        for (const auto& cluster : topClusterDataset->getClusters())
+    auto processTopClusters = [&]() {
+        if (topClusterDataset.isValid())
         {
-            if (!topInclusionList.contains(cluster.getName()))
+            for (const auto& cluster : topClusterDataset->getClusters())
             {
-                for (const auto& index : cluster.getIndices())
+                if (!topInclusionList.contains(cluster.getName()))
                 {
-                    topClusterNames[index] = false;
+                    for (const auto& index : cluster.getIndices())
+                    {
+                        topClusterNames[index] = false;
+                    }
                 }
             }
         }
-    }
+        };
 
-    if (middleClusterDataset.isValid())
-    {
-        for (const auto& cluster : middleClusterDataset->getClusters())
+    auto processMiddleClusters = [&]() {
+        if (middleClusterDataset.isValid())
         {
-            if (!middleInclusionList.contains(cluster.getName()))
+            for (const auto& cluster : middleClusterDataset->getClusters())
             {
-                for (const auto& index : cluster.getIndices())
+                if (!middleInclusionList.contains(cluster.getName()))
                 {
-                    middleClusterNames[index] = false;
+                    for (const auto& index : cluster.getIndices())
+                    {
+                        middleClusterNames[index] = false;
+                    }
                 }
             }
         }
-    }
+        };
 
-    if (bottomClusterDataset.isValid())
-    {
-        for (const auto& cluster : bottomClusterDataset->getClusters())
+    auto processBottomClusters = [&]() {
+        if (bottomClusterDataset.isValid())
         {
-            if (!bottomInclusionList.contains(cluster.getName()))
+            for (const auto& cluster : bottomClusterDataset->getClusters())
             {
-                for (const auto& index : cluster.getIndices())
+                if (!bottomInclusionList.contains(cluster.getName()))
                 {
-                    bottomClusterNames[index] = false;
+                    for (const auto& index : cluster.getIndices())
+                    {
+                        bottomClusterNames[index] = false;
+                    }
                 }
             }
         }
-    }
+        };
+
+    // Run the three tasks in parallel
+    QFuture<void> topFuture = QtConcurrent::run(processTopClusters);
+    QFuture<void> middleFuture = QtConcurrent::run(processMiddleClusters);
+    QFuture<void> bottomFuture = QtConcurrent::run(processBottomClusters);
+
+    // Wait for all tasks to complete
+    topFuture.waitForFinished();
+    middleFuture.waitForFinished();
+    bottomFuture.waitForFinished();
 
     if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
     {
@@ -1246,12 +1259,7 @@ void SettingsAction::triggerTrippleHierarchyFrequencyChange()
 
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
-    qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for all 3  levels : " + QString::number(duration / 1000.0) + " s";
-
-
-
-
-
+    qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for all 3 levels: " + QString::number(duration / 1000.0) + " s";
 }
 
 void SettingsAction::updateButtonTriggered()
@@ -2146,53 +2154,36 @@ void SettingsAction::computeGeneMeanExpressionMap()
     _clusterGeneMeanExpressionMap.clear();
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing gene mean expression map";
-    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
 
+    _clusterGeneMeanExpressionMap.clear();
+    if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
         auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
         auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
-
-            // Use a shared mutex for thread safety
-            QMutex mapMutex;
-
-            // Parallel processing of species clusters
-            QtConcurrent::blockingMap(speciesclusters, [&](const auto& species) {
+            for (auto species : speciesclusters) {
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
+                for (int i = 0; i < mainPointDimensionNames.size(); i++) {
+                    auto& geneName = mainPointDimensionNames[i];
+                    auto geneIndex = { i };
+                    std::vector<float> resultContainerFull(speciesIndices.size());
+                    mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
+                    float fullMean = calculateMean(resultContainerFull);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = std::make_pair(speciesIndices.size(), fullMean);
+                }
 
-                // Parallel processing of gene expressions within each species
-                QtConcurrent::blockingMap(mainPointDimensionNames, [&](const auto& geneName) {
-                    // Find the index of the geneName
-                    auto geneIndexIt = std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName);
-                    if (geneIndexIt == mainPointDimensionNames.end()) {
-                        return; // Skip processing if the geneName is not found
-                    }
-                    int geneIndex = std::distance(mainPointDimensionNames.begin(), geneIndexIt);
-
-                    std::vector<float> resultContainer(speciesIndices.size());
-                    std::vector<int> geneIndices = { geneIndex };
-                    mainPointDatasetFull->populateDataForDimensions(resultContainer, geneIndices, speciesIndices);
-                    float mean = calculateMean(resultContainer);
-
-                    // Lock the mutex only when updating the shared map
-                    {
-                        QMutexLocker locker(&mapMutex);
-                        _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = { speciesIndices.size(), mean };
-                    }
-                    });
-                });
-
+            }
             _meanMapComputed = true;
+
         }
-
-
     }
+
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
+    qDebug() << "Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
 }
 
 
