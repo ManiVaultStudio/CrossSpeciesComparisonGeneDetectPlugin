@@ -219,7 +219,7 @@ public: // Action getters
     DatasetPickerAction& getMainPointsDataset() { return _mainPointsDataset; }
     DatasetPickerAction& getEmbeddingDataset() { return _embeddingDataset; }
     DatasetPickerAction& getSpeciesNamesDataset() { return _speciesNamesDataset; }
-    DatasetPickerAction& getClusterNamesDataset() { return _clusterNamesDataset; }
+    DatasetPickerAction& getBottomClusterNamesDataset() { return _bottomClusterNamesDataset; }
     VariantAction& getFilteredGeneNames() { return _filteredGeneNamesVariant; }
     IntegralAction& getTopNGenesFilter() { return _topNGenesFilter; }
     StringAction& getGeneNamesConnection() { return _geneNamesConnection; }
@@ -282,6 +282,8 @@ public: // Action getters
     std::map<QString, SpeciesColorCountStorageVals> & getSelectedSpeciesCellCountMap() { return _selectedSpeciesCellCountMap; }
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
+    std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
+    bool& getStopClusterPositionMapCreation() { return _stopClusterPositionMapCreation; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
     std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
@@ -311,6 +313,7 @@ public: // Action getters
     QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     void findTopNGenesPerCluster();
     QString generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType);
+    void createClusterPositionMap();
 private:
 
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -339,10 +342,10 @@ protected:
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;
     DatasetPickerAction    _referenceTreeDataset;
-    std::map<QString, std::map<QString, std::pair<int,float>>> _clusterGeneMeanExpressionMap;
+    std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString,std::pair<int,float>>>> _clusterGeneMeanExpressionMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
-    DatasetPickerAction    _clusterNamesDataset;
+    DatasetPickerAction    _bottomClusterNamesDataset;
     DatasetPickerAction    _embeddingDataset;
     std::map<QString, std::map<QString, Stats>> _clusterNameToGeneNameToExpressionValue;
     VariantAction           _filteredGeneNamesVariant;
@@ -409,5 +412,7 @@ protected:
     QStringList                   _deleteDatasetIds;
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
+    std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
+    bool _stopClusterPositionMapCreation=true;
     //std::vector<QString> _speciesOrder;
 };

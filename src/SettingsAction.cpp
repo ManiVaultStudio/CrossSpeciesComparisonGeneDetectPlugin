@@ -233,7 +233,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     //_hierarchyMiddleClusterDataset(this, "Hierarchy Middle Cluster Dataset"),
     //_hierarchyTopClusterDataset(this, "Hierarchy Top Cluster Dataset"),
     _speciesNamesDataset(this, "Species Names"),
-    _clusterNamesDataset(this, "Cluster Names"),
+    _bottomClusterNamesDataset(this, "Cluster Names"),
     //_calculationReferenceCluster(this, "Calculation Reference Cluster"),
     _filteredGeneNamesVariant(this, "Filtered Gene Names"),
     _topNGenesFilter(this, "Top N"),
@@ -386,7 +386,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _mainPointsDataset  .setSerializationName("CSCGDV:Main Points Dataset");
     _embeddingDataset.setSerializationName("CSCGDV:Embedding Dataset");
     _speciesNamesDataset.setSerializationName("CSCGDV:Species Names Dataset");
-    _clusterNamesDataset.setSerializationName("CSCGDV:Cluster Names Dataset");
+    _bottomClusterNamesDataset.setSerializationName("CSCGDV:Cluster Names Dataset");
     _filteredGeneNamesVariant.setSerializationName("CSCGDV:Filtered Gene Names");
     _topNGenesFilter.setSerializationName("CSCGDV:Top N Genes Filter");
     _filteringEditTreeDataset.setSerializationName("CSCGDV:Filtering Tree Dataset");
@@ -472,7 +472,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _speciesNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
-    _clusterNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
+    _bottomClusterNamesDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
         return dataset->getDataType() == ClusterType;
         });
     _embeddingDataset.setFilterFunction([this](mv::Dataset<DatasetImpl> dataset) -> bool {
@@ -674,10 +674,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                 {
                                     if (selectedColorType == "Cluster")
                                     {
-                                        if (_clusterNamesDataset.getCurrentDataset().isValid())
+                                        if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
                                         {
                                             colorDatasetPickerAction->setCurrentText("");
-                                            colorDatasetPickerAction->setCurrentDataset(_clusterNamesDataset.getCurrentDataset());
+                                            colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
                                         }
                                     }
                                     else if (selectedColorType == "Species")
@@ -952,7 +952,7 @@ void SettingsAction::updateButtonTriggered()
         auto pointsDataset = _mainPointsDataset.getCurrentDataset();
         auto embeddingDataset = _embeddingDataset.getCurrentDataset();
         auto speciesDataset = _speciesNamesDataset.getCurrentDataset();
-        auto clusterDataset = _clusterNamesDataset.getCurrentDataset();
+        auto clusterDataset = _bottomClusterNamesDataset.getCurrentDataset();
         auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
         _selectedSpeciesVals.setString("");
         _geneNamesConnection.setString("");
@@ -1242,9 +1242,9 @@ void SettingsAction::updateButtonTriggered()
                                                     {
                                                         if (selectedColorType == "Cluster")
                                                         {
-                                                            if (_clusterNamesDataset.getCurrentDataset().isValid())
+                                                            if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
                                                             {
-                                                                colorDatasetPickerAction->setCurrentDataset(_clusterNamesDataset.getCurrentDataset());
+                                                                colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
                                                             }
                                                         }
                                                         else if (selectedColorType == "Species")
@@ -1461,7 +1461,7 @@ void SettingsAction::updateButtonTriggered()
 
                                 // Access shared data in a thread-safe manner
                                 QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
-                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
                                 locker.unlock();
 
                                 int allCellCounts = nonSelectionDetails.first;
@@ -1673,9 +1673,9 @@ void SettingsAction::updateClusterInfoStatusBar()
         delete layoutItem->widget();
         delete layoutItem;
     }
-    if (_tsneDatasetClusterColors.isValid() && _clusterNamesDataset.getCurrentDataset().isValid())
+    if (_tsneDatasetClusterColors.isValid() && _bottomClusterNamesDataset.getCurrentDataset().isValid())
     {
-        auto clusterDatasetName = _clusterNamesDataset.getCurrentDataset()->getGuiName();
+        auto clusterDatasetName = _bottomClusterNamesDataset.getCurrentDataset()->getGuiName();
         auto clusterValues = _tsneDatasetClusterColors->getClusters();
         if (!clusterValues.empty())
         {
@@ -1834,7 +1834,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     std::vector<float> resultContainerFull(speciesIndices.size());
                     mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                     float fullMean = calculateMean(resultContainerFull);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName] = std::make_pair(speciesIndices.size(), fullMean);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = std::make_pair(speciesIndices.size(), fullMean);
                 }
 
             }
@@ -2290,7 +2290,10 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
     return QVariant::fromValue(model);
 
 }
-
+void SettingsAction::createClusterPositionMap()
+{
+    _clusterPositionMap;
+}
 QStringList SettingsAction::getSystemModeColor() {
     // Get the application palette
     QPalette palette = QApplication::palette();
@@ -2342,7 +2345,7 @@ void SettingsAction::enableActions()
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
     _speciesNamesDataset.setDisabled(false);
-    _clusterNamesDataset.setDisabled(false);
+    _bottomClusterNamesDataset.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
@@ -2387,7 +2390,7 @@ void SettingsAction::disableActions()
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);
     _speciesNamesDataset.setDisabled(true);
-    _clusterNamesDataset.setDisabled(true);
+    _bottomClusterNamesDataset.setDisabled(true);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
     _speciesExplorerInMap.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
@@ -2886,7 +2889,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _mainPointsDataset.fromParentVariantMap(variantMap);
     _embeddingDataset.fromParentVariantMap(variantMap);
     _speciesNamesDataset.fromParentVariantMap(variantMap);
-    _clusterNamesDataset.fromParentVariantMap(variantMap);
+    _bottomClusterNamesDataset.fromParentVariantMap(variantMap);
     _filteredGeneNamesVariant.fromParentVariantMap(variantMap);
     _topNGenesFilter.fromParentVariantMap(variantMap);
     _filteringEditTreeDataset.fromParentVariantMap(variantMap);
@@ -2926,7 +2929,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _mainPointsDataset.insertIntoVariantMap(variantMap);
     _embeddingDataset.insertIntoVariantMap(variantMap);
     _speciesNamesDataset.insertIntoVariantMap(variantMap);
-    _clusterNamesDataset.insertIntoVariantMap(variantMap);
+    _bottomClusterNamesDataset.insertIntoVariantMap(variantMap);
     _filteredGeneNamesVariant.insertIntoVariantMap(variantMap);
     _topNGenesFilter.insertIntoVariantMap(variantMap);
     _filteringEditTreeDataset.insertIntoVariantMap(variantMap);

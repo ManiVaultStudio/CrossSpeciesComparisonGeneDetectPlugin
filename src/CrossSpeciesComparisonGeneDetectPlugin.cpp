@@ -209,7 +209,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                 _settingsAction.getSelctedSpeciesVals().setString("");
 
 
-                if (_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset().isValid() && _settingsAction.getClusterNamesDataset().getCurrentDataset().isValid())
+                if (_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset().isValid() && _settingsAction.getBottomClusterNamesDataset().getCurrentDataset().isValid())
                 {
 
                     auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -231,7 +231,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                     if (colorDatasetPickerAction)
                                     {
                                         colorDatasetPickerAction->setCurrentText("");
-                                        colorDatasetPickerAction->setCurrentDataset(_settingsAction.getClusterNamesDataset().getCurrentDataset());
+                                        colorDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
 
                                     }
                                     samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
@@ -409,7 +409,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                             if (colorDatasetPickerAction)
                             {
                                 colorDatasetPickerAction->setCurrentText("");
-                                colorDatasetPickerAction->setCurrentDataset(_settingsAction.getClusterNamesDataset().getCurrentDataset());
+                                colorDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
 
                             }
                             samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
@@ -546,7 +546,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesNamesDataset());
-    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterNamesDataset());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getBottomClusterNamesDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getScatterplotEmbeddingPointsUMAPOption());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSpeciesExplorerInMap());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
