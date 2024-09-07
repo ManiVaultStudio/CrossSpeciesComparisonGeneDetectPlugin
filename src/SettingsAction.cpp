@@ -1078,6 +1078,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _startComputationTriggerAction.setDisabled(false);
            
             _popupMessage->show();
+            QApplication::processEvents();
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
             QFuture<void> future2 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
             future1.waitForFinished();
