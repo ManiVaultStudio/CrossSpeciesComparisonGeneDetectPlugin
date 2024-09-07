@@ -796,7 +796,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 }
             }
             _bottomHierarchyClusterNamesFrequencyInclusionList.setOptions(clusterNames);
-            QStringList removalStringList = { "Oligo_2","Oligo_1","Astro_2","Astro_1", "OPC", "Microglia/PVM", "Endo", "LMC"};
+            QStringList removalStringList = { "Oligo_2","Oligo_1","Astro_2","Astro_1", "OPC", "Microglia/PVM", "Endo", "VLMC","LMC"};
 
             //if removal string present remove it
             for (auto removalString : removalStringList)
