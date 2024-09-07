@@ -2092,6 +2092,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
 
 
+        // Ensure that the types match
         QMutex mapMutex; // Mutex to protect shared access to _clusterGeneMeanExpressionMap
 
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
@@ -2103,19 +2104,19 @@ void SettingsAction::computeGeneMeanExpressionMap()
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
 
-                std::vector<int> topIndices;
-                std::vector<int> middleIndices;
-                std::vector<int> bottomIndices;
+                std::vector<uint32_t> topIndices;
+                std::vector<uint32_t> middleIndices;
+                std::vector<uint32_t> bottomIndices;
 
                 // Determine cluster membership for the species
-                for (int i = 0; i < speciesIndices.size(); ++i) {
-                    if (std::find(topClusterNames.begin(), topClusterNames.end(), speciesIndices[i]) != topClusterNames.end()) {
+                for (uint32_t i = 0; i < speciesIndices.size(); ++i) {
+                    if (std::binary_search(topClusterNames.begin(), topClusterNames.end(), speciesIndices[i])) {
                         topIndices.push_back(i);
                     }
-                    if (std::find(middleClusterNames.begin(), middleClusterNames.end(), speciesIndices[i]) != middleClusterNames.end()) {
+                    if (std::binary_search(middleClusterNames.begin(), middleClusterNames.end(), speciesIndices[i])) {
                         middleIndices.push_back(i);
                     }
-                    if (std::find(bottomClusterNames.begin(), bottomClusterNames.end(), speciesIndices[i]) != bottomClusterNames.end()) {
+                    if (std::binary_search(bottomClusterNames.begin(), bottomClusterNames.end(), speciesIndices[i])) {
                         bottomIndices.push_back(i);
                     }
                 }
@@ -2131,65 +2132,23 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     return; // Skip processing if the index is invalid
                 }
 
-                // Process "allCells"
-                std::vector<float> resultContainerFull(speciesIndices.size());
-                // Ensure the correct arguments are passed to populateDataForDimensions
-                mainPointDatasetFull->populateDataForDimensions(
-                    resultContainerFull,
-                    std::vector<int>{geneIndex}, // Check the expected type of gene index argument
-                    speciesIndices); // Check the expected type of indices argument
-
-                float fullMean = calculateMean(resultContainerFull);
-                {
+                auto processCells = [&](const std::vector<uint32_t>& indices, const QString& cellType) {
+                    std::vector<float> resultContainer(indices.size());
+                    mainPointDatasetFull->populateDataForDimensions(resultContainer, std::vector<int>{geneIndex}, indices);
+                    float mean = calculateMean(resultContainer);
                     QMutexLocker locker(&mapMutex);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = std::make_pair(speciesIndices.size(), fullMean);
-                }
+                    _clusterGeneMeanExpressionMap[speciesName][geneName][cellType] = std::make_pair(indices.size(), mean);
+                    };
 
-                // Process "topCells"
-                std::vector<float> resultContainerTop(topIndices.size());
-                mainPointDatasetFull->populateDataForDimensions(
-                    resultContainerTop,
-                    std::vector<int>{geneIndex}, // Ensure gene index is passed correctly
-                    topIndices); // Ensure indices are passed in the correct format
-
-                float topMean = calculateMean(resultContainerTop);
-                {
-                    QMutexLocker locker(&mapMutex);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]["topCells"] = std::make_pair(topIndices.size(), topMean);
-                }
-
-                // Process "middleCells"
-                std::vector<float> resultContainerMiddle(middleIndices.size());
-                mainPointDatasetFull->populateDataForDimensions(
-                    resultContainerMiddle,
-                    std::vector<int>{geneIndex}, // Ensure the index is in the correct format
-                    middleIndices); // Make sure the indices match expected input types
-
-                float middleMean = calculateMean(resultContainerMiddle);
-                {
-                    QMutexLocker locker(&mapMutex);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]["middleCells"] = std::make_pair(middleIndices.size(), middleMean);
-                }
-
-                // Process "bottomCells"
-                std::vector<float> resultContainerBottom(bottomIndices.size());
-                mainPointDatasetFull->populateDataForDimensions(
-                    resultContainerBottom,
-                    std::vector<int>{geneIndex}, // Correcting to the expected type
-                    bottomIndices); // Adjust if indices should be passed differently
-
-                float bottomMean = calculateMean(resultContainerBottom);
-                {
-                    QMutexLocker locker(&mapMutex);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]["bottomCells"] = std::make_pair(bottomIndices.size(), bottomMean);
-                }
+                processCells(speciesIndices, "allCells");
+                processCells(topIndices, "topCells");
+                processCells(middleIndices, "middleCells");
+                processCells(bottomIndices, "bottomCells");
                     });
                 });
 
             _meanMapComputed = true;
         }
-
-
 
 
 
