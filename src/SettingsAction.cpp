@@ -2162,7 +2162,8 @@ void SettingsAction::computeGeneMeanExpressionMap()
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
-            for (auto species : speciesclusters) {
+
+            QtConcurrent::blockingMap(speciesclusters, [&](const auto& species) {
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
                 for (int i = 0; i < mainPointDimensionNames.size(); i++) {
@@ -2173,10 +2174,9 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     float fullMean = calculateMean(resultContainerFull);
                     _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = std::make_pair(speciesIndices.size(), fullMean);
                 }
+                });
 
-            }
             _meanMapComputed = true;
-
         }
     }
 
