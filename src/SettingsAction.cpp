@@ -2032,50 +2032,50 @@ void SettingsAction::computeGeneMeanExpressionMap()
     {
         return;
     }
-    auto start = std::chrono::high_resolution_clock::now();
-    qDebug() << "Computing gene mean expression map";
 
 
     _clusterGeneMeanExpressionMap.clear();
-
+    _clusterSpeciesFrequencyMap.clear();
+    computeFrequencyMapForHierarchyItemsChange("top");
+    computeFrequencyMapForHierarchyItemsChange("middle");
+    computeFrequencyMapForHierarchyItemsChange("bottom");
+    auto start = std::chrono::high_resolution_clock::now();
+    qDebug() << "Computing gene mean expression map";
     if (_speciesNamesDataset.getCurrentDataset().isValid() && _mainPointsDataset.getCurrentDataset().isValid()) {
 
         auto speciesClusterDatasetFull = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
         auto mainPointDatasetFull = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
-        auto numOfPoints = mainPointDatasetFull->getNumPoints();
-
-        // Ensure that the types match
-        QMutex mapMutex; // Mutex to protect shared access to _clusterGeneMeanExpressionMap
-
         if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
+
+            // Use a shared mutex for thread safety
+            QMutex mapMutex;
 
             // Parallel processing of species clusters
             QtConcurrent::blockingMap(speciesclusters, [&](const auto& species) {
                 auto speciesIndices = species.getIndices();
                 auto speciesName = species.getName();
 
-               // Parallel processing of gene expressions within each species
+                // Parallel processing of gene expressions within each species
                 QtConcurrent::blockingMap(mainPointDimensionNames, [&](const auto& geneName) {
-                    // Manually find the index of the geneName
-                    int geneIndex = std::distance(mainPointDimensionNames.begin(),
-                    std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName));
+                    // Find the index of the geneName
+                    auto geneIndexIt = std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName);
+                    if (geneIndexIt == mainPointDimensionNames.end()) {
+                        return; // Skip processing if the geneName is not found
+                    }
+                    int geneIndex = std::distance(mainPointDimensionNames.begin(), geneIndexIt);
 
-                if (geneIndex == mainPointDimensionNames.size()) {
-                    // Handle case where geneName is not found if necessary
-                    return; // Skip processing if the index is invalid
-                }
-
-                auto processCellsMean = [&](const std::vector<uint32_t>& indices, const QString& cellType) {
-                    std::vector<float> resultContainer(indices.size());
-                    mainPointDatasetFull->populateDataForDimensions(resultContainer, std::vector<int>{geneIndex}, indices);
+                    std::vector<float> resultContainer(speciesIndices.size());
+                    std::vector<int> geneIndices = { geneIndex };
+                    mainPointDatasetFull->populateDataForDimensions(resultContainer, geneIndices, speciesIndices);
                     float mean = calculateMean(resultContainer);
-                    QMutexLocker locker(&mapMutex);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName][cellType] = std::make_pair(indices.size(), mean);
-                    };
 
-                processCellsMean(speciesIndices, "allCells");
+                    // Lock the mutex only when updating the shared map
+                    {
+                        QMutexLocker locker(&mapMutex);
+                        _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = { speciesIndices.size(), mean };
+                    }
                     });
                 });
 
@@ -2083,17 +2083,13 @@ void SettingsAction::computeGeneMeanExpressionMap()
         }
 
 
-
-
     }
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
-    _clusterSpeciesFrequencyMap.clear();
-    computeFrequencyMapForHierarchyItemsChange("top");
-    computeFrequencyMapForHierarchyItemsChange("middle");
-    computeFrequencyMapForHierarchyItemsChange("bottom");
 }
+
 
 void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarchyType)
 {
