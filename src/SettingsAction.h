@@ -140,6 +140,7 @@ struct SpeciesDetailsStats {
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
+    int abundanceCountTop;
     //float meanAll;
     //int countAll;
 
@@ -152,6 +153,7 @@ struct Stats {
     float meanNonSelected;
     int countNonSelected;
     QColor color;
+    int abundanceCountTop;
     //float meanAll;
     //int countAll;
 
@@ -160,6 +162,7 @@ struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
+    int abundanceCountTop;
     //int allCellsCount;
 };
 

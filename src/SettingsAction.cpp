@@ -71,7 +71,7 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
 
 
 
-Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected/*, const StatisticsSingle& allSelected*/) {
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const int countTopAbundance/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
@@ -81,6 +81,8 @@ Stats combineStatisticsSingle(const StatisticsSingle& selected, const Statistics
 
     combinedStats.meanNonSelected = nonSelected.meanVal; 
     combinedStats.countNonSelected = nonSelected.countVal; 
+
+    combinedStats.abundanceCountTop = countTopAbundance;
 
     return combinedStats;
 }
@@ -1873,7 +1875,22 @@ void SettingsAction::updateButtonTriggered()
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
 
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot);
+
+                                int topHierarchyCountValue = 0;
+                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end())
+                                {
+                                    topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
+                                    //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
+                                    //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
+                                }
+                                float topHierarchyFrequencyValue = 0.0;
+                                if (topHierarchyCountValue != 0.0f) {
+                                    topHierarchyFrequencyValue = static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue;
+                                }
+
+
+
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
                             }
 
                             // Merge results in a thread-safe manner
@@ -1882,6 +1899,7 @@ void SettingsAction::updateButtonTriggered()
                                 _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
+                                _selectedSpeciesCellCountMap[speciesName].abundanceCountTop = pair.second.abundanceCountTop;
                             }
                             });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
@@ -2994,9 +3012,10 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, MeanSelected: %3, CountSelected: %4, MeanNotSelected: %5, CountNotSelected: %6;\n")//, MeanAll: %7, CountAll: %8
+            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3, MeanSelected: %4, CountSelected: %5, MeanNotSelected: %6, CountNotSelected: %7;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
+                .arg(stats.abundanceCountTop)
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)

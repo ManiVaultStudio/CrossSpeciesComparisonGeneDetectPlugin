@@ -91,7 +91,7 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
 
     //qdebud speciesStatsList
     //qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");//, MeanAll: ([\\d.]+), CountAll: (\\d+)
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");//, MeanAll: ([\\d.]+), CountAll: (\\d+)
 
 
     for (const QString& speciesStats : speciesStatsList) {
@@ -100,10 +100,11 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
             QString species = match.captured(1);
             SpeciesDetailsStats stats = {
                 match.captured(2).toInt(),
-                match.captured(3).toFloat(),
-                match.captured(4).toInt(),
-                match.captured(5).toFloat(),
-                match.captured(6).toInt(),
+                match.captured(3).toInt(),
+                match.captured(4).toFloat(),
+                match.captured(5).toInt(),
+                match.captured(6).toFloat(),
+                match.captured(7).toInt(),
                 //match.captured(7).toFloat(),
                 //match.captured(8).toInt()
             };
@@ -1579,13 +1580,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << item; //2 Appearance\nRank
 
 
-                int topHierarchyCountValue = 0;
-                if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
-                {
-                    topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
+                int topHierarchyCountValue = it->second.abundanceCountTop;
+                //if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
+                //{
+                    //topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
                     //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
                     //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
-                }
+                //}
                 float topHierarchyFrequencyValue = 0.0;
                 if (topHierarchyCountValue != 0.0f) {
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
@@ -1752,7 +1753,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
-            
+            int topHierarchyCountValue = it->second.abundanceCountTop;
+
+            float topHierarchyFrequencyValue = 0.0;
+            if (topHierarchyCountValue != 0.0f) {
+                topHierarchyFrequencyValue = static_cast<float>(it->second.countSelected) / topHierarchyCountValue;
+            }
+
+            node["abundance"] = topHierarchyFrequencyValue;
         }
         if (it != speciesExpressionMap.end()) {
             node["cellCounts"] = it->second.countSelected;
