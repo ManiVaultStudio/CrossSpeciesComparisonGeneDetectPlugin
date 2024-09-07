@@ -288,7 +288,8 @@ public: // Action getters
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
-    bool& getStopClusterPositionMapCreation() { return _stopClusterPositionMapCreation; }
+    bool& getMapForHierarchyItemsChangeMethodStopForProjectLoadFlag() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadFlag; }
+    void setMapForHierarchyItemsChangeMethodStopForProjectLoadFlag(bool flag) { _mapForHierarchyItemsChangeMethodStopForProjectLoadFlag = flag; }
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
     std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
@@ -423,7 +424,7 @@ protected:
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
     std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
-    bool _stopClusterPositionMapCreation=true;
 
+    bool _mapForHierarchyItemsChangeMethodStopForProjectLoadFlag = true;
     //std::vector<QString> _speciesOrder;
 };

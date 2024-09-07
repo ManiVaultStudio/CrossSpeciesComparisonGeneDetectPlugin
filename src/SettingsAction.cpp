@@ -2018,7 +2018,9 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
 
 void SettingsAction::computeGeneMeanExpressionMap()
 {
-    
+    auto start = std::chrono::high_resolution_clock::now();
+    qDebug() << "Computing gene mean expression map";
+
     
     _clusterGeneMeanExpressionMap.clear(); 
 
@@ -2141,13 +2143,21 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
         }
     }
-
+    qDebug() << "Gene mean expression map computed";
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration) + " ms";
 }
 
 void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString hierarchyType)
 {
-
-    if (hierarchyType=="")
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadFlag)
+    {
+        return;
+    }
+    auto startTimer = std::chrono::high_resolution_clock::now();
+    qDebug() << "computeGeneMeanExpressionMapForHierarchyItemsChange Start for " + hierarchyType;
+    if (hierarchyType == "")
     {
         return;
     }
@@ -2161,7 +2171,7 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
         std::vector<bool> clusterNames(numOfPoints, true);
         bool datasetCheck = false;
         QStringList inclusionList;
-        if (hierarchyType=="top")
+        if (hierarchyType == "top")
         {
             inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
             if (_topClusterNamesDataset.getCurrentDataset().isValid())
@@ -2172,7 +2182,7 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
         else if (hierarchyType == "middle")
         {
             inclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-            if ( _middleClusterNamesDataset.getCurrentDataset().isValid())
+            if (_middleClusterNamesDataset.getCurrentDataset().isValid())
             {
                 datasetCheck = true;
             }
@@ -2185,11 +2195,11 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
                 datasetCheck = true;
             }
         }
-        
+
         if (datasetCheck)
         {
             mv::Dataset<Clusters> clusterDataset;
-            
+
             if (hierarchyType == "top")
             {
                 clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
@@ -2202,7 +2212,7 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
             {
                 clusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
             }
- 
+
             for (auto cluster : clusterDataset->getClusters())
             {
                 auto clusterIndices = cluster.getIndices();
@@ -2211,7 +2221,7 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
                 {
                     for (auto index : clusterIndices)
                     {
-                       clusterNames[index] = false;
+                        clusterNames[index] = false;
                     }
                 }
 
@@ -2220,7 +2230,7 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
 
 
 
-        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid()) 
+        if (speciesClusterDatasetFull.isValid() && mainPointDatasetFull.isValid())
         {
             auto speciesclusters = speciesClusterDatasetFull->getClusters();
             auto mainPointDimensionNames = mainPointDatasetFull->getDimensionNames();
@@ -2268,6 +2278,10 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
         }
     }
 
+    qDebug() << "computeGeneMeanExpressionMapForHierarchyItemsChange End for " + hierarchyType;
+    auto endTimer = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+    qDebug() << "\n\n******************Time taken for computeGeneMeanExpressionMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration) + " ms";
 }
 
 void SettingsAction::findTopNGenesPerCluster() {

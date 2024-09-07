@@ -429,7 +429,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
-
+            _settingsAction.setMapForHierarchyItemsChangeMethodStopForProjectLoadFlag(false);
 
         };
 
