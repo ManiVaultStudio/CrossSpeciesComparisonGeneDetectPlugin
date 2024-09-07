@@ -292,6 +292,7 @@ public: // Action getters
 
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
+    std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
     std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
     Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }

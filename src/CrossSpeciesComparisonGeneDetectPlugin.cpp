@@ -444,7 +444,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     //make long strings in the cells visible and not ...shortened
     _settingsAction.getGeneTableView()->setTextElideMode(Qt::ElideNone);
     _settingsAction.getGeneTableView()->setWordWrap(true);
-    _settingsAction.getGeneTableView()->setAlternatingRowColors(true);
+    _settingsAction.getGeneTableView()->setAlternatingRowColors(false);
     _settingsAction.getGeneTableView()->setSortingEnabled(true);
 
     //on hovering a cell, show the full text available in a tooltip
@@ -1458,7 +1458,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species", "Count\nSelected","Count\nNon\nSelected" });
+        model->setHorizontalHeaderLabels({ "Species","Relative\nAbundance\nNeuronal\nTop\nHierarchy", "Count\nSelected", "Count\nNon\nSelected" });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
@@ -1475,6 +1475,28 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             rowItems << speciesItem;
 
             QStandardItem* item;
+
+
+            int topHierarchyCountValue = 0;
+            if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
+            {
+                topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
+                //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
+                //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
+            }
+            float topHierarchyFrequencyValue = 0.0;
+            if (topHierarchyCountValue != 0.0f) {
+                topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
+            }
+
+            // Add new column for "Frequency Relative Top Hierarchy"
+            item = new QStandardItem();
+
+            QString formattedValue = QString::number(topHierarchyFrequencyValue, 'f', 2);
+            item->setData(QVariant(formattedValue), Qt::EditRole);
+            //item->setToolTip(QString::number(topHierarchyFrequencyValue));
+            rowItems << item;
+
             item = new QStandardItem();
             item->setData(QVariant(details.selectedCellsCount), Qt::EditRole);
             rowItems << item;
@@ -1485,15 +1507,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             model->appendRow(rowItems);
         }
+
+        // Set the model to the table view
         _settingsAction.getSelectionDetailsTable()->setModel(model);
-        model->sort(1, Qt::DescendingOrder);
+
+        // Sort the model by the fourth column (Frequency Relative Top Hierarchy) in descending order
+        model->sort(3, Qt::DescendingOrder);
+
+        // Configure the table view
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
-        emit model->layoutChanged();
 
+        // Emit layoutChanged signal to notify views of the model change
+        emit model->layoutChanged();
     }
+
+
     adjustTableWidths("small");
 }
 
@@ -1507,7 +1538,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
+        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Relative\nAbundance\nNeuronal\nTop\nHierarchy", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
         auto ValuesColor = colorValues[1];
@@ -1547,22 +1578,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(it->second.rank), Qt::EditRole);
                 rowItems << item; //2 Appearance\nRank
 
+
+                int topHierarchyCountValue = 0;
+                if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
+                {
+                    topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
+                    //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
+                    //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
+                }
+                float topHierarchyFrequencyValue = 0.0;
+                if (topHierarchyCountValue != 0.0f) {
+                    topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
+                }
+
+                // Add new column for "Frequency Relative Top Hierarchy"
+                item = new QStandardItem();
+
+                QString formattedValue = QString::number(topHierarchyFrequencyValue, 'f', 2);
+                item->setData(QVariant(formattedValue), Qt::EditRole);
+                //item->setToolTip(QString::number(topHierarchyFrequencyValue));
+                rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
+
+
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.countSelected), Qt::EditRole);
-                rowItems << item; //3 Count\nSelected
+                rowItems << item; //4 Count\nSelected
 
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanSelected), Qt::EditRole);
-                rowItems << item; //4 Mean\nSelected
+                rowItems << item; //5 Mean\nSelected
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
-                rowItems << item;  //5 Count\nNon\nSelected
+                rowItems << item;  //6 Count\nNon\nSelected
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
-                rowItems << item; //6 Mean\nNon\nSelected
+                rowItems << item; //7 Mean\nNon\nSelected
 
 
             }
@@ -1584,6 +1637,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A"); //4
                 rowItems << new QStandardItem("N/A"); //5
                 rowItems << new QStandardItem("N/A"); //6
+                rowItems << new QStandardItem("N/A"); //7
             }
 
             //QStringList speciesChosen = {};
@@ -1591,7 +1645,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             if (selectedSpecies.contains(species)) {
                 for (int i = 1; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
-                    rowItems[i]->setForeground(QBrush(QColor("#FFFFFF")));
+                    rowItems[i]->setForeground(QBrush(QColor(ValuesColor)));
                 }
 
             }
@@ -1601,6 +1655,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     rowItems[i]->setBackground(QBrush(QColor(systemColor)));
                     rowItems[i]->setForeground(QBrush(QColor(ValuesColor)));
                 }
+
+
             }
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);
 

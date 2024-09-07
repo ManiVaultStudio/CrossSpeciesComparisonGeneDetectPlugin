@@ -333,7 +333,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     _geneTableView->setSelectionMode(QAbstractItemView::SingleSelection);
     _geneTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    _geneTableView->setAlternatingRowColors(true);
+    _geneTableView->setAlternatingRowColors(false);
     _geneTableView->setSortingEnabled(true);
     _geneTableView->setShowGrid(true);
     _geneTableView->setGridStyle(Qt::SolidLine);
@@ -1080,9 +1080,18 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _popupMessage->show();
             QApplication::processEvents();
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            QFuture<void> future2 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
+            //QFuture<void> future5 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
+            //QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            //QFuture<void> future3 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
+            //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
+            computeFrequencyMapForHierarchyItemsChange("top");
+            //computeFrequencyMapForHierarchyItemsChange("middle");
+            //computeFrequencyMapForHierarchyItemsChange("bottom");
             future1.waitForFinished();
-            future2.waitForFinished();
+            //future2.waitForFinished();
+            //future3.waitForFinished();
+            //future4.waitForFinished();
+            //future5.waitForFinished();
             _startComputationTriggerAction.trigger();
         }
         else
