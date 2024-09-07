@@ -271,6 +271,37 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.setChecked(true);
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget = new QStatusBar();
+
+
+    _popupMessage = new QMessageBox();
+    _popupMessage->setIcon(QMessageBox::Information);
+    _popupMessage->setWindowTitle("Computation in Progress");
+    _popupMessage->setText("Data Precomputation in Progress");
+    _popupMessage->setInformativeText("The system is currently precomputing essential data to enhance your interactive exploration experience. This process may take some time based on your data size and processor. The popup will close automatically once initialization is complete. Thank you for using Cytosplore EvoViewer.");
+    _popupMessage->setStandardButtons(QMessageBox::NoButton);
+    _popupMessage->setModal(true);
+
+
+    /*
+    _popupMessage = new QMessageBox();
+    _popupMessage->setIcon(QMessageBox::Information);
+    _popupMessage->setWindowTitle("Computation in Progress");
+    _popupMessage->setText(
+        "<div style='text-align: center;'>"
+        "<h2 style='color: #333;'>Data Precomputation in Progress</h2>"
+        "</div>"
+    );
+    _popupMessage->setInformativeText(
+        "<div style='text-align: center;'>"
+        "The system is currently precomputing essential data to enhance your interactive exploration experience. "
+        "This process may take some time based on your data size and processor. The popup will close automatically "
+        "once initialization is complete. Thank you for using Cytosplore EvoViewer."
+        "</div>"
+    );
+    _popupMessage->setStandardButtons(QMessageBox::NoButton);
+    _popupMessage->setModal(true);
+    */
+
     _searchBox = new CustomLineEdit();
     QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
     QAction* searchAction = new QAction(_searchBox);
@@ -530,6 +561,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         {
             computeFrequencyMapForHierarchyItemsChange("bottom");
+            _statusColorAction.setString("M");
         }
         });
     connect(&_bottomHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateBottomHierarchyClusterNamesFrequencyInclusionList);
@@ -544,6 +576,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         {
             computeFrequencyMapForHierarchyItemsChange("middle");
+            _statusColorAction.setString("M");
         }
 
         });
@@ -559,6 +592,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         {
             computeFrequencyMapForHierarchyItemsChange("top");
+            _statusColorAction.setString("M");
         }
 
         });
@@ -911,6 +945,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (string == "C")
         {
             _startComputationTriggerAction.setDisabled(true);
+            if (_popupMessage->isVisible())
+            {
+                _popupMessage->hide();
+            }
         }
         else
         {
@@ -1038,11 +1076,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
-            // Run both methods in parallel
-            QFuture<void> future1 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
-            QFuture<void> future2 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-
-            // Wait for both to complete
+           
+            _popupMessage->show();
+            QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+            QFuture<void> future2 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
             future1.waitForFinished();
             future2.waitForFinished();
             _startComputationTriggerAction.trigger();
