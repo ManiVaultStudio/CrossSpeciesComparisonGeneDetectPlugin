@@ -554,7 +554,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getStatusColorAction());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterOrderHierarchy());
-    
+
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
@@ -563,6 +563,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
+    tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
+    tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
+    tsneOptionsGroup->addAction(&_settingsAction.getBottomHierarchyClusterNamesFrequencyInclusionList());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneKnn());

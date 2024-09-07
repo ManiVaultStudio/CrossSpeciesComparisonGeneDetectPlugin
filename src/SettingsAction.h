@@ -237,6 +237,9 @@ public: // Action getters
     OptionAction& getTypeofTopNGenes() { return _typeofTopNGenes; }
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
+    OptionsAction& getTopHierarchyClusterNamesFrequencyInclusionList() { return _topHierarchyClusterNamesFrequencyInclusionList; }
+    OptionsAction& getMiddleHierarchyClusterNamesFrequencyInclusionList() { return _middleHierarchyClusterNamesFrequencyInclusionList; }
+    OptionsAction& getBottomHierarchyClusterNamesFrequencyInclusionList() { return _bottomHierarchyClusterNamesFrequencyInclusionList; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
@@ -316,8 +319,9 @@ public: // Action getters
     void findTopNGenesPerCluster();
     QString generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType);
     void createClusterPositionMap();
+    void computeGeneMeanExpressionMapForHierarchyItemsChange(QString hierarchyType);
 private:
-
+    
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
     void updateButtonTriggered();
     void setModifiedTriggeredData(QVariant geneListTable);
@@ -407,7 +411,9 @@ protected:
     std::vector<QString>     _totalGeneList;
     QSet<QString>               _uniqueReturnGeneList;
     IntegralAction                _performGeneTableTsnePerplexity;
-    
+    OptionsAction                 _topHierarchyClusterNamesFrequencyInclusionList;
+    OptionsAction                 _middleHierarchyClusterNamesFrequencyInclusionList;
+    OptionsAction                 _bottomHierarchyClusterNamesFrequencyInclusionList;
     OptionAction                   _performGeneTableTsneKnn;
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;
@@ -418,5 +424,6 @@ protected:
     StringAction             _clusterOrderHierarchy;
     std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
     bool _stopClusterPositionMapCreation=true;
+
     //std::vector<QString> _speciesOrder;
 };
