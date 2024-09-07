@@ -265,9 +265,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
-    _toggleScatterplotSelection(this, "Show Scatterplot Selection")
+    _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
+    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
 {
-
+    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.setChecked(true);
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
     _statusBarActionWidget = new QStatusBar();
     _searchBox = new CustomLineEdit();
@@ -278,6 +279,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setPlaceholderText("Search ID...");
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _searchBox->setMaximumHeight(22);
+    
     //_searchBox->setMinimumWidth(100);
     _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
@@ -1042,7 +1044,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_applyLogTransformation, &ToggleAction::toggled, this, updateApplyLogTransformation);
+    const auto updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker = [this]() -> void {
+        if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+        {
+            _startComputationTriggerAction.setDisabled(false);
+            computeGeneMeanExpressionMap();
+            _startComputationTriggerAction.trigger();
+        }
+        else
+        {
+            _startComputationTriggerAction.setDisabled(true);
+        }
 
+        };
+    connect(&_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker, &ToggleAction::toggled, this, updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker);
         const auto updateToggleScatterplotSelection = [this]() -> void {
         
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -1142,6 +1157,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 void SettingsAction::updateButtonTriggered()
 {
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        qDebug() << "Map for hierarchy items change method stop for project load blocker is checked";
+        return;
+    }
+
     try {
        // _startComputationTriggerAction.setDisabled(true);
         startCodeTimer("UpdateGeneFilteringTrigger");
@@ -2018,6 +2039,10 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
 
 void SettingsAction::computeGeneMeanExpressionMap()
 {
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        return;
+    }
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing gene mean expression map";
 
@@ -2036,49 +2061,33 @@ void SettingsAction::computeGeneMeanExpressionMap()
         QStringList middleInclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         QStringList bottomInclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         if (_topClusterNamesDataset.getCurrentDataset().isValid() && _middleClusterNamesDataset.getCurrentDataset().isValid() && _bottomClusterNamesDataset.getCurrentDataset().isValid())
+
         {
             auto topClusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto middleClusterDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto bottomClusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
-            for (auto cluster : topClusterDataset->getClusters())
-            {
-                auto clusterIndices = cluster.getIndices();
-                auto clusterName = cluster.getName();
-                if (!topInclusionList.contains(clusterName))
-                {
-                    for (auto index : clusterIndices)
-                    {
-                        topClusterNames[index] = false;
+
+            auto processCluster = [&](const Clusters& dataset, std::vector<bool>& clusterNames) {
+                for (const auto& cluster : dataset.getClusters()) {
+                    auto clusterIndices = cluster.getIndices();
+                    auto clusterName = cluster.getName();
+                    if (!topInclusionList.contains(clusterName)) {
+                        for (auto index : clusterIndices) {
+                            if (index < clusterNames.size()) {
+                                clusterNames[index] = false;
+                            }
+                        }
                     }
                 }
+                };
 
-            }
-            for (auto cluster : middleClusterDataset->getClusters())
-            {
-                auto clusterIndices = cluster.getIndices();
-                auto clusterName = cluster.getName();
-                if (!topInclusionList.contains(clusterName))
-                {
-                    for (auto index : clusterIndices)
-                    {
-                        middleClusterNames[index] = false;
-                    }
-                }
+            QFuture<void> topFuture = QtConcurrent::run([&]() { processCluster(*topClusterDataset, topClusterNames); });
+            QFuture<void> middleFuture = QtConcurrent::run([&]() { processCluster(*middleClusterDataset, middleClusterNames); });
+            QFuture<void> bottomFuture = QtConcurrent::run([&]() { processCluster(*bottomClusterDataset, bottomClusterNames); });
 
-            }
-            for (auto cluster : bottomClusterDataset->getClusters())
-            {
-                auto clusterIndices = cluster.getIndices();
-                auto clusterName = cluster.getName();
-                if (!topInclusionList.contains(clusterName))
-                {
-                    for (auto index : clusterIndices)
-                    {
-                        bottomClusterNames[index] = false;
-                    }
-                }
-
-            }
+            topFuture.waitForFinished();
+            middleFuture.waitForFinished();
+            bottomFuture.waitForFinished();
         }
 
 
@@ -2143,15 +2152,15 @@ void SettingsAction::computeGeneMeanExpressionMap()
 
         }
     }
-    qDebug() << "Gene mean expression map computed";
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration) + " ms";
+    qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
+
 }
 
 void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString hierarchyType)
 {
-    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadFlag)
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
     {
         return;
     }
@@ -2277,11 +2286,10 @@ void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChange(QString
 
         }
     }
-
-    qDebug() << "computeGeneMeanExpressionMapForHierarchyItemsChange End for " + hierarchyType;
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
-    qDebug() << "\n\n******************Time taken for computeGeneMeanExpressionMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration) + " ms";
+    qDebug() << "Time taken for computeGeneMeanExpressionMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
+
 }
 
 void SettingsAction::findTopNGenesPerCluster() {

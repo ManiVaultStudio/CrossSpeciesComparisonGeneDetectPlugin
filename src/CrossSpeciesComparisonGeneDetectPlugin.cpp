@@ -386,7 +386,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.removeDatasets(groupId1);
             _settingsAction.removeDatasets(groupId2);
             _settingsAction.removeDatasets(-1);
-            _settingsAction.getStartComputationTriggerAction().trigger();
+            _settingsAction.getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker().setChecked(false);
 
 
 
@@ -429,7 +429,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
-            _settingsAction.setMapForHierarchyItemsChangeMethodStopForProjectLoadFlag(false);
+            
 
         };
 
