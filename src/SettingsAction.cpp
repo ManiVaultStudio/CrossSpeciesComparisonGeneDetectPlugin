@@ -1085,7 +1085,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateRightClickedCluster = [this]() -> void {
 
        
-        qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
+        //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
         QString orderedClusters = _rightClickedCluster.getString();
         auto geneName = _selectedGene.getString();
         if (orderedClusters=="" || geneName=="")
@@ -1133,7 +1133,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (referenceTreeDataset.isValid()) {
                 auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
                 if (referenceTree.isValid()) {
-                    QJsonObject speciesDataJson = _precomputedTreesFromTheHierarchy[clusterLevel][clusterName][geneName];
+                    QString speciesData = _precomputedTreesFromTheHierarchy[clusterLevel][clusterName][geneName];
+                    QJsonObject speciesDataJson = QJsonDocument::fromJson(speciesData.toUtf8()).object();
                     //check if QJsonObject isValid
                     if (speciesDataJson.isEmpty())
                     {
@@ -2532,7 +2533,12 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                         QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                         createTreeInitial(speciesDataJson, utilityMap);
-                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = speciesDataJson;
+
+                        //convert QJsonObjectToString to store in a more space efficientway and then again convert the string to QJSONObject
+                        QString jsonString = QJsonDocument(speciesDataJson).toJson(QJsonDocument::Compact);
+                        
+
+                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = jsonString;
                     }
                 }
                 });
