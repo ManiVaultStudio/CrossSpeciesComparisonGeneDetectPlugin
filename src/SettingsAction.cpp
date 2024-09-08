@@ -2318,15 +2318,18 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             return;
                         }
 
-                        for (int geneIndex = 0; geneIndex < mainPointDimensionNames.size(); ++geneIndex) {
-                            const QString& geneName = mainPointDimensionNames[geneIndex];
-                            std::vector<int> geneIndexContainer = { geneIndex };
+                        std::vector<float> resultContainerShort(commonPointsIndices.size());
+                        std::vector<int> geneIndexContainer(1);
+
+                        QtConcurrent::blockingMap(mainPointDimensionNames, [&](const QString& geneName) {
+                            auto it = std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName);
+                            int geneIndex = (it != mainPointDimensionNames.end()) ? std::distance(mainPointDimensionNames.begin(), it) : -1;
+                            geneIndexContainer[0] = geneIndex;
 
                             const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
                             int allCellCounts = nonSelectionDetails.first;
                             float allCellMean = nonSelectionDetails.second;
 
-                            std::vector<float> resultContainerShort(commonPointsIndices.size());
                             mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
 
                             StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
@@ -2341,7 +2344,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                             QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                             topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
-                        }
+                        });
                     });
 
                     enum class SelectionOption {
@@ -2354,8 +2357,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                     SelectionOption option = SelectionOption::AbsoluteTopN;
                     if (optionValue == "Positive") {
                         option = SelectionOption::PositiveTopN;
-                    }
-                    else if (optionValue == "Negative") {
+                    } else if (optionValue == "Negative") {
                         option = SelectionOption::NegativeTopN;
                     }
 
@@ -2373,8 +2375,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                                 return std::abs(a.second) > std::abs(b.second);
                             });
-                        }
-                        else {
+                        } else {
                             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                                 return a.second > b.second;
                             });
