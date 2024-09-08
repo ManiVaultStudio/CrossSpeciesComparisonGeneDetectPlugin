@@ -1082,13 +1082,57 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _popupMessage->show();
             QApplication::processEvents();
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+            //QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
             //QFuture<void> future3 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
             //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
             //QFuture<void> future5 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
             //QFuture<void> future6 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
             computeFrequencyMapForHierarchyItemsChange("top");
             future1.waitForFinished();
+            //future2.waitForFinished();
             precomputeTreesFromHierarchy();
+
+
+            //print qdebug two QJsonObject value from     std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString, QJsonObject>>>  _precomputedTreesFromTheHierarchy;
+            /*
+
+            {
+                int count = 0;
+                for (const auto& outerPair : _precomputedTreesFromTheHierarchy) {
+                    const QString& outerKey = outerPair.first;
+                    const auto& middleMap = outerPair.second;
+
+                    for (const auto& middlePair : middleMap) {
+                        const QString& middleKey = middlePair.first;
+                        const auto& innerMap = middlePair.second;
+
+                        for (const auto& innerPair : innerMap) {
+                            const QString& innerKey = innerPair.first;
+                            const QJsonObject& jsonObject = innerPair.second;
+
+                            qDebug() << "Outer Key:" << outerKey;
+                            qDebug() << "Middle Key:" << middleKey;
+                            qDebug() << "Inner Key:" << innerKey;
+                            qDebug() << "QJsonObject:" << QJsonDocument(jsonObject).toJson(QJsonDocument::Compact);
+
+                            if (++count >= 2) {
+                                break;
+                            }
+                        }
+                        if (count >= 2) {
+                            break;
+                        }
+                    }
+                    if (count >= 2) {
+                        break;
+                    }
+                }
+            }
+
+            */
+
+
+            //_precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName]
             //computeFrequencyMapForHierarchyItemsChange("middle");
             //computeFrequencyMapForHierarchyItemsChange("bottom");
             
