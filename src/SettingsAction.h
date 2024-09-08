@@ -172,6 +172,13 @@ struct StatisticsSingle {
 
 };
 
+struct InitialStatistics {
+    float meanVal;
+    float differentialVal;
+    float abundanceVal;
+    int rankVal;
+};
+
 class SettingsAction : public WidgetAction
 {
 public:
