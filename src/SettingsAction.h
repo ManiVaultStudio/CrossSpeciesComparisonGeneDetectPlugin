@@ -136,11 +136,12 @@ struct ClusterOrderContainer {
 
 struct SpeciesDetailsStats {
     int rank;
+    int abundanceCountTop;
     float meanSelected;
     int countSelected;
     float meanNonSelected;
     int countNonSelected;
-    int abundanceCountTop;
+    
     //float meanAll;
     //int countAll;
 
@@ -162,7 +163,6 @@ struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
-    int abundanceCountTop;
     //int allCellsCount;
 };
 
@@ -292,7 +292,7 @@ public: // Action getters
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
-
+    std::unordered_map<QString, std::unordered_map<QString, QString>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
@@ -308,6 +308,7 @@ public: // Action getters
     //bool setErrorOutFlag(bool flag) { return _erroredOutFlag = flag; }
     void triggerTrippleHierarchyFrequencyChange();
     void computeGeneMeanExpressionMap();
+    void precomputeTreesFromHierarchy();
     void computeGeneMeanExpressionMapExperimental();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
@@ -433,7 +434,7 @@ protected:
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
     std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
-
+    std::unordered_map<QString, std::unordered_map<QString, QString>>  _precomputedTreesFromTheHierarchy;
     ToggleAction _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker;
     //std::vector<QString> _speciesOrder;
 };

@@ -85,28 +85,22 @@ void makeAllRowsVisible(QTableView* geneTableView, QSortFilterProxyModel* proxyM
 std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& formattedStatistics) {
     std::map<QString, SpeciesDetailsStats> statisticsMap;
 
-
-
     QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
 
-    //qdebud speciesStatsList
-    //qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");//, MeanAll: ([\\d.]+), CountAll: (\\d+)
-
+    // qDebug() << speciesStatsList;
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
         if (match.hasMatch()) {
             QString species = match.captured(1);
             SpeciesDetailsStats stats = {
-                match.captured(2).toInt(),
-                match.captured(3).toInt(),
-                match.captured(4).toFloat(),
-                match.captured(5).toInt(),
-                match.captured(6).toFloat(),
-                match.captured(7).toInt(),
-                //match.captured(7).toFloat(),
-                //match.captured(8).toInt()
+                match.captured(2).toInt(),  // Rank
+                match.captured(3).toInt(),  // AbundanceTop
+                match.captured(4).toFloat(),  // MeanSelected
+                match.captured(5).toInt(),  // CountSelected
+                match.captured(6).toFloat(),  // MeanNotSelected
+                match.captured(7).toInt()  // CountNotSelected
             };
             statisticsMap[species] = stats;
         }
@@ -114,6 +108,8 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
 
     return statisticsMap;
 }
+
+
 
 CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
@@ -1533,6 +1529,23 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
+
+    /*for (const auto& pair : statisticsValues) {
+        const QString& species = pair.first;
+        const SpeciesDetailsStats& stats = pair.second;
+        qDebug() << "Species:" << species
+            << "Rank:" << stats.rank
+            << "MeanSelected:" << stats.meanSelected
+            << "CountSelected:" << stats.countSelected
+            << "MeanNonSelected:" << stats.meanNonSelected
+            << "CountNonSelected:" << stats.countNonSelected
+            << "AbundanceCountTop:" << stats.abundanceCountTop;
+
+            ;
+
+    }*/
+
+
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
         // Create a new model for the table view
@@ -1581,23 +1594,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
 
                 int topHierarchyCountValue = it->second.abundanceCountTop;
-                //if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
-                //{
-                    //topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
-                    //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
-                    //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
-                //}
                 float topHierarchyFrequencyValue = 0.0;
                 if (topHierarchyCountValue != 0.0f) {
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
                 }
-
-                // Add new column for "Frequency Relative Top Hierarchy"
                 item = new QStandardItem();
-
                 QString formattedValue = QString::number(topHierarchyFrequencyValue, 'f', 2);
                 item->setData(QVariant(formattedValue), Qt::EditRole);
-                //item->setToolTip(QString::number(topHierarchyFrequencyValue));
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
 

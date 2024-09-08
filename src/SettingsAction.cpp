@@ -1081,15 +1081,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
            
             _popupMessage->show();
             QApplication::processEvents();
-            QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            //QFuture<void> future5 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
-            //QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            //QFuture<void> future3 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
-            //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
+            QFuture<void> future1 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
+            QFuture<void> future2 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+            //QFuture<void> future3 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
+            //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            //QFuture<void> future5 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
+            //QFuture<void> future6 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
             computeFrequencyMapForHierarchyItemsChange("top");
             //computeFrequencyMapForHierarchyItemsChange("middle");
             //computeFrequencyMapForHierarchyItemsChange("bottom");
             future1.waitForFinished();
+            future2.waitForFinished();
             //future2.waitForFinished();
             //future3.waitForFinished();
             //future4.waitForFinished();
@@ -1880,8 +1882,6 @@ void SettingsAction::updateButtonTriggered()
                                 if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end())
                                 {
                                     topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
-                                    //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
-                                    //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
                                 }
                                 float topHierarchyFrequencyValue = 0.0;
                                 if (topHierarchyCountValue != 0.0f) {
@@ -1899,7 +1899,6 @@ void SettingsAction::updateButtonTriggered()
                                 _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
-                                _selectedSpeciesCellCountMap[speciesName].abundanceCountTop = pair.second.abundanceCountTop;
                             }
                             });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
@@ -2208,6 +2207,25 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
         qDebug() << "QVariant empty";
     }
 }
+void SettingsAction::precomputeTreesFromHierarchy()
+{
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+    {
+        return;
+    }
+    _precomputedTreesFromTheHierarchy.clear();
+    auto start = std::chrono::high_resolution_clock::now();
+    qDebug() << "Computing precomputeTreesFromHierarchy";
+
+
+
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    qDebug() << "Time taken for precomputeTreesFromHierarchy : " + QString::number(duration / 1000.0) + " s";
+
+}
+
 void SettingsAction::computeGeneMeanExpressionMap()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
