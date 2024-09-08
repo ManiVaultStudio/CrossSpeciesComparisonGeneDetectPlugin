@@ -1080,7 +1080,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker = [this]() -> void {
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
-            _startComputationTriggerAction.setDisabled(true);
+            _startComputationTriggerAction.setDisabled(false);
 
             _popupMessage->show();
             QApplication::processEvents();
