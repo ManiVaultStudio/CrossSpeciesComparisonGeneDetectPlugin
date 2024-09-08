@@ -274,6 +274,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
+            _settingsAction.getClearRightClickedCluster().trigger();
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -316,7 +317,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             }
             //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
             clearTableSelection(_settingsAction.getSelectionDetailsTable());
-
+            _settingsAction.getClearRightClickedCluster().trigger();
         };
 
     connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
@@ -1725,6 +1726,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             //_settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autopspecies);
             //_settingsAction.getSelctedSpeciesVals().setString(species);
             //geneExplorer(species);
+            _settingsAction.getClearRightClickedCluster().trigger();
             });
         
 

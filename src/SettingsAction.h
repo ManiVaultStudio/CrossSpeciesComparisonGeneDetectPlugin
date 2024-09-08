@@ -262,7 +262,8 @@ public: // Action getters
     TriggerAction& getComputeTreesToDisplayFromHierarchy() { return _computeTreesToDisplayFromHierarchy; }
     StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
     ToggleAction& getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker; }
-
+    StringAction& getRightClickedCluster() { return _rightClickedCluster; }
+    TriggerAction& getClearRightClickedCluster() { return _clearRightClickedCluster; }
 
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
 
@@ -446,4 +447,6 @@ protected:
     std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString, QJsonObject>>>  _precomputedTreesFromTheHierarchy;
     ToggleAction _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker;
     //std::vector<QString> _speciesOrder;
+    StringAction              _rightClickedCluster;
+    TriggerAction              _clearRightClickedCluster;
 };

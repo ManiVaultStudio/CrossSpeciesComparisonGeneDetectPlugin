@@ -268,6 +268,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
     _computeTreesToDisplayFromHierarchy(this, "Compute Trees To Display From Hierarchy"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
+    _rightClickedCluster(this, "Right Clicked Cluster"),
+    _clearRightClickedCluster(this, "Clear Right Clicked Cluster"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
 {
@@ -438,6 +440,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _clusterOrderHierarchy.setSerializationName("CSCGDV:Cluster Order Hierarchy");
+    _rightClickedCluster.setSerializationName("CSCGDV:Right Clicked Cluster");
+    _clearRightClickedCluster.setSerializationName("CSCGDV:Clear Right Clicked Cluster");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
     _revertRowSelectionChangesToInitial.setSerializationName("CSCGDV:Revert Row Selection Changes To Initial");
@@ -460,6 +464,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneTrigger.setSerializationName("CSCGDV:Gene Table TSNE Trigger");
     _performGeneTableTsneTrigger.setDisabled(true);
     _clusterOrderHierarchy.setString("");
+    _rightClickedCluster.setString("");
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -1070,7 +1075,80 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_clusterOrderHierarchy, &StringAction::changed, this, updateClusterOrderHierarchy);
 
+    const auto updateRightClickedCluster = [this]() -> void {
 
+        //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
+        QString orderedClusters = _rightClickedCluster.getString();
+        auto geneName = _selectedGene.getString();
+        if (orderedClusters=="" || geneName=="")
+        {
+            _clearRightClickedCluster.trigger();
+            return;
+        }
+        QStringList clusterNameAndLevel = orderedClusters.split(" @%$,$%@ ");
+        if (clusterNameAndLevel.size() == 2)
+        {
+            QString clusterName = clusterNameAndLevel.at(0);
+            QString clusterLevelTemp = clusterNameAndLevel.at(1);
+            if (clusterName == "" || clusterLevelTemp == "")
+            {
+                _clearRightClickedCluster.trigger();
+                return;
+            }
+            QString clusterLevel;
+            if (clusterLevelTemp == "1")
+            {
+                clusterLevel = "top";
+            }
+            else if (clusterLevelTemp == "2")
+            {
+                clusterLevel = "middle";
+            }
+            else if (clusterLevelTemp == "3")
+            {
+                clusterLevel = "bottom";
+            }
+            else
+            {
+
+                    _clearRightClickedCluster.trigger();
+                    return;
+
+            }
+            
+            qDebug() << "Cluster Name: " << clusterName << " Cluster Level: " << clusterLevel;
+
+            auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
+            if (referenceTreeDataset.isValid()) {
+                auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
+                if (referenceTree.isValid()) {
+                    QJsonObject speciesDataJson = _precomputedTreesFromTheHierarchy[clusterLevel][clusterName][geneName];
+                    //check if QJsonObject isValid
+                    if (speciesDataJson.isEmpty())
+                    {
+                        _clearRightClickedCluster.trigger();
+                        return;
+                    }
+                    referenceTree->setTreeData(speciesDataJson);
+                    events().notifyDatasetDataChanged(referenceTree);
+                }
+                else
+                {
+                    _clearRightClickedCluster.trigger();
+                    return;
+                }
+
+            }
+            else
+            {
+                _clearRightClickedCluster.trigger();
+                return;
+            }
+            
+        }
+
+        };
+    connect(&_rightClickedCluster, &StringAction::changed, this, updateRightClickedCluster);
 
     const auto updateApplyLogTransformation = [this]() -> void {
         _statusColorAction.setString("M");
@@ -3355,6 +3433,8 @@ void SettingsAction::enableActions()
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
     _clusterOrderHierarchy.setDisabled(false);
+    _rightClickedCluster.setDisabled(false);
+    _clearRightClickedCluster.setDisabled(false);
     _statusColorAction.setDisabled(false);
     _searchBox->setDisabled(false);
     enableDisableButtonsAutomatically();
@@ -3367,10 +3447,12 @@ void SettingsAction::enableActions()
         _startComputationTriggerAction.setDisabled(false);
     }
     _toggleScatterplotSelection.setChecked(true);
+    QApplication::processEvents();
 }
 void SettingsAction::disableActions()
 {
     _statusColorAction.setString("R");
+    _clearRightClickedCluster.trigger();
     _startComputationTriggerAction.setDisabled(true);
     _topNGenesFilter.setDisabled(true);
     _typeofTopNGenes.setDisabled(true);
@@ -3402,8 +3484,11 @@ void SettingsAction::disableActions()
     _bottomHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
     _clusterOrderHierarchy.setDisabled(true);
+    _rightClickedCluster.setDisabled(true);
+    _clearRightClickedCluster.setDisabled(true);
     _statusColorAction.setDisabled(true);
     _searchBox->setDisabled(true);
+    QApplication::processEvents();
 }
 
 void SettingsAction::enableDisableButtonsAutomatically()
@@ -3919,6 +4004,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _clusterOrderHierarchy.fromParentVariantMap(variantMap);
+    _rightClickedCluster.fromParentVariantMap(variantMap);
+    _clearRightClickedCluster.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
@@ -3964,6 +4051,8 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _clusterOrderHierarchy.insertIntoVariantMap(variantMap);
+    _rightClickedCluster.insertIntoVariantMap(variantMap);
+    _clearRightClickedCluster.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);
