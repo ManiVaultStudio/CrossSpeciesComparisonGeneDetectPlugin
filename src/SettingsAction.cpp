@@ -2217,8 +2217,32 @@ void SettingsAction::precomputeTreesFromHierarchy()
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing precomputeTreesFromHierarchy";
 
+    if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid() || !_topClusterNamesDataset.getCurrentDataset().isValid() || !_middleClusterNamesDataset.getCurrentDataset().isValid() || !_bottomClusterNamesDataset.getCurrentDataset().isValid()) {
+        qDebug() << "Datasets are not valid";
+        return;
+    }
+    auto speciesNamesDataset = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+    auto mainPointsDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+    auto topClusterNamesDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+    auto middleClusterNamesDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
+    auto bottomClusterNamesDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
 
+    if (speciesNamesDataset.isValid() && mainPointsDataset.isValid() && topClusterNamesDataset.isValid() && middleClusterNamesDataset.isValid() && bottomClusterNamesDataset.isValid()) {
+        auto speciesclusters = speciesNamesDataset->getClusters();
+        auto mainPointDimensionNames = mainPointsDataset->getDimensionNames();
+        auto mainPointsNumOfIndices = mainPointsDataset->getNumPoints();
+        auto mainPointsNumOfDims = mainPointsDataset->getNumDimensions();
 
+        auto topClusters = topClusterNamesDataset->getClusters();
+        auto middleClusters = middleClusterNamesDataset->getClusters();
+        auto bottomClusters = bottomClusterNamesDataset->getClusters();
+
+ 
+    }
+    else
+    {
+        qDebug() << "Datasets are not valid";
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
