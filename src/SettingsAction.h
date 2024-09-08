@@ -292,7 +292,7 @@ public: // Action getters
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
-    std::unordered_map<QString, std::unordered_map<QString, QString>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
+    std::unordered_map<QString,std::unordered_map<QString, std::unordered_map<QString, QString>>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
@@ -434,7 +434,7 @@ protected:
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
     std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
-    std::unordered_map<QString, std::unordered_map<QString, QString>>  _precomputedTreesFromTheHierarchy;
+    std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString, QString>>>  _precomputedTreesFromTheHierarchy;
     ToggleAction _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker;
     //std::vector<QString> _speciesOrder;
 };
