@@ -2287,19 +2287,14 @@ void SettingsAction::precomputeTreesFromHierarchy()
         QVector<Cluster>  middleClusters = middleClusterNamesDataset->getClusters();
         QVector<Cluster>  bottomClusters = bottomClusterNamesDataset->getClusters();
 
-        if (mainPointDimensionNames.size() > 0)
-        {
-            std::map<QString, QVector<Cluster>> combinedClusters;
+        if (!mainPointDimensionNames.empty()) {
+            std::map<QString, QVector<Cluster>> combinedClusters = {
+                {"top", topClusters},
+                {"middle", middleClusters},
+                {"bottom", bottomClusters}
+            };
 
-            combinedClusters["top"] = topClusters;
-            combinedClusters["middle"] = middleClusters;
-            combinedClusters["bottom"] = bottomClusters;
-
-
-            for (const auto& pair : combinedClusters) {
-                const QString& hierarchyType = pair.first;
-                const QVector<Cluster>& clusters = pair.second;
-
+            for (const auto& [hierarchyType, clusters] : combinedClusters) {
                 for (const auto& cluster : clusters) {
                     const auto& clusterName = cluster.getName();
                     auto clusterIndices = cluster.getIndices();
@@ -2315,7 +2310,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
 
                         if (commonPointsIndices.empty()) {
-                            continue;
+                            return;
                         }
 
                         for (int geneIndex = 0; geneIndex < mainPointDimensionNames.size(); ++geneIndex) {
@@ -2384,44 +2379,28 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                         for (int i = 0; i < geneExpressionVec.size(); ++i) {
                             int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
-
-                            auto geneNameString = geneExpressionVec[i].first;
-                            rankingMap[geneNameString].emplace_back(speciesName, rank);
+                            rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, rank);
                         }
                     }
 
-
                     for (auto& [geneName, speciesRankVec] : rankingMap) {
-
                         std::map<QString, InitialStatistics> utilityMap;
-                        for (const auto& [speciesName, rank] : speciesRankVec)
-                        {
-
+                        for (const auto& [speciesName, rank] : speciesRankVec) {
                             InitialStatistics tempStats;
                             tempStats.rankVal = rank;
                             tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
                             tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
-                            if (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) {
-                                tempStats.abundanceVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop;
-                            }
-                            else {
-                                tempStats.abundanceVal = 0.0f;
-                            }
+                            tempStats.abundanceVal = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop : 0.0f;
                             utilityMap[speciesName] = tempStats;
-
                         }
 
-
-                        createTreeInitial(speciesDataJson,utilityMap);
+                        createTreeInitial(speciesDataJson, utilityMap);
                         _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = speciesDataJson;
-
                     }
-
-
                 }
-
             }
         }
+
 
     }
     else
