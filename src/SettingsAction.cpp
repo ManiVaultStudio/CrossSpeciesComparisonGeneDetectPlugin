@@ -1077,6 +1077,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateRightClickedCluster = [this]() -> void {
 
+       
+        if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
+        {
+            return;
+        }
         //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
         QString orderedClusters = _rightClickedCluster.getString();
         auto geneName = _selectedGene.getString();
