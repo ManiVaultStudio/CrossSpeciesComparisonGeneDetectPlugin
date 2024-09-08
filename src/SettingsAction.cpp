@@ -1084,14 +1084,33 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
             _popupMessage->show();
             QApplication::processEvents();
-            QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            QFuture<void> future2 = QtConcurrent::run([this]() {computeFrequencyMapForHierarchyItemsChange("top"); });
-            future1.waitForFinished();
-            future2.waitForFinished();
-            QFuture<void> future3 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
-            QFuture<void> future4 = QtConcurrent::run([this]() { _startComputationTriggerAction.trigger(); });
-            future3.waitForFinished();
-            future4.waitForFinished();
+
+            try {
+                QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+                QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+                future1.waitForFinished();
+                future2.waitForFinished();
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error during computation: " << e.what() << std::endl;
+                _popupMessage->hide();
+                QApplication::processEvents();
+                return;
+            }
+
+            try {
+                QFuture<void> future3 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
+                QFuture<void> future4 = QtConcurrent::run([this]() { _startComputationTriggerAction.trigger(); });
+                future3.waitForFinished();
+                future4.waitForFinished();
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error during tree precomputation: " << e.what() << std::endl;
+                _popupMessage->hide();
+                QApplication::processEvents();
+                return;
+            }
+
             _popupMessage->hide();
             QApplication::processEvents();
         }
