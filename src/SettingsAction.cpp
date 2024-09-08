@@ -1009,7 +1009,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         };
-    connect(&_statusColorAction, &StringAction::changed, this, updateStatus);
+    connect(&_statusColorAction, &StringAction::stringChanged, this, updateStatus);
 
     /*const auto updateSelectedCellClusterInfoBox = [this]() -> void {
 
@@ -1080,16 +1080,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         };
-    connect(&_clusterOrderHierarchy, &StringAction::changed, this, updateClusterOrderHierarchy);
+    connect(&_clusterOrderHierarchy, &StringAction::stringChanged, this, updateClusterOrderHierarchy);
 
     const auto updateRightClickedCluster = [this]() -> void {
 
        
-        if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
-        {
-            return;
-        }
-        //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
+        qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
         QString orderedClusters = _rightClickedCluster.getString();
         auto geneName = _selectedGene.getString();
         if (orderedClusters=="" || geneName=="")
@@ -1166,7 +1162,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         }
 
         };
-    connect(&_rightClickedCluster, &StringAction::changed, this, updateRightClickedCluster);
+    connect(&_rightClickedCluster, &StringAction::stringChanged, this, updateRightClickedCluster);
 
     const auto updateApplyLogTransformation = [this]() -> void {
         _statusColorAction.setString("M");

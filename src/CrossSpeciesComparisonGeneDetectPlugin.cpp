@@ -175,7 +175,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         };
 
-    connect(&_settingsAction.getSelectedRowIndexAction(), &StringAction::changed, this, updateSelectedRowIndex);
+    connect(&_settingsAction.getSelectedRowIndexAction(), &StringAction::stringChanged, this, updateSelectedRowIndex);
 
     const auto updateSelectedGene = [this]() -> void
         {
@@ -183,7 +183,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         };
 
-    connect(&_settingsAction.getSelectedGeneAction(), &StringAction::changed, this, updateSelectedGene);
+    connect(&_settingsAction.getSelectedGeneAction(), &StringAction::stringChanged, this, updateSelectedGene);
 
     const auto removeRowSelectionTable = [this]() -> void
         {
@@ -329,7 +329,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         };
 
-    connect(&_settingsAction.getSelctedSpeciesVals(), &StringAction::changed, this, updateSelctedSpeciesVals);
+    connect(&_settingsAction.getSelctedSpeciesVals(), &StringAction::stringChanged, this, updateSelctedSpeciesVals);
 
 
     const auto updateTableModel = [this]() -> void
