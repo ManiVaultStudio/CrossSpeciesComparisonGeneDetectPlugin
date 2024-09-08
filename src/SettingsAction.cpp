@@ -266,6 +266,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneKnn(this, "Perform Gene Table TSNE Knn"),
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
+    _computeTreesToDisplayFromHierarchy(this, "Compute Trees To Display From Hierarchy"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
@@ -606,8 +607,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _pauseStatusUpdates = true;
             _speciesExplorerInMap.setSelectedOptions({});
             //_erroredOutFlag = false;
+            QApplication::processEvents();
             updateButtonTriggered();
             enableActions();
+            QApplication::processEvents();
 
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
@@ -947,10 +950,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (string == "C")
         {
             _startComputationTriggerAction.setDisabled(true);
-            if (_popupMessage->isVisible())
-            {
-                _popupMessage->hide();
-            }
+            //if (_popupMessage->isVisible())
+            //{
+                //_popupMessage->hide();
+            //}
         }
         else
         {
@@ -1078,66 +1081,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
-           
+
             _popupMessage->show();
             QApplication::processEvents();
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            //QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            //QFuture<void> future3 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
-            //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            //QFuture<void> future5 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
-            //QFuture<void> future6 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
-            computeFrequencyMapForHierarchyItemsChange("top");
+            QFuture<void> future2 = QtConcurrent::run([this]() {computeFrequencyMapForHierarchyItemsChange("top"); });
             future1.waitForFinished();
-            //future2.waitForFinished();
-            precomputeTreesFromHierarchy();
-
-
-            //print qdebug two QJsonObject value from     std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString, QJsonObject>>>  _precomputedTreesFromTheHierarchy;
-            /*
-
-            {
-                int count = 0;
-                for (const auto& outerPair : _precomputedTreesFromTheHierarchy) {
-                    const QString& outerKey = outerPair.first;
-                    const auto& middleMap = outerPair.second;
-
-                    for (const auto& middlePair : middleMap) {
-                        const QString& middleKey = middlePair.first;
-                        const auto& innerMap = middlePair.second;
-
-                        for (const auto& innerPair : innerMap) {
-                            const QString& innerKey = innerPair.first;
-                            const QJsonObject& jsonObject = innerPair.second;
-
-                            qDebug() << "Outer Key:" << outerKey;
-                            qDebug() << "Middle Key:" << middleKey;
-                            qDebug() << "Inner Key:" << innerKey;
-                            qDebug() << "QJsonObject:" << QJsonDocument(jsonObject).toJson(QJsonDocument::Compact);
-
-                            if (++count >= 2) {
-                                break;
-                            }
-                        }
-                        if (count >= 2) {
-                            break;
-                        }
-                    }
-                    if (count >= 2) {
-                        break;
-                    }
-                }
-            }
-
-            */
-
-
-            //_precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName]
-            //computeFrequencyMapForHierarchyItemsChange("middle");
-            //computeFrequencyMapForHierarchyItemsChange("bottom");
-            
-
-            _startComputationTriggerAction.trigger();
+            future2.waitForFinished();
+            QFuture<void> future3 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
+            QFuture<void> future4 = QtConcurrent::run([this]() { _startComputationTriggerAction.trigger(); });
+            future3.waitForFinished();
+            future4.waitForFinished();
+            _popupMessage->hide();
+            QApplication::processEvents();
         }
         else
         {
@@ -1207,6 +1163,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
+    const auto updateComputeTreesToDisplayFromHierarchy = [this]() -> void {
+        
+        _computeTreesToDisplayFromHierarchy.setDisabled(true);
+        precomputeTreesFromHierarchy();
+        _computeTreesToDisplayFromHierarchy.setDisabled(false);
+
+        };
+
+    connect(&_computeTreesToDisplayFromHierarchy, &TriggerAction::triggered, this, updateComputeTreesToDisplayFromHierarchy);
 
     const auto updateGeneTableTSNECheck = [this]() -> void {
         _statusColorAction.setString("M");
@@ -2301,6 +2266,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
     QStringList speciesNamesVerify = referenceTreeDataset->getTreeLeafNames();
     if (speciesDataJson.isEmpty() || speciesNamesVerify.isEmpty())
     {
+        qDebug() << "Reference tree data is empty";
         return;
     }
 
@@ -2312,12 +2278,14 @@ void SettingsAction::precomputeTreesFromHierarchy()
         //check if speciesNamesVerify and speciesClusters contain the same strings maybe in different order but same number and same value
         if (speciesNamesVerify.size() != speciesClusters.size())
         {
+            qDebug() << "Species names do not match";
             return;
         }
         for (int i = 0; i < speciesNamesVerify.size(); i++)
         {
             if (speciesNamesVerify[i] != speciesClusters[i].getName())
             {
+                qDebug() << "Species names do not match";
                 return;
             }
         }
@@ -2359,6 +2327,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
 
                         if (commonPointsIndices.empty()) {
+                            //qDebug() << "No common points found";
                             return;
                         }
 
@@ -2397,7 +2366,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         NegativeTopN
                     };
 
-                    auto optionValue = "Positive";
+                    auto optionValue = _typeofTopNGenes.getCurrentText();
                     SelectionOption option = SelectionOption::AbsoluteTopN;
                     if (optionValue == "Positive") {
                         option = SelectionOption::PositiveTopN;
@@ -2454,12 +2423,17 @@ void SettingsAction::precomputeTreesFromHierarchy()
             });
         }
 
-
+        else
+        {
+            qDebug() << "Datasets are not valid";
+            return;
+            }
 
     }
     else
     {
         qDebug() << "Datasets are not valid";
+        return;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -3345,6 +3319,7 @@ void SettingsAction::enableActions()
     _performGeneTableTsneKnn.setDisabled(false);
     _performGeneTableTsneDistance.setDisabled(false);
     _performGeneTableTsneTrigger.setDisabled(false);
+    _computeTreesToDisplayFromHierarchy.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
@@ -3394,6 +3369,7 @@ void SettingsAction::disableActions()
     _performGeneTableTsneKnn.setDisabled(true);
     _performGeneTableTsneDistance.setDisabled(true);
     _performGeneTableTsneTrigger.setDisabled(true);
+    _computeTreesToDisplayFromHierarchy.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);

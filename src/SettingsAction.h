@@ -259,6 +259,7 @@ public: // Action getters
     OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
     OptionAction& getPerformGeneTableTsneDistance() { return _performGeneTableTsneDistance; }
     TriggerAction& getPerformGeneTableTsneTrigger() { return _performGeneTableTsneTrigger; }
+    TriggerAction& getComputeTreesToDisplayFromHierarchy() { return _computeTreesToDisplayFromHierarchy; }
     StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
     ToggleAction& getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker; }
 
@@ -435,6 +436,7 @@ protected:
     OptionAction                   _performGeneTableTsneKnn;
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;
+    TriggerAction                 _computeTreesToDisplayFromHierarchy;
     Dataset<Points>                _selectedPointsTSNEDatasetForGeneTable;
     bool                           _pauseStatusUpdates=false;
     QStringList                   _deleteDatasetIds;
