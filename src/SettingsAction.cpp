@@ -2336,6 +2336,7 @@ void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatist
             node["differential"] = std::round(it->second.differentialVal * 100.0) / 100.0; // Round to 2 decimal places
             node["abundance"] = it->second.abundanceVal;
             node["rank"] = it->second.rankVal;
+            node["gene"] = it->second.geneName;
         }
     }
 
@@ -2522,6 +2523,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         for (const auto& [speciesName, rank] : speciesRankVec) {
                             InitialStatistics tempStats;
                             tempStats.rankVal = rank;
+                            tempStats.geneName = geneName;
                             tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
                             tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
                             tempStats.abundanceVal = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop : 0.0f;

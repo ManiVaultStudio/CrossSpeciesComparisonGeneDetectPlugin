@@ -177,6 +177,7 @@ struct InitialStatistics {
     float differentialVal;
     float abundanceVal;
     int rankVal;
+    QString geneName;
 };
 
 class SettingsAction : public WidgetAction
