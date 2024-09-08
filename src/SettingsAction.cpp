@@ -2204,12 +2204,33 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
         qDebug() << "QVariant empty";
     }
 }
-// Ensure createTreeInitial is declared and defined
-QString createTreeInitial(const std::map<QString, InitialStatistics>& utilityMap) {
 
-    QString tree;
-    return tree;
+void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatistics>& utilityMap) {
+    // Check if the "name" key exists in the current node
+    if (node.contains("name")) {
+        QString nodeName = node["name"].toString();
+        auto it = utilityMap.find(nodeName);
+
+        if (it != utilityMap.end()) {
+            node["mean"] = std::round(it->second.meanVal * 100.0) / 100.0; // Round to 2 decimal places
+            node["differential"] = std::round(it->second.differentialVal * 100.0) / 100.0; // Round to 2 decimal places
+            node["abundance"] = it->second.abundanceVal;
+            node["rank"] = it->second.rankVal;
+        }
+    }
+
+    // If the node has "children", recursively update them as well
+    if (node.contains("children")) {
+        QJsonArray children = node["children"].toArray();
+        for (int i = 0; i < children.size(); ++i) {
+            QJsonObject child = children[i].toObject();
+            createTreeInitial(child, utilityMap); // Recursive call
+            children[i] = child; // Update the modified object back into the array
+        }
+        node["children"] = children; // Update the modified array back into the parent JSON object
+    }
 }
+
 
 void SettingsAction::precomputeTreesFromHierarchy()
 {
@@ -2391,8 +2412,8 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         }
 
 
-                        QString treeVect = createTreeInitial(utilityMap);
-                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = treeVect;
+                        createTreeInitial(speciesDataJson,utilityMap);
+                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = speciesDataJson;
 
                     }
 
