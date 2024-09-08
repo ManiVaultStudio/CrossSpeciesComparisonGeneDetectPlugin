@@ -2204,6 +2204,13 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
         qDebug() << "QVariant empty";
     }
 }
+// Ensure createTreeInitial is declared and defined
+QString createTreeInitial(const std::map<QString, InitialStatistics>& utilityMap) {
+
+    QString tree;
+    return tree;
+}
+
 void SettingsAction::precomputeTreesFromHierarchy()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -2232,8 +2239,9 @@ void SettingsAction::precomputeTreesFromHierarchy()
         return;
     }
 
-    
-    if (speciesNamesDataset.isValid() && mainPointsDataset.isValid() && topClusterNamesDataset.isValid() && middleClusterNamesDataset.isValid() && bottomClusterNamesDataset.isValid()) {
+
+    if (speciesNamesDataset.isValid() && mainPointsDataset.isValid() && topClusterNamesDataset.isValid() && middleClusterNamesDataset.isValid() && bottomClusterNamesDataset.isValid())
+    {
         auto speciesClusters = speciesNamesDataset->getClusters();
 
         //check if speciesNamesVerify and speciesClusters contain the same strings maybe in different order but same number and same value
@@ -2258,144 +2266,141 @@ void SettingsAction::precomputeTreesFromHierarchy()
         QVector<Cluster>  middleClusters = middleClusterNamesDataset->getClusters();
         QVector<Cluster>  bottomClusters = bottomClusterNamesDataset->getClusters();
 
-            if (mainPointDimensionNames.size() > 0)
-            {
-                std::map<QString, QVector<Cluster>> combinedClusters;
+        if (mainPointDimensionNames.size() > 0)
+        {
+            std::map<QString, QVector<Cluster>> combinedClusters;
 
-                combinedClusters["top"] = topClusters;
-                combinedClusters["middle"] = middleClusters;
-                combinedClusters["bottom"] = bottomClusters;
+            combinedClusters["top"] = topClusters;
+            combinedClusters["middle"] = middleClusters;
+            combinedClusters["bottom"] = bottomClusters;
 
 
-                for (const auto& pair : combinedClusters) {
-                    const QString& hierarchyType = pair.first;
-                    const QVector<Cluster>& clusters = pair.second;
+            for (const auto& pair : combinedClusters) {
+                const QString& hierarchyType = pair.first;
+                const QVector<Cluster>& clusters = pair.second;
 
-                    for (const auto& cluster : clusters){
-                        const auto& clusterName = cluster.getName();
-                        auto clusterIndices = cluster.getIndices();
-                        std::sort(clusterIndices.begin(), clusterIndices.end());
-                        std::map<QString, std::map<QString, Stats>> topSpeciesToGeneExpressionMap;
+                for (const auto& cluster : clusters) {
+                    const auto& clusterName = cluster.getName();
+                    auto clusterIndices = cluster.getIndices();
+                    std::sort(clusterIndices.begin(), clusterIndices.end());
+                    std::map<QString, std::map<QString, Stats>> topSpeciesToGeneExpressionMap;
 
-                        for (const auto& species : speciesClusters) {
-                            const auto& speciesName = species.getName();
-                            auto speciesIndices = species.getIndices();
-                            std::sort(speciesIndices.begin(), speciesIndices.end());
+                    for (const auto& species : speciesClusters) {
+                        const auto& speciesName = species.getName();
+                        auto speciesIndices = species.getIndices();
+                        std::sort(speciesIndices.begin(), speciesIndices.end());
 
-                            std::vector<int> commonPointsIndices;
-                            std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
+                        std::vector<int> commonPointsIndices;
+                        std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
 
-                            if (commonPointsIndices.empty()) {
-                                continue;
-                            }
-
-                            for (int geneIndex = 0; geneIndex < mainPointDimensionNames.size(); ++geneIndex) {
-                                const QString& geneName = mainPointDimensionNames[geneIndex];
-                                std::vector<int> geneIndexContainer = { geneIndex };
-
-                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
-                                int allCellCounts = nonSelectionDetails.first;
-                                float allCellMean = nonSelectionDetails.second;
-
-                                std::vector<float> resultContainerShort(commonPointsIndices.size());
-                                mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
-
-                                StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
-
-                                float allCellTotal = allCellMean * allCellCounts;
-                                int nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
-                                float nonSelectedMean = (nonSelectedCells > 0) ? (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells : 0.0f;
-
-                                StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                                int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
-                                float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
-
-                                topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
-                            }
+                        if (commonPointsIndices.empty()) {
+                            continue;
                         }
 
-                        enum class SelectionOption {
-                            AbsoluteTopN,
-                            PositiveTopN,
-                            NegativeTopN
-                        };
+                        for (int geneIndex = 0; geneIndex < mainPointDimensionNames.size(); ++geneIndex) {
+                            const QString& geneName = mainPointDimensionNames[geneIndex];
+                            std::vector<int> geneIndexContainer = { geneIndex };
 
-                        auto optionValue = "Positive";
-                        SelectionOption option = SelectionOption::AbsoluteTopN;
-                        if (optionValue == "Positive") {
-                            option = SelectionOption::PositiveTopN;
+                            const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
+                            int allCellCounts = nonSelectionDetails.first;
+                            float allCellMean = nonSelectionDetails.second;
+
+                            std::vector<float> resultContainerShort(commonPointsIndices.size());
+                            mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
+
+                            StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
+
+                            float allCellTotal = allCellMean * allCellCounts;
+                            int nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
+                            float nonSelectedMean = (nonSelectedCells > 0) ? (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells : 0.0f;
+
+                            StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                            int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
+                            float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
+
+                            topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
                         }
-                        else if (optionValue == "Negative") {
-                            option = SelectionOption::NegativeTopN;
-                        }
-
-                        std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
-
-                        for (const auto& [speciesName, geneMap] : topSpeciesToGeneExpressionMap) {
-                            std::vector<std::pair<QString, float>> geneExpressionVec;
-                            geneExpressionVec.reserve(geneMap.size());
-                            for (const auto& [geneName, stats] : geneMap) {
-                                float differenceMeanValue = stats.meanSelected - stats.meanNonSelected;
-                                geneExpressionVec.emplace_back(geneName, differenceMeanValue);
-                            }
-
-                            if (option == SelectionOption::AbsoluteTopN) {
-                                std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-                                    return std::abs(a.second) > std::abs(b.second);
-                                    });
-                            }
-                            else {
-                                std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
-                                    return a.second > b.second;
-                                    });
-                                if (option == SelectionOption::NegativeTopN) {
-                                    std::reverse(geneExpressionVec.begin(), geneExpressionVec.end());
-                                }
-                            }
-
-                            for (int i = 0; i < geneExpressionVec.size(); ++i) {
-                                int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
-
-                                auto geneNameString = geneExpressionVec[i].first;
-                                rankingMap[geneNameString].emplace_back(speciesName, rank);
-                            }
-                        }
-                        
-                        
-                        for (auto& [geneName, speciesRankVec] : rankingMap) {
-                            
-                            std::map<QString, InitialStatistics> utilityMap;
-                            for (const auto& [speciesName, rank] : speciesRankVec) 
-                            {
-                               
-                                InitialStatistics tempStats;
-                                tempStats.rankVal = rank;
-                                tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
-                                tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
-                                if (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) {
-                                    tempStats.abundanceVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop;
-                                } else {
-                                    tempStats.abundanceVal = 0.0f;
-                                }
-                                utilityMap[speciesName] = tempStats;
-                                
-                            }
-
-
-                            QString treeVect = "";
-
-                            //treeVect = createTreeInitial(utilityMap);
-                            _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = treeVect;
-                            
-                        }
-                       
                     }
 
-                   }
+                    enum class SelectionOption {
+                        AbsoluteTopN,
+                        PositiveTopN,
+                        NegativeTopN
+                    };
+
+                    auto optionValue = "Positive";
+                    SelectionOption option = SelectionOption::AbsoluteTopN;
+                    if (optionValue == "Positive") {
+                        option = SelectionOption::PositiveTopN;
+                    }
+                    else if (optionValue == "Negative") {
+                        option = SelectionOption::NegativeTopN;
+                    }
+
+                    std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
+
+                    for (const auto& [speciesName, geneMap] : topSpeciesToGeneExpressionMap) {
+                        std::vector<std::pair<QString, float>> geneExpressionVec;
+                        geneExpressionVec.reserve(geneMap.size());
+                        for (const auto& [geneName, stats] : geneMap) {
+                            float differenceMeanValue = stats.meanSelected - stats.meanNonSelected;
+                            geneExpressionVec.emplace_back(geneName, differenceMeanValue);
+                        }
+
+                        if (option == SelectionOption::AbsoluteTopN) {
+                            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                                return std::abs(a.second) > std::abs(b.second);
+                                });
+                        }
+                        else {
+                            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                                return a.second > b.second;
+                                });
+                            if (option == SelectionOption::NegativeTopN) {
+                                std::reverse(geneExpressionVec.begin(), geneExpressionVec.end());
+                            }
+                        }
+
+                        for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                            int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
+
+                            auto geneNameString = geneExpressionVec[i].first;
+                            rankingMap[geneNameString].emplace_back(speciesName, rank);
+                        }
+                    }
+
+
+                    for (auto& [geneName, speciesRankVec] : rankingMap) {
+
+                        std::map<QString, InitialStatistics> utilityMap;
+                        for (const auto& [speciesName, rank] : speciesRankVec)
+                        {
+
+                            InitialStatistics tempStats;
+                            tempStats.rankVal = rank;
+                            tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
+                            tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
+                            if (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) {
+                                tempStats.abundanceVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop;
+                            }
+                            else {
+                                tempStats.abundanceVal = 0.0f;
+                            }
+                            utilityMap[speciesName] = tempStats;
+
+                        }
+
+
+                        QString treeVect = createTreeInitial(utilityMap);
+                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = treeVect;
+
+                    }
+
+
                 }
 
-
             }
+        }
 
     }
     else
@@ -2408,6 +2413,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
     qDebug() << "Time taken for precomputeTreesFromHierarchy : " + QString::number(duration / 1000.0) + " s";
 
 }
+
 
 void SettingsAction::computeGeneMeanExpressionMap()
 {
