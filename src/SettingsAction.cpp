@@ -1083,6 +1083,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (orderedClusters=="" || geneName=="")
         {
             _clearRightClickedCluster.trigger();
+            qDebug() << "Strings Empty, orderedClusters, genename" << orderedClusters << geneName;
             return;
         }
         QStringList clusterNameAndLevel = orderedClusters.split(" @%$,$%@ ");
@@ -1093,6 +1094,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (clusterName == "" || clusterLevelTemp == "")
             {
                 _clearRightClickedCluster.trigger();
+                qDebug() << "Strings Empty clustername, clusterLevelTemp" << clusterName << clusterLevelTemp;
                 return;
             }
             QString clusterLevel;
@@ -1112,11 +1114,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
 
                     _clearRightClickedCluster.trigger();
+                    qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
                     return;
 
             }
             
-            qDebug() << "Cluster Name: " << clusterName << " Cluster Level: " << clusterLevel;
+            //qDebug() << "Cluster Name: " << clusterName << " Cluster Level: " << clusterLevel;
 
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
             if (referenceTreeDataset.isValid()) {
@@ -1127,6 +1130,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     if (speciesDataJson.isEmpty())
                     {
                         _clearRightClickedCluster.trigger();
+                        qDebug() << "Species Data Json Empty";
                         return;
                     }
                     referenceTree->setTreeData(speciesDataJson);
@@ -1135,6 +1139,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 else
                 {
                     _clearRightClickedCluster.trigger();
+                    qDebug() << "Reference Tree Invalid";
                     return;
                 }
 
@@ -1142,6 +1147,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             else
             {
                 _clearRightClickedCluster.trigger();
+                qDebug() << "Reference Tree Dataset Invalid";
                 return;
             }
             
