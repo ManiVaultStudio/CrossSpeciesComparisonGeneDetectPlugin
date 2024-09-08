@@ -2294,7 +2294,12 @@ void SettingsAction::precomputeTreesFromHierarchy()
                 {"bottom", bottomClusters}
             };
 
-            for (const auto& [hierarchyType, clusters] : combinedClusters) {
+            QMutex mutex; // Mutex for thread safety
+
+            QtConcurrent::blockingMap(combinedClusters, [&](const auto& pair) {
+                const auto& hierarchyType = pair.first;
+                const auto& clusters = pair.second;
+
                 for (const auto& cluster : clusters) {
                     const auto& clusterName = cluster.getName();
                     auto clusterIndices = cluster.getIndices();
@@ -2334,6 +2339,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
                             float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
 
+                            QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                             topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
                         }
                     }
@@ -2379,6 +2385,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                         for (int i = 0; i < geneExpressionVec.size(); ++i) {
                             int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
+                            QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                             rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, rank);
                         }
                     }
@@ -2394,12 +2401,14 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             utilityMap[speciesName] = tempStats;
                         }
 
+                        QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                         createTreeInitial(speciesDataJson, utilityMap);
                         _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = speciesDataJson;
                     }
                 }
-            }
+                });
         }
+
 
 
     }
