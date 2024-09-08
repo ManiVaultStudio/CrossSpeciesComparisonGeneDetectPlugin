@@ -282,7 +282,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _popupMessage->setIcon(QMessageBox::Information);
     _popupMessage->setWindowTitle("Computation in Progress");
     _popupMessage->setText("Data Precomputation in Progress");
-    _popupMessage->setInformativeText("The system is currently precomputing essential data to enhance your interactive exploration experience. This process may take some time based on your data size and processor. The popup will close automatically once initialization is complete. Thank you for using Cytosplore EvoViewer.");
+    _popupMessage->setInformativeText(
+        "The system is currently precomputing essential data to enhance your interactive exploration experience. "
+        "This process may take some time based on your data size and processor. The popup will close automatically once initialization is complete. "
+        "Thank you for using Cytosplore EvoViewer.<br><br>"
+        "Please visit our website <a href=\"https://viewer.cytosplore.org/\">https://viewer.cytosplore.org/</a> to learn more."
+    );
+    _popupMessage->setTextFormat(Qt::RichText); // Enable rich text formatting
+    _popupMessage->setTextInteractionFlags(Qt::TextBrowserInteraction); // Enable link interaction
     _popupMessage->setStandardButtons(QMessageBox::NoButton);
     _popupMessage->setModal(true);
 
@@ -2434,11 +2441,6 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         std::vector<int> commonPointsIndices;
                         std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
 
-                        if (commonPointsIndices.empty()) {
-                            //qDebug() << "No common points found";
-                            return;
-                        }
-
                         std::vector<float> resultContainerShort(commonPointsIndices.size());
                         std::vector<int> geneIndexContainer(1);
 
@@ -2451,20 +2453,30 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             int allCellCounts = nonSelectionDetails.first;
                             float allCellMean = nonSelectionDetails.second;
 
-                            mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
+                            if (commonPointsIndices.empty()) {
+                                // Initialize statistics with zero values for calculateStatisticsShort
+                                StatisticsSingle calculateStatisticsShort = { 0.0f, 0 };
+                                // Set calculateStatisticsNot to allCellCounts and allCellMean
+                                StatisticsSingle calculateStatisticsNot = { allCellMean, allCellCounts };
+                                int topHierarchyCountValue = 0;
+                                QMutexLocker locker(&mutex); // Lock the mutex for thread safety
+                                topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                            } else {
+                                mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
 
-                            StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
+                                StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
 
-                            float allCellTotal = allCellMean * allCellCounts;
-                            int nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
-                            float nonSelectedMean = (nonSelectedCells > 0) ? (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells : 0.0f;
+                                float allCellTotal = allCellMean * allCellCounts;
+                                int nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
+                                float nonSelectedMean = (nonSelectedCells > 0) ? (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells : 0.0f;
 
-                            StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
-                            int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
-                            float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
+                                StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                                int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
+                                float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
 
-                            QMutexLocker locker(&mutex); // Lock the mutex for thread safety
-                            topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                                QMutexLocker locker(&mutex); // Lock the mutex for thread safety
+                                topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                            }
                         });
                     });
 
@@ -2529,6 +2541,8 @@ void SettingsAction::precomputeTreesFromHierarchy()
                     }
                 }
             });
+
+
         }
 
         else
