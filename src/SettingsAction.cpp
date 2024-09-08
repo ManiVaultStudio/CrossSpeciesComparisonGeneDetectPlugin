@@ -2306,7 +2306,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                     std::sort(clusterIndices.begin(), clusterIndices.end());
                     std::map<QString, std::map<QString, Stats>> topSpeciesToGeneExpressionMap;
 
-                    for (const auto& species : speciesClusters) {
+                    QtConcurrent::blockingMap(speciesClusters, [&](const auto& species) {
                         const auto& speciesName = species.getName();
                         auto speciesIndices = species.getIndices();
                         std::sort(speciesIndices.begin(), speciesIndices.end());
@@ -2342,7 +2342,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             QMutexLocker locker(&mutex); // Lock the mutex for thread safety
                             topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
                         }
-                    }
+                    });
 
                     enum class SelectionOption {
                         AbsoluteTopN,
@@ -2372,12 +2372,12 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         if (option == SelectionOption::AbsoluteTopN) {
                             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                                 return std::abs(a.second) > std::abs(b.second);
-                                });
+                            });
                         }
                         else {
                             std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
                                 return a.second > b.second;
-                                });
+                            });
                             if (option == SelectionOption::NegativeTopN) {
                                 std::reverse(geneExpressionVec.begin(), geneExpressionVec.end());
                             }
@@ -2406,7 +2406,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                         _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = speciesDataJson;
                     }
                 }
-                });
+            });
         }
 
 
