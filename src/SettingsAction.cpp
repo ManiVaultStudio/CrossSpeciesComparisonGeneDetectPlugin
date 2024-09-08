@@ -1080,7 +1080,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         };
-    connect(&_clusterOrderHierarchy, &StringAction::stringChanged, this, updateClusterOrderHierarchy);
+    connect(&_clusterOrderHierarchy, &StringAction::changed, this, updateClusterOrderHierarchy);
 
     const auto updateRightClickedCluster = [this]() -> void {
 
