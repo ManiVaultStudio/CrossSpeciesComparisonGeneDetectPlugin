@@ -293,7 +293,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _popupMessageInit->setStandardButtons(QMessageBox::NoButton);
     _popupMessageInit->setModal(true);
 
-
+    // Create a message box to notify the user about the completion of the tree creation process
+    _popupMessageTreeCreationCompletion = new QMessageBox();
+    _popupMessageTreeCreationCompletion->setIcon(QMessageBox::Information);
+    _popupMessageTreeCreationCompletion->setWindowTitle("Tree Creation Completed");
+    _popupMessageTreeCreationCompletion->setText(
+        "The precomputed tree method has been completed. "
+        "Right-click is available in the hierarchy view. "
+        "To explore expression values across species for each cluster in the phylogenetic tree, "
+    );
+    _popupMessageTreeCreationCompletion->setInformativeText(
+        "Right Click available in the cluster hierarchy view."
+    );
+    _popupMessageTreeCreationCompletion->setStandardButtons(QMessageBox::Ok);
+    _popupMessageTreeCreationCompletion->setModal(false);
     /*
     _popupMessageInit = new QMessageBox();
     _popupMessageInit->setIcon(QMessageBox::Information);
@@ -2561,7 +2574,9 @@ void SettingsAction::precomputeTreesFromHierarchy()
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "Time taken for precomputeTreesFromHierarchy : " + QString::number(duration / 1000.0) + " s";
-
+    //_popupMessageInit.hide();
+    //_popupMessageTreeCreationCompletion->show();
+    //QApplication::processEvents();
 }
 
 

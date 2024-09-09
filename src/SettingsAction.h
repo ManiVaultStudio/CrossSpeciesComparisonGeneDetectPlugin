@@ -293,6 +293,7 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetClusters() { return _filteredUMAPDatasetClusters; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
     QMessageBox* getPopupMessageInit() const { return _popupMessageInit; }
+    QMessageBox* getPopupMessageTreeCreationCompletion() const { return _popupMessageTreeCreationCompletion; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getGeneTableView() const { return _geneTableView; }
@@ -409,6 +410,7 @@ protected:
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
     QMessageBox* _popupMessageInit;
+    QMessageBox* _popupMessageTreeCreationCompletion;
     mv::gui::FlowLayout*            _selectedCellClusterInfoStatusBar;
     //mv::gui::FlowLayout     _clustersLayout;
     QStringList _initColumnNames;
