@@ -136,7 +136,8 @@ struct ClusterOrderContainer {
 
 struct SpeciesDetailsStats {
     int rank;
-    int abundanceCountTop;
+    float abundanceTop;
+    float abundanceMiddle;
     float meanSelected;
     int countSelected;
     float meanNonSelected;
@@ -154,7 +155,8 @@ struct Stats {
     float meanNonSelected;
     int countNonSelected;
     QColor color;
-    int abundanceCountTop;
+    float abundanceTop;
+    float abundanceMiddle;
     //float meanAll;
     //int countAll;
 
@@ -175,7 +177,8 @@ struct StatisticsSingle {
 struct InitialStatistics {
     float meanVal;
     float differentialVal;
-    float abundanceVal;
+    float abundanceTop;
+    float abundanceMiddle;
     int rankVal;
     QString geneName;
 };
@@ -249,8 +252,6 @@ public: // Action getters
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
     OptionsAction& getTopHierarchyClusterNamesFrequencyInclusionList() { return _topHierarchyClusterNamesFrequencyInclusionList; }
-    OptionsAction& getMiddleHierarchyClusterNamesFrequencyInclusionListAbandoned() { return _middleHierarchyClusterNamesFrequencyInclusionListAbandoned; }
-    OptionsAction& getBottomHierarchyClusterNamesFrequencyInclusionListAbandoned() { return _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
@@ -437,8 +438,6 @@ protected:
     QSet<QString>               _uniqueReturnGeneList;
     IntegralAction                _performGeneTableTsnePerplexity;
     OptionsAction                 _topHierarchyClusterNamesFrequencyInclusionList;
-    OptionsAction                 _middleHierarchyClusterNamesFrequencyInclusionListAbandoned;
-    OptionsAction                 _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned;
     OptionAction                   _performGeneTableTsneKnn;
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;

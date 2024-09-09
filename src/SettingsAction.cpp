@@ -71,7 +71,7 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
 
 
 
-Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const int countTopAbundance/*, const StatisticsSingle& allSelected*/) {
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const float topAbundance,const float middleAbundance/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
@@ -82,7 +82,8 @@ Stats combineStatisticsSingle(const StatisticsSingle& selected, const Statistics
     combinedStats.meanNonSelected = nonSelected.meanVal; 
     combinedStats.countNonSelected = nonSelected.countVal; 
 
-    combinedStats.abundanceCountTop = countTopAbundance;
+    combinedStats.abundanceTop = topAbundance;
+    combinedStats.abundanceMiddle = middleAbundance;
 
     return combinedStats;
 }
@@ -256,8 +257,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _topHierarchyClusterNamesFrequencyInclusionList(this, "Top Hierarchy Cluster Names Frequency Inclusion List"),
-    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned(this, "Middle Hierarchy Cluster Names Frequency Inclusion List"),
-    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned(this, "Bottom Hierarchy Cluster Names Frequency Inclusion List"),
     _speciesExplorerInMapTrigger(this, "Explore"),
     _applyLogTransformation(this, "Gene mapping log"),
     _clusterCountSortingType(this, "Cluster Count Sorting Type"),
@@ -438,10 +437,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
-_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
-
-
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
 
 
@@ -498,8 +493,6 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _topHierarchyClusterNamesFrequencyInclusionList.setSerializationName("CSCGDV:Top Hierarchy Cluster Names Frequency Inclusion List");
-    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setSerializationName("CSCGDV:Middle Hierarchy Cluster Names Frequency Inclusion List");
-    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setSerializationName("CSCGDV:Bottom Hierarchy Cluster Names Frequency Inclusion List");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
@@ -803,76 +796,15 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     connect(&_topClusterNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateTopHierarchyDatasetChanged);
 
     const auto updateMiddleHierarchyDatasetChanged = [this]() -> void {
-        if (_middleClusterNamesDataset.getCurrentDataset().isValid())
-        {
-            //computeHierarchyAppearanceVector();
-            auto clusterFullDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
-            auto clusters = clusterFullDataset->getClusters();
-            QStringList clusterNames = {};
-            if (!clusters.isEmpty())
-            {
-                for (auto cluster : clusters)
-                {
-                    clusterNames.append(cluster.getName());
-                }
-            }
-            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions(clusterNames);
-            //QStringList removalStringList = { "Oligo","Astro", "OPC", "Micro-PVM, "Endo", "VLMC" };
-            QStringList removalStringList = { "Oligo", "Astro", "OPC", "Micro-PVM", "Endo", "VLMC" };
 
-            //if removal string present remove it
-            for (auto removalString : removalStringList)
-            {
-                if (clusterNames.contains(removalString))
-            {
-                clusterNames.removeAll(removalString);
-                
-            }
-                }
-            
-            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setSelectedOptions(clusterNames);
-        }
-        else
-        {
-            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions({});
-        }
+
         };
 
     connect(&_middleClusterNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateMiddleHierarchyDatasetChanged);
 
     const auto updateBottomHierarchyDatasetChanged = [this]() -> void {
-        if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
-        {
-            //computeHierarchyAppearanceVector();
-            auto clusterFullDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
-            auto clusters = clusterFullDataset->getClusters();
-            QStringList clusterNames = {};
-            if (!clusters.isEmpty())
-            {
-                for (auto cluster : clusters)
-                {
-                    clusterNames.append(cluster.getName());
-                }
-            }
-            _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions(clusterNames);
-            QStringList removalStringList = { "Oligo_2","Oligo_1","Astro_2","Astro_1", "OPC", "Microglia/PVM", "Endo", "VLMC","LMC"};
 
-            //if removal string present remove it
-            for (auto removalString : removalStringList)
-            {
-                if (clusterNames.contains(removalString))
-                {
-                    clusterNames.removeAll(removalString);
 
-                }
-            }
-                _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setSelectedOptions(clusterNames);
-            
-        }
-        else
-        {
-            _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions({});
-        }
         };
 
     connect(&_bottomClusterNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateBottomHierarchyDatasetChanged);
@@ -1956,7 +1888,7 @@ void SettingsAction::updateButtonTriggered()
                     //stopCodeTimer("Part12.1");
 
                     //startCodeTimer("Part12.2");
-
+                    qDebug("***********************It's here in the computation***********************");
 
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
 
@@ -1971,11 +1903,19 @@ void SettingsAction::updateButtonTriggered()
                             auto speciesName = species.getName();
 
                             std::vector<int> commonSelectedIndices;
+                            commonSelectedIndices.reserve(std::min(_selectedIndicesFromStorage.size(), speciesIndices.size()));
 
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
 
                             std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
+
+                            // Precompute the inclusion list and cluster sizes
+                            auto inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+                            std::unordered_map<QString, int> clusterSizes;
+                            for (const auto& cluster : _topHierarchyClusterMap) {
+                                clusterSizes[cluster.first] = cluster.second.size();
+                            }
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
@@ -1992,9 +1932,39 @@ void SettingsAction::updateButtonTriggered()
                                 float nonSelectedMean = 0.0;
                                 int nonSelectedCells = 0;
 
+                                int selectedTopCounts = 0;
+                                int selectedMiddleCounts = 0;
+                                int allTopCounts = 0;
+                                int allMiddleCounts = 0;
+
                                 StatisticsSingle calculateStatisticsShort = { 0.0f, 0 };
 
                                 if (!commonSelectedIndices.empty()) {
+                                    // abundance
+                                    for (const auto& cluster : _topHierarchyClusterMap) {
+                                        auto clusterSize = clusterSizes[cluster.first];
+                                        auto isInInclusionList = inclusionList.contains(cluster.first);
+
+                                        if (isInInclusionList) {
+                                            allTopCounts += clusterSize;
+                                            selectedTopCounts += std::count_if(cluster.second.begin(), cluster.second.end(), [&](int index) {
+                                                return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                            });
+                                        } else {
+                                            bool hasCommonIndex = std::any_of(cluster.second.begin(), cluster.second.end(), [&](int index) {
+                                                return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                            });
+
+                                            if (hasCommonIndex) {
+                                                allMiddleCounts += clusterSize;
+                                                selectedMiddleCounts += std::count_if(cluster.second.begin(), cluster.second.end(), [&](int index) {
+                                                    return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                                });
+                                            }
+                                        }
+                                    }
+
+                                    // mean
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
                                     calculateStatisticsShort = calculateStatistics(resultContainerShort);
@@ -2006,32 +1976,35 @@ void SettingsAction::updateButtonTriggered()
                                     // Check to prevent division by zero
                                     if (nonSelectedCells > 0) {
                                         nonSelectedMean = (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells;
-                                    }
-                                    else {
+                                    } else {
                                         nonSelectedMean = 0.0f;
                                     }
-                                }
-                                else {
+                                } else {
                                     nonSelectedMean = allCellMean;
                                     nonSelectedCells = allCellCounts;
                                 }
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
 
-
                                 int topHierarchyCountValue = 0;
-                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end())
-                                {
+                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) {
                                     topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
                                 }
                                 float topHierarchyFrequencyValue = 0.0;
                                 if (topHierarchyCountValue != 0.0f) {
                                     topHierarchyFrequencyValue = static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue;
                                 }
+                                float topHierarchyValue = 0.0;
+                                if (allTopCounts != 0) {
+                                    topHierarchyValue = static_cast<float>(selectedTopCounts) / allTopCounts;
+                                }
 
+                                float middleHierarchyValue = 0.0;
+                                if (allMiddleCounts != 0) {
+                                    middleHierarchyValue = static_cast<float>(selectedMiddleCounts) / allMiddleCounts;
+                                }
 
-
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyValue, middleHierarchyValue);
                             }
 
                             // Merge results in a thread-safe manner
@@ -2040,14 +2013,15 @@ void SettingsAction::updateButtonTriggered()
                                 _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                 _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
+                                _clusterSpeciesFrequencyMap[speciesName]["AbundanceTop"] = pair.second.abundanceTop;
+                                _clusterSpeciesFrequencyMap[speciesName]["AbundanceMiddle"] = pair.second.abundanceMiddle;
                             }
-                            });
+                        });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
                     }
+                    synchronizer.waitForFinished(); // Wait for all tasks to complete
 
-                    synchronizer.waitForFinished();
-
-
+                    qDebug("***********************It's done***********************");
 
                     //stopCodeTimer("Part12.2");
 
@@ -2358,7 +2332,8 @@ void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatist
         if (it != utilityMap.end()) {
             node["mean"] = std::round(it->second.meanVal * 100.0) / 100.0; // Round to 2 decimal places
             node["differential"] = std::round(it->second.differentialVal * 100.0) / 100.0; // Round to 2 decimal places
-            node["abundance"] = it->second.abundanceVal;
+            node["abundanceTop"] = it->second.abundanceTop;
+            node["abundanceMiddle"] = it->second.abundanceMiddle;
             node["rank"] = it->second.rankVal;
             node["gene"] = it->second.geneName;
         }
@@ -2489,10 +2464,11 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                             StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
                             int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
-                            float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
+                            int middleHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
+                            //float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
 
                             QMutexLocker locker(&mutex); // Lock the mutex for thread safety
-                            topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                            topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue, middleHierarchyCountValue);
                             });
                         });
 
@@ -2550,7 +2526,11 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             tempStats.geneName = geneName;
                             tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
                             tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
-                            tempStats.abundanceVal = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop : 0.0f;
+                            
+                            tempStats.abundanceTop = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceTop : 0.0f;
+
+                            tempStats.abundanceMiddle = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceMiddle != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceMiddle : 0.0f;
+                            
                             utilityMap[speciesName] = tempStats;
                         }
 
@@ -3444,10 +3424,11 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3, MeanSelected: %4, CountSelected: %5, MeanNotSelected: %6, CountNotSelected: %7;\n")//, MeanAll: %7, CountAll: %8
+            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3,  AbundanceMiddle: %3, MeanSelected: %4, CountSelected: %5, MeanNotSelected: %6, CountNotSelected: %7;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
-                .arg(stats.abundanceCountTop)
+                .arg(stats.abundanceTop, 0, 'f', 2)
+                .arg(stats.abundanceMiddle, 0, 'f', 2)
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)
@@ -3526,8 +3507,6 @@ void SettingsAction::enableActions()
     _topClusterNamesDataset.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
-    //_middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(false);
-    //_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
@@ -3580,8 +3559,6 @@ void SettingsAction::disableActions()
     _topClusterNamesDataset.setDisabled(true);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
-    //_middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
-    //_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
     _clusterOrderHierarchy.setDisabled(true);
     _rightClickedCluster.setDisabled(true);
@@ -4098,8 +4075,6 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _topHierarchyClusterNamesFrequencyInclusionList.fromParentVariantMap(variantMap);
-    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.fromParentVariantMap(variantMap);
-    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
@@ -4145,8 +4120,6 @@ QVariantMap SettingsAction::toVariantMap() const
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _topHierarchyClusterNamesFrequencyInclusionList.insertIntoVariantMap(variantMap);
-    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.insertIntoVariantMap(variantMap);
-    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
