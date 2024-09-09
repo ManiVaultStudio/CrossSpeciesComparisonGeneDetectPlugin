@@ -69,7 +69,7 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
 
 
 
-Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const int topAbundance,const int middleAbundance, const int countAbundanceNumerator/*, const StatisticsSingle& allSelected*/) {
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected, const int topAbundance, const int middleAbundance, const int countAbundanceNumerator/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
@@ -77,8 +77,8 @@ Stats combineStatisticsSingle(const StatisticsSingle& selected, const Statistics
     //combinedStats.meanAll = allSelected.meanVal;
     //combinedStats.countAll = allSelected.countVal;
 
-    combinedStats.meanNonSelected = nonSelected.meanVal; 
-    combinedStats.countNonSelected = nonSelected.countVal; 
+    combinedStats.meanNonSelected = nonSelected.meanVal;
+    combinedStats.countNonSelected = nonSelected.countVal;
 
     combinedStats.abundanceTop = topAbundance;
     combinedStats.abundanceMiddle = middleAbundance;
@@ -103,21 +103,21 @@ StatisticsSingle calculateStatistics(const std::vector<float>& data) {
 
     return { mean, count };
 }
- float calculateMean(const std::vector<float>&v) {
+float calculateMean(const std::vector<float>& v) {
     if (v.empty())
-         return 0.0f;
-    
-        
-        #ifdef _WIN32
-         float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
-        #else
-         float sum = std::reduce(v.begin(), v.end(), 0.0f);
-        #endif
-        //float sum= std::accumulate(v.begin(), v.end(), 0.0);
+        return 0.0f;
 
-        
-        return sum / static_cast<float>(v.size());
-    
+
+#ifdef _WIN32
+    float sum = std::reduce(std::execution::par, v.begin(), v.end(), 0.0f);
+#else
+    float sum = std::reduce(v.begin(), v.end(), 0.0f);
+#endif
+    //float sum= std::accumulate(v.begin(), v.end(), 0.0);
+
+
+    return sum / static_cast<float>(v.size());
+
 }
 
 
@@ -157,7 +157,7 @@ float calculateMeanLogTransformed(const std::vector<float>& v) {
     if (positiveCount == 0)
         return 0.0f;
 
-    
+
 
     #ifdef _WIN32
     float sum = std::transform_reduce(std::execution::par, v.begin(), v.end(), 0.0f, std::plus<>(), logTransform);
@@ -332,7 +332,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _searchBox->setPlaceholderText("Search ID...");
     _searchBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _searchBox->setMaximumHeight(22);
-    
+
     //_searchBox->setMinimumWidth(100);
     _searchBox->setMaximumWidth(800);
     _searchBox->setAutoFillBackground(true);
@@ -431,7 +431,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
     _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    
+
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
@@ -599,13 +599,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     QTimer* topTimer = new QTimer(this);
     topTimer->setSingleShot(true);
     const auto updateTopHierarchyClusterNamesFrequencyInclusionList = [this, topTimer, delayMs]() -> void
-    {
-        topTimer->start(delayMs);
-    };
+        {
+            topTimer->start(delayMs);
+        };
     connect(topTimer, &QTimer::timeout, this, [this]() {
         //computeFrequencyMapForHierarchyItemsChange("top");
         _statusColorAction.setString("M");
-    });
+        });
     connect(&_topHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateTopHierarchyClusterNamesFrequencyInclusionList);
 
     const auto updateGeneFilteringTrigger = [this]() -> void
@@ -730,7 +730,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         QStringList speciesOptions = {};
         if (_speciesNamesDataset.getCurrentDataset().isValid())
         {
-            auto clusterFullDataset=mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
+            auto clusterFullDataset = mv::data().getDataset<Clusters>(_speciesNamesDataset.getCurrentDataset().getDatasetId());
             auto clusterValuesData = clusterFullDataset->getClusters();
             if (!clusterValuesData.isEmpty())
             {
@@ -751,7 +751,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         }
         _speciesExplorerInMap.setOptions(speciesOptions);
-        
+
         if (!_meanMapComputed)
         {
             computeGeneMeanExpressionMap();
@@ -760,10 +760,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     connect(&_speciesNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateSpeciesNameDataset);
     const auto updateTopHierarchyDatasetChanged = [this]() -> void {
-       
+
         if (_topClusterNamesDataset.getCurrentDataset().isValid())
         {
-           
+
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -780,7 +780,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (clusterNames.contains(removalString))
             {
                 clusterNames.removeAll(removalString);
-               
+
             }
             _topHierarchyClusterNamesFrequencyInclusionList.setSelectedOptions(clusterNames);
         }
@@ -789,7 +789,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _topHierarchyClusterNamesFrequencyInclusionList.setOptions({});
         }
         computeHierarchyAppearanceVector();
-        
+
         };
 
     connect(&_topClusterNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateTopHierarchyDatasetChanged);
@@ -809,7 +809,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_bottomClusterNamesDataset, &DatasetPickerAction::currentIndexChanged, this, updateBottomHierarchyDatasetChanged);
 
     const auto updateScatterplotColor = [this]() -> void {
-        auto selectedColorType= _scatterplotReembedColorOption.getCurrentText();
+        auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
         if (selectedColorType != "")
         {
             auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
@@ -823,73 +823,73 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                         if (pointDatasetPickerAction) {
 
 
-                            if(pointDatasetPickerAction->getCurrentDataset() == _selectedPointsTSNEDataset){
-                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                            if (colorDatasetPickerAction)
-                            {
-                                
-
-
-
-                                auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
-                                if (selectedColorType != "")
+                            if (pointDatasetPickerAction->getCurrentDataset() == _selectedPointsTSNEDataset) {
+                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                if (colorDatasetPickerAction)
                                 {
-                                    if (selectedColorType == "Cluster")
+
+
+
+
+                                    auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
+                                    if (selectedColorType != "")
                                     {
-                                        if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
+                                        if (selectedColorType == "Cluster")
                                         {
-                                            colorDatasetPickerAction->setCurrentText("");
-                                            colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                            if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
+                                            {
+                                                colorDatasetPickerAction->setCurrentText("");
+                                                colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                            }
                                         }
-                                    }
-                                    else if (selectedColorType == "Species")
-                                    {
-                                        if (_speciesNamesDataset.getCurrentDataset().isValid())
+                                        else if (selectedColorType == "Species")
                                         {
-                                            colorDatasetPickerAction->setCurrentText("");
-                                            colorDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
+                                            if (_speciesNamesDataset.getCurrentDataset().isValid())
+                                            {
+                                                colorDatasetPickerAction->setCurrentText("");
+                                                colorDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
+                                            }
                                         }
-                                    }
-                                    else if (selectedColorType == "Expression")
-                                    {
-                                        if (_tsneDatasetExpressionColors.isValid())
+                                        else if (selectedColorType == "Expression")
                                         {
-                                            colorDatasetPickerAction->setCurrentText("");
-                                            colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                            if (_tsneDatasetExpressionColors.isValid())
+                                            {
+                                                colorDatasetPickerAction->setCurrentText("");
+                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                            }
                                         }
+
+
+
                                     }
+
+
 
 
 
                                 }
 
+                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
 
-
-
-
+                                if (samplerActionAction)
+                                {
+                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                        QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                        return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
+                                        });
+                                }
                             }
-                            
-                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
-
-                            if (samplerActionAction)
-                            {
-                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
-                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
-                                    });
-                            }
-                        }
                         }
                     }
                 }
             }
 
         }
-        
+
         };
     connect(&_scatterplotReembedColorOption, &OptionAction::currentIndexChanged, this, updateScatterplotColor);
-    
-    
+
+
     const auto updateStatus = [this]() -> void {
         if (_pauseStatusUpdates)
         {
@@ -918,7 +918,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (string == "C") {
             labelText = "Updated";
             backgroundColor = "#28a745"; // Green
-            
+
         }
         else if (string == "M") {
             labelText = "Outdated";
@@ -926,7 +926,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         }
         else if (string == "E") {
-            labelText ="Error";
+            labelText = "Error";
             backgroundColor = "#dc3545"; // Red
         }
         else if (string == "R")
@@ -952,7 +952,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     /*const auto updateSelectedCellClusterInfoBox = [this]() -> void {
 
-        
+
         // Clear any previous message
         _selectedCellClusterInfoStatusBar->clearMessage();
 
@@ -966,10 +966,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         // Create a new QLabel
         _currentCellSelectionClusterInfoLabel = new QLabel;
         auto string = _selectedCellClusterInfoBox.getString();
-        QString htmlText = string; 
-        _currentCellSelectionClusterInfoLabel->setText(htmlText); 
-        _selectedCellClusterInfoStatusBar->addWidget(_currentCellSelectionClusterInfoLabel); 
-        
+        QString htmlText = string;
+        _currentCellSelectionClusterInfoLabel->setText(htmlText);
+        _selectedCellClusterInfoStatusBar->addWidget(_currentCellSelectionClusterInfoLabel);
+
 
         QLayoutItem* layoutItem;
 
@@ -1003,7 +1003,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
     const auto updateClusterOrderHierarchy = [this]() -> void {
-        
+
         _customOrderClustersFromHierarchy.clear();
         if (_clusterOrderHierarchy.getString() != "")
         {
@@ -1014,8 +1014,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 _customOrderClustersFromHierarchy.push_back(clusterOrderHierarchyItem);
             }
         }
-        
-        
+
+
 
 
         };
@@ -1023,11 +1023,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto updateRightClickedCluster = [this]() -> void {
 
-       
+
         //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
         QString orderedClusters = _rightClickedCluster.getString();
         auto geneName = _selectedGene.getString();
-        if (orderedClusters=="" || geneName=="")
+        if (orderedClusters == "" || geneName == "")
         {
             _clearRightClickedCluster.trigger();
             qDebug() << "Strings Empty, orderedClusters, genename" << orderedClusters << geneName;
@@ -1060,12 +1060,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             else
             {
 
-                    _clearRightClickedCluster.trigger();
-                    qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
-                    return;
+                _clearRightClickedCluster.trigger();
+                qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
+                return;
 
             }
-            
+
             //qDebug() << "Cluster Name: " << clusterName << " Cluster Level: " << clusterLevel;
 
             auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
@@ -1098,7 +1098,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 qDebug() << "Reference Tree Dataset Invalid";
                 return;
             }
-            
+
         }
 
         };
@@ -1112,23 +1112,23 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker = [this]() -> void {
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
-           // _startComputationTriggerAction.setDisabled(false);
-            //computeFrequencyMapForHierarchyItemsChange("top");
+            // _startComputationTriggerAction.setDisabled(false);
+             //computeFrequencyMapForHierarchyItemsChange("top");
 
-            //_startComputationTriggerAction.trigger();
+             //_startComputationTriggerAction.trigger();
 
-            //QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+             //QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
             QFuture<void> future2 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector(); });
-            
+
             //future.waitForFinished();
 
             future1.waitForFinished();
             future2.waitForFinished();
             _startComputationTriggerAction.trigger();
-            
+
             /*
-            
+
             _popupMessageInit->show();
             QApplication::processEvents();
             try {
@@ -1168,30 +1168,30 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker, &ToggleAction::toggled, this, updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker);
-        const auto updateToggleScatterplotSelection = [this]() -> void {
-        
-            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-            mv::gui::DecimalAction* overlayopacityAction;
+    const auto updateToggleScatterplotSelection = [this]() -> void {
 
-            if (scatterplotViewFactory) {
-                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Embedding View") {
-                        overlayopacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Selection/Opacity"));
-                        if (overlayopacityAction)
+        auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+        mv::gui::DecimalAction* overlayopacityAction;
+
+        if (scatterplotViewFactory) {
+            for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                    overlayopacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Selection/Opacity"));
+                    if (overlayopacityAction)
+                    {
+                        //qDebug() << "Overlay opacity action found";
+                        if (_toggleScatterplotSelection.isChecked())
                         {
-                            //qDebug() << "Overlay opacity action found";
-                            if (_toggleScatterplotSelection.isChecked())
-                            {
-                                overlayopacityAction->setValue(100.0);
-                            }
-                            else
-                            {
-                                overlayopacityAction->setValue(0.0);
-                            }   
+                            overlayopacityAction->setValue(100.0);
+                        }
+                        else
+                        {
+                            overlayopacityAction->setValue(0.0);
                         }
                     }
                 }
             }
+        }
 
         };
     connect(&_toggleScatterplotSelection, &ToggleAction::toggled, this, updateToggleScatterplotSelection);
@@ -1200,7 +1200,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto recomputeGeneTableTSNE = [this]() -> void {
         if (_selectedPointsTSNEDatasetForGeneTable.isValid())
         {
-            
+
             auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
 
             if (runningAction)
@@ -1217,7 +1217,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                 }
 
             }
-            
+
 
             auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Start"));
             if (startAction) {
@@ -1230,7 +1230,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         };
     connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
     const auto updateComputeTreesToDisplayFromHierarchy = [this]() -> void {
-        
+
         _computeTreesToDisplayFromHierarchy.setDisabled(true);
         precomputeTreesFromHierarchy();
         _computeTreesToDisplayFromHierarchy.setDisabled(false);
@@ -1394,7 +1394,7 @@ void SettingsAction::updateButtonTriggered()
     }
 
     try {
-       // _startComputationTriggerAction.setDisabled(true);
+        // _startComputationTriggerAction.setDisabled(true);
         startCodeTimer("UpdateGeneFilteringTrigger");
         //startCodeTimer("Part1");
 
@@ -1480,7 +1480,7 @@ void SettingsAction::updateButtonTriggered()
                         //mv::data().removeDataset(_selectedPointsTSNEDataset);
                         //mv::events().notifyDatasetRemoved(datasetIDLowRem, PointType);
                     //}
-                    
+
                    // _selectedPointsDataset = Dataset<Points>();
                     //_selectedPointsEmbeddingDataset = Dataset<Points>();
                     //startCodeTimer("Part6.1");
@@ -1491,7 +1491,7 @@ void SettingsAction::updateButtonTriggered()
                         mv::events().notifyDatasetAdded(_selectedPointsDataset);
 
                     }*/
-                    
+
 
                     pointsDatasetRaw->setSelectionIndices(_selectedIndicesFromStorage);
                     _selectedPointsDataset = pointsDatasetRaw->createSubsetFromSelection("SelectedPointsDataset");
@@ -1550,8 +1550,8 @@ void SettingsAction::updateButtonTriggered()
 
                     }
 
-                    
-                    
+
+
                     /*if (!_selectedPointsEmbeddingDataset.isValid())
                     {
                         _selectedPointsEmbeddingDataset = mv::data().createDataset("Points", "TSNEDataset", _selectedPointsDataset);
@@ -1664,171 +1664,171 @@ void SettingsAction::updateButtonTriggered()
                         if (!_performGeneTableTsneAction.isChecked())
                         {
 
-                        
-                        mv::plugin::AnalysisPlugin* analysisPlugin;
-                        bool usePreTSNE = _usePreComputedTSNE.isChecked();
 
-                        auto scatterplotModificationsLowDimUMAP = [this]() {
-                            if (_selectedPointsTSNEDataset.isValid()) {
-                                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-                                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-                                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-                                mv::gui::ViewPluginSamplerAction* samplerActionAction;
-                                if (scatterplotViewFactory) {
-                                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                                        if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
-                                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                                            if (pointDatasetPickerAction) {
-                                                pointDatasetPickerAction->setCurrentText("");
+                            mv::plugin::AnalysisPlugin* analysisPlugin;
+                            bool usePreTSNE = _usePreComputedTSNE.isChecked();
 
-                                                pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
+                            auto scatterplotModificationsLowDimUMAP = [this]() {
+                                if (_selectedPointsTSNEDataset.isValid()) {
+                                    auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                                    mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                                    mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                                    mv::gui::ViewPluginSamplerAction* samplerActionAction;
+                                    if (scatterplotViewFactory) {
+                                        for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                                            if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
+                                                pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                                                if (pointDatasetPickerAction) {
+                                                    pointDatasetPickerAction->setCurrentText("");
 
-                                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                                                if (colorDatasetPickerAction)
-                                                {
-                                                    colorDatasetPickerAction->setCurrentText("");
+                                                    pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDataset);
 
-
-
-                                                    auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
-                                                    if (selectedColorType != "")
+                                                    colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                                    if (colorDatasetPickerAction)
                                                     {
-                                                        if (selectedColorType == "Cluster")
-                                                        {
-                                                            if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
-                                                            }
-                                                        }
-                                                        else if (selectedColorType == "Species")
-                                                        {
-                                                            if (_speciesNamesDataset.getCurrentDataset().isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
-                                                            }
-                                                        }
-                                                        else if (selectedColorType == "Expression")
-                                                        {
-                                                            if (_tsneDatasetExpressionColors.isValid())
-                                                            {
-                                                                colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
-                                                            }
-                                                        }
+                                                        colorDatasetPickerAction->setCurrentText("");
 
 
 
+                                                        auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
+                                                        if (selectedColorType != "")
+                                                        {
+                                                            if (selectedColorType == "Cluster")
+                                                            {
+                                                                if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                                                }
+                                                            }
+                                                            else if (selectedColorType == "Species")
+                                                            {
+                                                                if (_speciesNamesDataset.getCurrentDataset().isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
+                                                                }
+                                                            }
+                                                            else if (selectedColorType == "Expression")
+                                                            {
+                                                                if (_tsneDatasetExpressionColors.isValid())
+                                                                {
+                                                                    colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                                }
+                                                            }
+
+
+
+                                                        }
                                                     }
-                                                }
-                                                
-                                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
 
-                                                if (samplerActionAction)
-                                                {
-                                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
-                                                        QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                                        return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
-                                                        });
+                                                    samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+
+                                                    if (samplerActionAction)
+                                                    {
+                                                        samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                                            QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                                            return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
+                                                            });
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            };
-                        //stopCodeTimer("Part9");
-                        if (!usePreTSNE)
-                        {
-                            //startCodeTimer("Part10");
-                            analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
-                            if (!analysisPlugin) {
-                                qDebug() << "Could not find create TSNE Analysis";
-                                return;
-                            }
-                            _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
-                            _selectedPointsTSNEDataset->setGroupIndex(groupIDDeletion);
-                            if (_selectedPointsTSNEDataset.isValid())
+                                };
+                            //stopCodeTimer("Part9");
+                            if (!usePreTSNE)
                             {
-
-                                int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
-                                if (perplexity < 5)
-                                {
-                                    qDebug() << "Perplexity is less than 5";
-                                    //_startComputationTriggerAction.setDisabled(false);
+                                //startCodeTimer("Part10");
+                                analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _selectedPointsEmbeddingDataset });
+                                if (!analysisPlugin) {
+                                    qDebug() << "Could not find create TSNE Analysis";
                                     return;
                                 }
-                                if (perplexity != _tsnePerplexity.getValue())
-                                {
-                                    _tsnePerplexity.setValue(perplexity);
-                                }
-
-                                auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
-                                if (perplexityAction)
-                                {
-                                    qDebug() << "Perplexity: Found";
-                                    perplexityAction->setValue(perplexity);
-                                }
-                                else
-                                {
-                                    qDebug() << "Perplexity: Not Found";
-                                }
-
-                                scatterplotModificationsLowDimUMAP();
-
-                                auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
-                                if (startAction) {
-
-                                    startAction->trigger();
-
-                                    analysisPlugin->getOutputDataset()->setSelectionIndices({});
-                                }
-
-                            }
-                            //stopCodeTimer("Part10");
-                        }
-                        else
-                        {
-                            //startCodeTimer("Part11");
-                            auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
-
-                            if (umapDataset.isValid())
-                            {
-
-
-                                _selectedPointsTSNEDataset = mv::data().createDerivedDataset<Points>("SelectedPointsTSNEDataset", _selectedPointsEmbeddingDataset, _selectedPointsEmbeddingDataset);
+                                _selectedPointsTSNEDataset = analysisPlugin->getOutputDataset();
                                 _selectedPointsTSNEDataset->setGroupIndex(groupIDDeletion);
-                                mv::events().notifyDatasetAdded(_selectedPointsTSNEDataset);
-
-                                auto umapDatasetRaw = mv::data().getDataset<Points>(umapDataset->getId());
-                                auto dimNames = umapDatasetRaw->getDimensionNames();
-                                int preComputedEmbeddingColumnsSize = umapDatasetRaw->getNumDimensions();
-                                std::vector<float> resultContainerPreComputedUMAP(selectedIndicesFromStorageSize * preComputedEmbeddingColumnsSize);
-                                std::vector<int> preComputedEmbeddingColumnIndices(preComputedEmbeddingColumnsSize);
-
-                                std::iota(preComputedEmbeddingColumnIndices.begin(), preComputedEmbeddingColumnIndices.end(), 0);
-
-                                umapDatasetRaw->populateDataForDimensions(resultContainerPreComputedUMAP, preComputedEmbeddingColumnIndices, _selectedIndicesFromStorage);
-
-                                QString datasetId = _selectedPointsTSNEDataset->getId();
-                                populatePointData(datasetId, resultContainerPreComputedUMAP, selectedIndicesFromStorageSize, preComputedEmbeddingColumnsSize, dimNames);
-
                                 if (_selectedPointsTSNEDataset.isValid())
                                 {
+
+                                    int perplexity = std::min(static_cast<int>(_selectedIndicesFromStorage.size()), _tsnePerplexity.getValue());
+                                    if (perplexity < 5)
+                                    {
+                                        qDebug() << "Perplexity is less than 5";
+                                        //_startComputationTriggerAction.setDisabled(false);
+                                        return;
+                                    }
+                                    if (perplexity != _tsnePerplexity.getValue())
+                                    {
+                                        _tsnePerplexity.setValue(perplexity);
+                                    }
+
+                                    auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/Perplexity"));
+                                    if (perplexityAction)
+                                    {
+                                        qDebug() << "Perplexity: Found";
+                                        perplexityAction->setValue(perplexity);
+                                    }
+                                    else
+                                    {
+                                        qDebug() << "Perplexity: Not Found";
+                                    }
+
                                     scatterplotModificationsLowDimUMAP();
+
+                                    auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDataset->findChildByPath("TSNE/TsneComputationAction/Start"));
+                                    if (startAction) {
+
+                                        startAction->trigger();
+
+                                        analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                                    }
+
                                 }
+                                //stopCodeTimer("Part10");
                             }
                             else
                             {
-                                qDebug() << "UMAP Dataset not valid";
+                                //startCodeTimer("Part11");
+                                auto umapDataset = _scatterplotEmbeddingPointsUMAPOption.getCurrentDataset();
+
+                                if (umapDataset.isValid())
+                                {
+
+
+                                    _selectedPointsTSNEDataset = mv::data().createDerivedDataset<Points>("SelectedPointsTSNEDataset", _selectedPointsEmbeddingDataset, _selectedPointsEmbeddingDataset);
+                                    _selectedPointsTSNEDataset->setGroupIndex(groupIDDeletion);
+                                    mv::events().notifyDatasetAdded(_selectedPointsTSNEDataset);
+
+                                    auto umapDatasetRaw = mv::data().getDataset<Points>(umapDataset->getId());
+                                    auto dimNames = umapDatasetRaw->getDimensionNames();
+                                    int preComputedEmbeddingColumnsSize = umapDatasetRaw->getNumDimensions();
+                                    std::vector<float> resultContainerPreComputedUMAP(selectedIndicesFromStorageSize * preComputedEmbeddingColumnsSize);
+                                    std::vector<int> preComputedEmbeddingColumnIndices(preComputedEmbeddingColumnsSize);
+
+                                    std::iota(preComputedEmbeddingColumnIndices.begin(), preComputedEmbeddingColumnIndices.end(), 0);
+
+                                    umapDatasetRaw->populateDataForDimensions(resultContainerPreComputedUMAP, preComputedEmbeddingColumnIndices, _selectedIndicesFromStorage);
+
+                                    QString datasetId = _selectedPointsTSNEDataset->getId();
+                                    populatePointData(datasetId, resultContainerPreComputedUMAP, selectedIndicesFromStorageSize, preComputedEmbeddingColumnsSize, dimNames);
+
+                                    if (_selectedPointsTSNEDataset.isValid())
+                                    {
+                                        scatterplotModificationsLowDimUMAP();
+                                    }
+                                }
+                                else
+                                {
+                                    qDebug() << "UMAP Dataset not valid";
+                                }
+
+
+                                //stopCodeTimer("Part11");
+
+
+
                             }
-
-
-                            //stopCodeTimer("Part11");
-
-
-
                         }
-                    }
 
 
                     }
@@ -1965,7 +1965,7 @@ void SettingsAction::updateButtonTriggered()
                                 allCellMean = _clusterGeneMeanExpressionMap[speciesName][geneName].second;
                             }
 
-                            float nonSelectedCellsMean = 0.0;
+                            float nonSelectedMean = 0.0;
                             float selectedCellsMean = 0.0;
                             if (!commonSelectedIndices.empty()) {
                                 std::vector<float> resultContainerShort(commonSelectedIndices.size());
@@ -1975,13 +1975,12 @@ void SettingsAction::updateButtonTriggered()
                                 selectedCellsMean = calculateMean(resultContainerShort);
 
                                 if (nonSelectedCellsCount > 0) {
-                                    float selectedCellsTotal = selectedCellsMean * selectedCellCount;
-                                    float nonSelectedCellsTotal = allCellTotal - selectedCellsTotal;
-                                    nonSelectedCellsMean = selectedCellsTotal / nonSelectedCellsCount;
+
+                                    nonSelectedMean = (allCellTotal - (selectedCellsMean * selectedCellCount)) / nonSelectedCellsCount;
                                 }
                             }
                             else {
-                                nonSelectedCellsMean = allCellMean;
+                                nonSelectedMean = allCellMean;
                             }
 
                             Stats valueStats;
@@ -1990,7 +1989,7 @@ void SettingsAction::updateButtonTriggered()
                             valueStats.countSelected = selectedCellCount;
                             valueStats.countNonSelected = nonSelectedCellsCount;
                             valueStats.meanSelected = selectedCellsMean;
-                            valueStats.meanNonSelected = nonSelectedCellsMean;
+                            valueStats.meanNonSelected = nonSelectedMean;
                             valueStats.color = speciesColor;
                             valueStats.countAbundanceNumerator = selectedInclusionCounts;
 
@@ -2009,7 +2008,6 @@ void SettingsAction::updateButtonTriggered()
                         });
 
 
-                    
 
 
                     //stopCodeTimer("Part12.2");
@@ -2125,10 +2123,10 @@ void SettingsAction::updateButtonTriggered()
 
 
                     //startCodeTimer("Part14");
-                     findTopNGenesPerCluster();
+                    findTopNGenesPerCluster();
                     //stopCodeTimer("Part14");
 
-                    
+
 
 
                 }
@@ -2326,7 +2324,7 @@ void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatist
             float topAbundance = 0.0;
             if (it->second.abundanceTop != 0)
             {
- 
+
                 topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
             }
 
@@ -2532,11 +2530,11 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             tempStats.geneName = geneName;
                             tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
                             tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
-                            
+
                             tempStats.abundanceTop = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceTop : 0.0f;
 
                             tempStats.abundanceMiddle = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceMiddle != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceMiddle : 0.0f;
-                            
+
                             utilityMap[speciesName] = tempStats;
                         }
 
@@ -2545,7 +2543,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
 
                         //convert QJsonObjectToString to store in a more space efficientway and then again convert the string to QJSONObject
                         QString jsonString = QJsonDocument(speciesDataJson).toJson(QJsonDocument::Compact);
-                        
+
 
                         _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = jsonString;
                     }
@@ -2558,7 +2556,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
         {
             qDebug() << "Datasets are not valid";
             return;
-            }
+        }
 
     }
     else
@@ -2582,7 +2580,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
     {
         return;
     }
-    
+
 
     _clusterGeneMeanExpressionMap.clear();
     auto start = std::chrono::high_resolution_clock::now();
@@ -2605,7 +2603,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     std::vector<float> resultContainerFull(speciesIndices.size());
                     mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                     float fullMean = calculateMean(resultContainerFull);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]= std::make_pair(speciesIndices.size(), fullMean);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName] = std::make_pair(speciesIndices.size(), fullMean);
                 }
                 });
 
@@ -2627,30 +2625,30 @@ void SettingsAction::computeHierarchyAppearanceVector()
     }
 
     auto startTimer = std::chrono::high_resolution_clock::now();
-    qDebug() << "computeHierarchyAppearanceVector Start" ;
+    qDebug() << "computeHierarchyAppearanceVector Start";
     _topHierarchyClusterMap.clear();
 
     if (_mainPointsDataset.getCurrentDataset().isValid()) {
         auto fullMainDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         auto numOfPoints = fullMainDataset->getNumPoints();
         auto clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
-            if (clusterDataset.isValid()) {
-                auto clusters = clusterDataset->getClusters();
-                if (!clusters.empty()) {
-                    
-                    for (const auto& cluster : clusters) {
-                        std::vector<bool> clusterNamesAppearance(numOfPoints, false);
-                        auto clusterName = cluster.getName();
-                            for (const auto& index : cluster.getIndices()) {
-                                clusterNamesAppearance[index] = true;
-                            }
-                            _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
+        if (clusterDataset.isValid()) {
+            auto clusters = clusterDataset->getClusters();
+            if (!clusters.empty()) {
+
+                for (const auto& cluster : clusters) {
+                    std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                    auto clusterName = cluster.getName();
+                    for (const auto& index : cluster.getIndices()) {
+                        clusterNamesAppearance[index] = true;
                     }
+                    _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
                 }
             }
+        }
 
     }
-    
+
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
     qDebug() << "Time taken for computeHierarchyAppearanceVector : " + QString::number(duration / 1000.0) + " s";
@@ -3135,199 +3133,199 @@ void SettingsAction::findTopNGenesPerCluster() {
             }
         }
 
-    QString pointDataId = _geneSimilarityPoints->getId();
-    int pointDimSize = static_cast<int>(speciesOrder.size());
-    int pointIndicesSize = static_cast<int>(_geneOrder.size());
+        QString pointDataId = _geneSimilarityPoints->getId();
+        int pointDimSize = static_cast<int>(speciesOrder.size());
+        int pointIndicesSize = static_cast<int>(_geneOrder.size());
 
-    if (_selectedPointsTSNEDatasetForGeneTable.isValid())
-    {
-        auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
-
-        if (runningAction)
+        if (_selectedPointsTSNEDatasetForGeneTable.isValid())
         {
+            auto runningAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Running"));
 
-            if (runningAction->isChecked())
+            if (runningAction)
             {
-                auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Stop"));
-                if (stopAction)
+
+                if (runningAction->isChecked())
                 {
-                    stopAction->trigger();
-                    //std::this_thread::sleep_for(std::chrono::seconds(5));
+                    auto stopAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Stop"));
+                    if (stopAction)
+                    {
+                        stopAction->trigger();
+                        //std::this_thread::sleep_for(std::chrono::seconds(5));
+                    }
                 }
+
             }
-
+            mv::data().removeDataset(_selectedPointsTSNEDatasetForGeneTable);
         }
-        mv::data().removeDataset(_selectedPointsTSNEDatasetForGeneTable);
-    }
 
-    populatePointData(pointDataId, rankOrder, pointIndicesSize, pointDimSize, speciesOrder);
+        populatePointData(pointDataId, rankOrder, pointIndicesSize, pointDimSize, speciesOrder);
 
-    mv::plugin::AnalysisPlugin* analysisPlugin;
-    auto scatterplotModificationsGeneSimilarity = [this]() {
-        if (_selectedPointsTSNEDatasetForGeneTable.isValid()) {
-            auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
-            mv::gui::DatasetPickerAction* colorDatasetPickerAction;
-            mv::gui::DatasetPickerAction* pointDatasetPickerAction;
-            mv::gui::ViewPluginSamplerAction* samplerActionAction;
-            if (scatterplotViewFactory) {
-                for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
-                    if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
-                        pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
-                        if (pointDatasetPickerAction) {
-                            pointDatasetPickerAction->setCurrentText("");
+        mv::plugin::AnalysisPlugin* analysisPlugin;
+        auto scatterplotModificationsGeneSimilarity = [this]() {
+            if (_selectedPointsTSNEDatasetForGeneTable.isValid()) {
+                auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
+                mv::gui::DatasetPickerAction* colorDatasetPickerAction;
+                mv::gui::DatasetPickerAction* pointDatasetPickerAction;
+                mv::gui::ViewPluginSamplerAction* samplerActionAction;
+                if (scatterplotViewFactory) {
+                    for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
+                        if (plugin->getGuiName() == "Scatterplot Cell Selection Overview") {
+                            pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
+                            if (pointDatasetPickerAction) {
+                                pointDatasetPickerAction->setCurrentText("");
 
-                            pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDatasetForGeneTable);
+                                pointDatasetPickerAction->setCurrentDataset(_selectedPointsTSNEDatasetForGeneTable);
 
-                            colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
-                            if (colorDatasetPickerAction)
-                            {
-                                colorDatasetPickerAction->setCurrentText("");
-
-                                if (_geneSimilarityClusterColoring.isValid())
+                                colorDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Color"));
+                                if (colorDatasetPickerAction)
                                 {
-                                    colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
+                                    colorDatasetPickerAction->setCurrentText("");
+
+                                    if (_geneSimilarityClusterColoring.isValid())
+                                    {
+                                        colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
+                                    }
+
                                 }
 
-                            }
-                            
-                            samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
+                                samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
 
-                            if (samplerActionAction)
-                            {
-                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
-                                    QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
-                                    return generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
-                                    });
+                                if (samplerActionAction)
+                                {
+                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                        QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
+                                        return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
+                                        });
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        };
-
+            };
 
 
-    {
-        //startCodeTimer("Part10");
-        analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _geneSimilarityPoints });
-        if (!analysisPlugin) {
-            qDebug() << "Could not find create TSNE Analysis";
-            return;
-        }
-        _selectedPointsTSNEDatasetForGeneTable = analysisPlugin->getOutputDataset();
-        int groupID2 = 10 * 3;
-        _selectedPointsTSNEDatasetForGeneTable->setGroupIndex(groupID2);
-        if (_selectedPointsTSNEDatasetForGeneTable.isValid())
+
         {
-            //_selectedPointsTSNEDatasetForGeneTable->printChildren();
-            bool skip = false;
-            int perplexity = std::min(static_cast<int>(_geneOrder.size()), _tsnePerplexity.getValue());
-            if (perplexity < 5)
-            {
-                qDebug() << "Perplexity is less than 5";
-                skip = true;
-                //_startComputationTriggerAction.setDisabled(false);
+            //startCodeTimer("Part10");
+            analysisPlugin = mv::plugins().requestPlugin<AnalysisPlugin>("tSNE Analysis", { _geneSimilarityPoints });
+            if (!analysisPlugin) {
+                qDebug() << "Could not find create TSNE Analysis";
+                return;
             }
-            if (!skip)
+            _selectedPointsTSNEDatasetForGeneTable = analysisPlugin->getOutputDataset();
+            int groupID2 = 10 * 3;
+            _selectedPointsTSNEDatasetForGeneTable->setGroupIndex(groupID2);
+            if (_selectedPointsTSNEDatasetForGeneTable.isValid())
             {
-            if (perplexity != _tsnePerplexity.getValue())
-            {
-                _tsnePerplexity.setValue(perplexity);
-            }
+                //_selectedPointsTSNEDatasetForGeneTable->printChildren();
+                bool skip = false;
+                int perplexity = std::min(static_cast<int>(_geneOrder.size()), _tsnePerplexity.getValue());
+                if (perplexity < 5)
+                {
+                    qDebug() << "Perplexity is less than 5";
+                    skip = true;
+                    //_startComputationTriggerAction.setDisabled(false);
+                }
+                if (!skip)
+                {
+                    if (perplexity != _tsnePerplexity.getValue())
+                    {
+                        _tsnePerplexity.setValue(perplexity);
+                    }
 
-            auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Perplexity"));
-            if (perplexityAction)
+                    auto perplexityAction = dynamic_cast<IntegralAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Perplexity"));
+                    if (perplexityAction)
+                    {
+                        //qDebug() << "Perplexity: Found";
+                        perplexityAction->setValue(perplexity);
+                    }
+                    else
+                    {
+                        qDebug() << "Perplexity: Not Found";
+                    }
+
+                    QString knnAlgorithmValue = _performGeneTableTsneKnn.getCurrentText();
+                    QString distanceMetricValue = _performGeneTableTsneDistance.getCurrentText();
+                    if (knnAlgorithmValue != "")
+                    {
+                        auto knnAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/kNN Algorithm"));
+                        if (knnAction)
+                        {
+                            //qDebug() << "Knn: Found";
+                            try {
+                                knnAction->setCurrentText(knnAlgorithmValue);
+                            }
+                            catch (const std::exception& e) {
+                                qDebug() << "An exception occurred in setting knn value: " << e.what();
+                            }
+                        }
+                        else
+                        {
+                            qDebug() << "Knn: Not Found";
+                        }
+                    }
+                    if (distanceMetricValue != "")
+                    {
+                        auto distanceAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Distance metric"));
+                        if (distanceAction)
+                        {
+                            //qDebug() << "Distance: Found";
+                            try {
+                                distanceAction->setCurrentText(distanceMetricValue);
+                            }
+                            catch (const std::exception& e) {
+                                qDebug() << "An exception occurred in setting distance value: " << e.what();
+                            }
+                        }
+                        else
+                        {
+                            qDebug() << "Distance: Not Found";
+                        }
+                    }
+
+                    scatterplotModificationsGeneSimilarity();
+
+                    auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Start"));
+                    if (startAction) {
+
+                        startAction->trigger();
+
+                        analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                    }
+                }
+            }
+            //stopCodeTimer("Part10");
+        }
+
+        std::vector<int> selectedIndices;
+        std::vector<int> nonselectedIndices;
+        selectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
+        nonselectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
+        for (int i = 0; i < _geneOrder.size(); i++)
+        {
+            if (_uniqueReturnGeneList.find(_geneOrder[i]) != _uniqueReturnGeneList.end())
             {
-                //qDebug() << "Perplexity: Found";
-                perplexityAction->setValue(perplexity);
+                selectedIndices.push_back(i);
             }
             else
             {
-                qDebug() << "Perplexity: Not Found";
-            }
-
-            QString knnAlgorithmValue = _performGeneTableTsneKnn.getCurrentText();
-            QString distanceMetricValue = _performGeneTableTsneDistance.getCurrentText();
-            if (knnAlgorithmValue != "")
-            {
-                auto knnAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/kNN Algorithm"));
-                if (knnAction)
-                {
-                    //qDebug() << "Knn: Found";
-                    try {
-                        knnAction->setCurrentText(knnAlgorithmValue);
-                    }
-                    catch (const std::exception& e) {
-                        qDebug() << "An exception occurred in setting knn value: " << e.what();
-                    }  
-                }
-                else
-                {
-                    qDebug() << "Knn: Not Found";
-                }
-            }
-            if (distanceMetricValue != "")
-            {
-                auto distanceAction = dynamic_cast<OptionAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/Distance metric"));
-                if (distanceAction)
-                {
-                    //qDebug() << "Distance: Found";
-                    try {
-                        distanceAction->setCurrentText(distanceMetricValue);
-                    }
-                    catch (const std::exception& e) {
-                        qDebug() << "An exception occurred in setting distance value: " << e.what();
-                    }
-                }
-                else
-                {
-                    qDebug() << "Distance: Not Found";
-                }
-            }
-
-            scatterplotModificationsGeneSimilarity();
-
-            auto startAction = dynamic_cast<TriggerAction*>(_selectedPointsTSNEDatasetForGeneTable->findChildByPath("TSNE/TsneComputationAction/Start"));
-            if (startAction) {
-
-                startAction->trigger();
-
-                analysisPlugin->getOutputDataset()->setSelectionIndices({});
+                nonselectedIndices.push_back(i);
             }
         }
-        }
-        //stopCodeTimer("Part10");
-    }
-
-    std::vector<int> selectedIndices;
-    std::vector<int> nonselectedIndices;
-    selectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
-    nonselectedIndices.reserve(_geneOrder.size()); // Pre-allocate memory
-    for (int i = 0; i < _geneOrder.size(); i++)
-    {
-        if (_uniqueReturnGeneList.find(_geneOrder[i]) != _uniqueReturnGeneList.end())
-        {
-            selectedIndices.push_back(i);
-        }
-        else
-        {
-            nonselectedIndices.push_back(i);
-        }
-    }
-    QString clusterDataId = _geneSimilarityClusterColoring->getId();
-    QColor selectedColor = QColor("#00A2ED");
-    QColor nonSelectedColor = QColor("#ff5d12");
-    std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
-    selectedClusterMap["TopNSelectedGenes"] = { selectedColor, selectedIndices };
-    selectedClusterMap["NonTopNGenes"] = { nonSelectedColor, nonselectedIndices };
+        QString clusterDataId = _geneSimilarityClusterColoring->getId();
+        QColor selectedColor = QColor("#00A2ED");
+        QColor nonSelectedColor = QColor("#ff5d12");
+        std::map<QString, std::pair<QColor, std::vector<int>>> selectedClusterMap;
+        selectedClusterMap["TopNSelectedGenes"] = { selectedColor, selectedIndices };
+        selectedClusterMap["NonTopNGenes"] = { nonSelectedColor, nonselectedIndices };
 
         populateClusterData(clusterDataId, selectedClusterMap);
-}
+    }
 
     //stopCodeTimer("findTopNGenesPerCluster");
-    QVariant returnedmodel= createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
+    QVariant returnedmodel = createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
 
     setModifiedTriggeredData(returnedmodel);
 
@@ -3341,11 +3339,11 @@ void SettingsAction::removeDatasets(int groupId)
 
     std::copy_if(allDatasets.begin(), allDatasets.end(), std::back_inserter(datasetsFilteredAndSorted), [groupId](Dataset<DatasetImpl> dataset) {
         return dataset->getGroupIndex() == groupId;
-    });
+        });
 
     std::sort(datasetsFilteredAndSorted.begin(), datasetsFilteredAndSorted.end(), [](Dataset<DatasetImpl> lhs, Dataset<DatasetImpl> rhs) -> bool {
         return rhs->getDataHierarchyItem().getDepth() < lhs->getDataHierarchyItem().getDepth();
-    });
+        });
 
     //std::reverse(datasetsFilteredAndSorted.begin(), datasetsFilteredAndSorted.end());
 
@@ -3360,7 +3358,7 @@ void SettingsAction::removeDatasets(int groupId)
     //mv::data().removeDataset(_selectedPointsDataset);
     //mv::data().removeDataset(_selectedPointsEmbeddingDataset);
 }
-QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QString, Stats>>& map,   const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
+QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
     if (map.empty() || _totalGeneList.empty()) {
         return QVariant();
