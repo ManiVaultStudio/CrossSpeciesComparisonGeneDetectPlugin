@@ -1889,7 +1889,8 @@ void SettingsAction::updateButtonTriggered()
 
                     //startCodeTimer("Part12.2");
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-
+                    _currentHierarchyItemsTopForTable.clear();
+                    _currentHierarchyItemsMiddleForTable.clear();
                     for (auto& species : speciesValuesAll) 
 
 
@@ -1981,12 +1982,6 @@ void SettingsAction::updateButtonTriggered()
                                 else {
                                     nonSelectedMean = allCellMean;
                                 }
-
-                                int topHierarchyCountValue = 0;
-                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) {
-                                    topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
-                                }
-                                float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(selectedCellCount) / topHierarchyCountValue : 0.0f;
 
                                 Stats valueStats;
                                 valueStats.abundanceMiddle = allMiddleCounts;

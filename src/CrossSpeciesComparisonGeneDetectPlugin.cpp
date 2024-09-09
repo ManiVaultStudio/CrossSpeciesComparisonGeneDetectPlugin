@@ -1487,7 +1487,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             }
 
-            QString formattedValueTop = QString::number(topAbundance, 'f', 6);
+            QString formattedValueTop = QString::number(topAbundance, 'f', 2);
             item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
@@ -1500,7 +1500,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
                 middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
 
             }
-            QString formattedValueMiddle = QString::number(middleAbundance, 'f', 6);
+            QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
             item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
             rowItems << item;
 
@@ -1635,20 +1635,24 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << item; //4 Relative\nAbundance\nNeuronal\Middle\nHierarchy
 
                 item = new QStandardItem();
+
                 item->setData(QVariant(it->second.countSelected), Qt::EditRole);
                 rowItems << item; //5 Count\nSelected
 
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.meanSelected), Qt::EditRole);
+                QString formattedMeanSelected = QString::number(it->second.meanSelected, 'f', 2);
+                item->setData(QVariant(formattedMeanSelected), Qt::EditRole);
                 rowItems << item; //6 Mean\nSelected
 
                 item = new QStandardItem();
+                
                 item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
                 rowItems << item;  //7 Count\nNon\nSelected
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
+                QString formattedMeanNonSelected = QString::number(it->second.meanNonSelected, 'f', 2);
+                item->setData(QVariant(formattedMeanNonSelected), Qt::EditRole);
                 rowItems << item; //8 Mean\nNon\nSelected
 
 
@@ -1803,8 +1807,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
                 middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
             }
 
-            node["abundanceTop"] = topAbundance;
-            node["abundanceMiddle"] = middleAbundance;
+            node["abundanceTop"] = std::round(topAbundance * 100.0) / 100.0;
+            node["abundanceMiddle"] =  std::round(middleAbundance * 100.0) / 100.0;
         }
         if (it != speciesExpressionMap.end()) {
             node["cellCounts"] = it->second.countSelected;
