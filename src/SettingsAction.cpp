@@ -1176,10 +1176,19 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
+            computeFrequencyMapForHierarchyItemsChange("top");
 
+            _startComputationTriggerAction.trigger();
+
+            //QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            //computeGeneMeanExpressionMap();
+            //future.waitForFinished();
+            //_startComputationTriggerAction.trigger();
+            
+            /*
+            
             _popupMessageInit->show();
             QApplication::processEvents();
-
             try {
                 QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
                 QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
@@ -1208,6 +1217,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
             _popupMessageInit->hide();
             QApplication::processEvents();
+            */
         }
         else
         {
@@ -1962,7 +1972,7 @@ void SettingsAction::updateButtonTriggered()
 
                                 // Access shared data in a thread-safe manner
                                 QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
-                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
+                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
                                 locker.unlock();
 
                                 int allCellCounts = nonSelectionDetails.first;
@@ -2454,7 +2464,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
                             int geneIndex = (it != mainPointDimensionNames.end()) ? std::distance(mainPointDimensionNames.begin(), it) : -1;
                             geneIndexContainer[0] = geneIndex;
 
-                            const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
+                            const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
                             int allCellCounts = nonSelectionDetails.first;
                             float allCellMean = nonSelectionDetails.second;
 
@@ -2575,7 +2585,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
     {
         return;
     }
-
+    
 
     _clusterGeneMeanExpressionMap.clear();
     auto start = std::chrono::high_resolution_clock::now();
@@ -2598,7 +2608,7 @@ void SettingsAction::computeGeneMeanExpressionMap()
                     std::vector<float> resultContainerFull(speciesIndices.size());
                     mainPointDatasetFull->populateDataForDimensions(resultContainerFull, geneIndex, speciesIndices);
                     float fullMean = calculateMean(resultContainerFull);
-                    _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"] = std::make_pair(speciesIndices.size(), fullMean);
+                    _clusterGeneMeanExpressionMap[speciesName][geneName]= std::make_pair(speciesIndices.size(), fullMean);
                 }
                 });
 
@@ -2611,7 +2621,6 @@ void SettingsAction::computeGeneMeanExpressionMap()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
 }
-
 
 void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarchyType)
 {
@@ -2693,7 +2702,7 @@ void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarch
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
     qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
 }
-
+/*
 void SettingsAction::computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType)
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -2948,6 +2957,7 @@ void SettingsAction::computeGeneMeanExpressionMapExperimental()
     qDebug() << "\n\n++++++++++++++++++Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
 
 }
+*/
 void SettingsAction::findTopNGenesPerCluster() {
 
     int n = _topNGenesFilter.getValue();

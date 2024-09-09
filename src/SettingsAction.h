@@ -320,7 +320,7 @@ public: // Action getters
     void triggerTrippleHierarchyFrequencyChange();
     void computeGeneMeanExpressionMap();
     void precomputeTreesFromHierarchy();
-    void computeGeneMeanExpressionMapExperimental();
+    //void computeGeneMeanExpressionMapExperimental();
     void populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames);
     void populatePointData(QString& datasetId, std::vector<float>& pointVector, int& numPoints, int& numDimensions, std::vector<QString>& dimensionNames);
     void populateClusterData(QString& datasetId, std::map<QString, std::pair<QColor, std::vector<int>>>& clusterMap);
@@ -338,7 +338,7 @@ public: // Action getters
     void findTopNGenesPerCluster();
     QString generateTooltip(const ViewPluginSamplerAction::SampleContext& toolTipContext, const QString& clusterDatasetId, bool showTooltip, QString indicesType);
     void createClusterPositionMap();
-    void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
+    //void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
 private:
     
@@ -368,7 +368,8 @@ protected:
     OptionSelectionAction         _optionSelectionAction;
     TriggerAction              _startComputationTriggerAction;
     DatasetPickerAction    _referenceTreeDataset;
-    std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString,std::pair<int,float>>>> _clusterGeneMeanExpressionMap;
+    std::unordered_map<QString, std::unordered_map<QString,std::pair<int,float>>> _clusterGeneMeanExpressionMap;
+
     std::unordered_map<QString,  std::unordered_map<QString, int>> _clusterSpeciesFrequencyMap;
     DatasetPickerAction    _mainPointsDataset;
     DatasetPickerAction    _speciesNamesDataset;
