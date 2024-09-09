@@ -266,7 +266,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneKnn(this, "Perform Gene Table TSNE Knn"),
     _performGeneTableTsneDistance(this, "Perform Gene Table TSNE Distance"),
     _performGeneTableTsneTrigger(this, "Perform Gene Table TSNE Trigger"),
+    _computeTreesToDisplayFromHierarchy(this, "Compute Trees To Display From Hierarchy"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
+    _rightClickedCluster(this, "Right Clicked Cluster"),
+    _clearRightClickedCluster(this, "Clear Right Clicked Cluster"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
 {
@@ -275,33 +278,53 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget = new QStatusBar();
 
 
-    _popupMessage = new QMessageBox();
-    _popupMessage->setIcon(QMessageBox::Information);
-    _popupMessage->setWindowTitle("Computation in Progress");
-    _popupMessage->setText("Data Precomputation in Progress");
-    _popupMessage->setInformativeText("The system is currently precomputing essential data to enhance your interactive exploration experience. This process may take some time based on your data size and processor. The popup will close automatically once initialization is complete. Thank you for using Cytosplore EvoViewer.");
-    _popupMessage->setStandardButtons(QMessageBox::NoButton);
-    _popupMessage->setModal(true);
+    _popupMessageInit = new QMessageBox();
+    _popupMessageInit->setIcon(QMessageBox::Information);
+    _popupMessageInit->setWindowTitle("Computation in Progress");
+    _popupMessageInit->setText("Data Precomputation in Progress");
+    _popupMessageInit->setInformativeText(
+        "The system is currently precomputing essential data to enhance your interactive exploration experience. "
+        "This process may take some time based on the input data size, your memory and processor. <br> This popup will close automatically once initialization is complete. "
+        "Thank you for using Cytosplore EvoViewer.<br><br>"
+        "Please visit our website <a href=\"https://viewer.cytosplore.org/\">https://viewer.cytosplore.org/</a> to learn more."
+    );
+    _popupMessageInit->setTextFormat(Qt::RichText); // Enable rich text formatting
+    _popupMessageInit->setTextInteractionFlags(Qt::TextBrowserInteraction); // Enable link interaction
+    _popupMessageInit->setStandardButtons(QMessageBox::NoButton);
+    _popupMessageInit->setModal(true);
 
-
+    // Create a message box to notify the user about the completion of the tree creation process
+    _popupMessageTreeCreationCompletion = new QMessageBox();
+    _popupMessageTreeCreationCompletion->setIcon(QMessageBox::Information);
+    _popupMessageTreeCreationCompletion->setWindowTitle("Tree Creation Completed");
+    _popupMessageTreeCreationCompletion->setText(
+        "The precomputed tree method has been completed. "
+        "Right-click is available in the hierarchy view. "
+        "To explore expression values across species for each cluster in the phylogenetic tree, "
+    );
+    _popupMessageTreeCreationCompletion->setInformativeText(
+        "Right Click available in the cluster hierarchy view."
+    );
+    _popupMessageTreeCreationCompletion->setStandardButtons(QMessageBox::Ok);
+    _popupMessageTreeCreationCompletion->setModal(false);
     /*
-    _popupMessage = new QMessageBox();
-    _popupMessage->setIcon(QMessageBox::Information);
-    _popupMessage->setWindowTitle("Computation in Progress");
-    _popupMessage->setText(
+    _popupMessageInit = new QMessageBox();
+    _popupMessageInit->setIcon(QMessageBox::Information);
+    _popupMessageInit->setWindowTitle("Computation in Progress");
+    _popupMessageInit->setText(
         "<div style='text-align: center;'>"
         "<h2 style='color: #333;'>Data Precomputation in Progress</h2>"
         "</div>"
     );
-    _popupMessage->setInformativeText(
+    _popupMessageInit->setInformativeText(
         "<div style='text-align: center;'>"
         "The system is currently precomputing essential data to enhance your interactive exploration experience. "
         "This process may take some time based on your data size and processor. The popup will close automatically "
         "once initialization is complete. Thank you for using Cytosplore EvoViewer."
         "</div>"
     );
-    _popupMessage->setStandardButtons(QMessageBox::NoButton);
-    _popupMessage->setModal(true);
+    _popupMessageInit->setStandardButtons(QMessageBox::NoButton);
+    _popupMessageInit->setModal(true);
     */
 
     _searchBox = new CustomLineEdit();
@@ -437,6 +460,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _geneNamesConnection.setSerializationName("CSCGDV:Gene Names Connection");
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _clusterOrderHierarchy.setSerializationName("CSCGDV:Cluster Order Hierarchy");
+    _rightClickedCluster.setSerializationName("CSCGDV:Right Clicked Cluster");
+    _clearRightClickedCluster.setSerializationName("CSCGDV:Clear Right Clicked Cluster");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
     _revertRowSelectionChangesToInitial.setSerializationName("CSCGDV:Revert Row Selection Changes To Initial");
@@ -459,6 +484,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneTrigger.setSerializationName("CSCGDV:Gene Table TSNE Trigger");
     _performGeneTableTsneTrigger.setDisabled(true);
     _clusterOrderHierarchy.setString("");
+    _rightClickedCluster.setString("");
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -606,8 +632,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             _pauseStatusUpdates = true;
             _speciesExplorerInMap.setSelectedOptions({});
             //_erroredOutFlag = false;
+            QApplication::processEvents();
             updateButtonTriggered();
             enableActions();
+            QApplication::processEvents();
 
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
@@ -947,10 +975,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (string == "C")
         {
             _startComputationTriggerAction.setDisabled(true);
-            if (_popupMessage->isVisible())
-            {
-                _popupMessage->hide();
-            }
+            //if (_popupMessageInit->isVisible())
+            //{
+                //_popupMessageInit->hide();
+            //}
         }
         else
         {
@@ -1065,9 +1093,90 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
         };
-    connect(&_clusterOrderHierarchy, &StringAction::changed, this, updateClusterOrderHierarchy);
+    connect(&_clusterOrderHierarchy, &StringAction::stringChanged, this, updateClusterOrderHierarchy);
 
+    const auto updateRightClickedCluster = [this]() -> void {
 
+       
+        //qDebug() << "Cluster Name and Level: " << _rightClickedCluster.getString();
+        QString orderedClusters = _rightClickedCluster.getString();
+        auto geneName = _selectedGene.getString();
+        if (orderedClusters=="" || geneName=="")
+        {
+            _clearRightClickedCluster.trigger();
+            qDebug() << "Strings Empty, orderedClusters, genename" << orderedClusters << geneName;
+            return;
+        }
+        QStringList clusterNameAndLevel = orderedClusters.split(" @%$,$%@ ");
+        if (clusterNameAndLevel.size() == 2)
+        {
+            QString clusterName = clusterNameAndLevel.at(0);
+            QString clusterLevelTemp = clusterNameAndLevel.at(1);
+            if (clusterName == "" || clusterLevelTemp == "")
+            {
+                _clearRightClickedCluster.trigger();
+                qDebug() << "Strings Empty clustername, clusterLevelTemp" << clusterName << clusterLevelTemp;
+                return;
+            }
+            QString clusterLevel;
+            if (clusterLevelTemp == "1")
+            {
+                clusterLevel = "top";
+            }
+            else if (clusterLevelTemp == "2")
+            {
+                clusterLevel = "middle";
+            }
+            else if (clusterLevelTemp == "3")
+            {
+                clusterLevel = "bottom";
+            }
+            else
+            {
+
+                    _clearRightClickedCluster.trigger();
+                    qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
+                    return;
+
+            }
+            
+            //qDebug() << "Cluster Name: " << clusterName << " Cluster Level: " << clusterLevel;
+
+            auto referenceTreeDataset = _referenceTreeDataset.getCurrentDataset();
+            if (referenceTreeDataset.isValid()) {
+                auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
+                if (referenceTree.isValid()) {
+                    QString speciesData = _precomputedTreesFromTheHierarchy[clusterLevel][clusterName][geneName];
+                    QJsonObject speciesDataJson = QJsonDocument::fromJson(speciesData.toUtf8()).object();
+                    //check if QJsonObject isValid
+                    if (speciesDataJson.isEmpty())
+                    {
+                        _clearRightClickedCluster.trigger();
+                        qDebug() << "Species Data Json Empty";
+                        return;
+                    }
+                    referenceTree->setTreeData(speciesDataJson);
+                    events().notifyDatasetDataChanged(referenceTree);
+                }
+                else
+                {
+                    _clearRightClickedCluster.trigger();
+                    qDebug() << "Reference Tree Invalid";
+                    return;
+                }
+
+            }
+            else
+            {
+                _clearRightClickedCluster.trigger();
+                qDebug() << "Reference Tree Dataset Invalid";
+                return;
+            }
+            
+        }
+
+        };
+    connect(&_rightClickedCluster, &StringAction::stringChanged, this, updateRightClickedCluster);
 
     const auto updateApplyLogTransformation = [this]() -> void {
         _statusColorAction.setString("M");
@@ -1078,25 +1187,38 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
-           
-            _popupMessage->show();
+
+            _popupMessageInit->show();
             QApplication::processEvents();
-            QFuture<void> future1 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
-            QFuture<void> future2 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            //QFuture<void> future3 = QtConcurrent::run([this]() { triggerTrippleHierarchyFrequencyChange(); });
-            //QFuture<void> future4 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            //QFuture<void> future5 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("middle"); });
-            //QFuture<void> future6 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("bottom"); });
-            computeFrequencyMapForHierarchyItemsChange("top");
-            //computeFrequencyMapForHierarchyItemsChange("middle");
-            //computeFrequencyMapForHierarchyItemsChange("bottom");
-            future1.waitForFinished();
-            future2.waitForFinished();
-            //future2.waitForFinished();
-            //future3.waitForFinished();
-            //future4.waitForFinished();
-            //future5.waitForFinished();
-            _startComputationTriggerAction.trigger();
+
+            try {
+                QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+                QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+                future1.waitForFinished();
+                future2.waitForFinished();
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error during computation: " << e.what() << std::endl;
+                _popupMessageInit->hide();
+                QApplication::processEvents();
+                return;
+            }
+
+            try {
+                QFuture<void> future3 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
+                QFuture<void> future4 = QtConcurrent::run([this]() { _startComputationTriggerAction.trigger(); });
+                //future3.waitForFinished();
+                future4.waitForFinished();
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error during tree precomputation: " << e.what() << std::endl;
+                _popupMessageInit->hide();
+                QApplication::processEvents();
+                return;
+            }
+
+            _popupMessageInit->hide();
+            QApplication::processEvents();
         }
         else
         {
@@ -1166,6 +1288,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
+    const auto updateComputeTreesToDisplayFromHierarchy = [this]() -> void {
+        
+        _computeTreesToDisplayFromHierarchy.setDisabled(true);
+        precomputeTreesFromHierarchy();
+        _computeTreesToDisplayFromHierarchy.setDisabled(false);
+
+        };
+
+    connect(&_computeTreesToDisplayFromHierarchy, &TriggerAction::triggered, this, updateComputeTreesToDisplayFromHierarchy);
 
     const auto updateGeneTableTSNECheck = [this]() -> void {
         _statusColorAction.setString("M");
@@ -2207,6 +2338,35 @@ void SettingsAction::setModifiedTriggeredData(QVariant geneListTable)
         qDebug() << "QVariant empty";
     }
 }
+
+void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatistics>& utilityMap) {
+    // Check if the "name" key exists in the current node
+    if (node.contains("name")) {
+        QString nodeName = node["name"].toString();
+        auto it = utilityMap.find(nodeName);
+
+        if (it != utilityMap.end()) {
+            node["mean"] = std::round(it->second.meanVal * 100.0) / 100.0; // Round to 2 decimal places
+            node["differential"] = std::round(it->second.differentialVal * 100.0) / 100.0; // Round to 2 decimal places
+            node["abundance"] = it->second.abundanceVal;
+            node["rank"] = it->second.rankVal;
+            node["gene"] = it->second.geneName;
+        }
+    }
+
+    // If the node has "children", recursively update them as well
+    if (node.contains("children")) {
+        QJsonArray children = node["children"].toArray();
+        for (int i = 0; i < children.size(); ++i) {
+            QJsonObject child = children[i].toObject();
+            createTreeInitial(child, utilityMap); // Recursive call
+            children[i] = child; // Update the modified object back into the array
+        }
+        node["children"] = children; // Update the modified array back into the parent JSON object
+    }
+}
+
+
 void SettingsAction::precomputeTreesFromHierarchy()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -2217,7 +2377,7 @@ void SettingsAction::precomputeTreesFromHierarchy()
     auto start = std::chrono::high_resolution_clock::now();
     qDebug() << "Computing precomputeTreesFromHierarchy";
 
-    if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid() || !_topClusterNamesDataset.getCurrentDataset().isValid() || !_middleClusterNamesDataset.getCurrentDataset().isValid() || !_bottomClusterNamesDataset.getCurrentDataset().isValid()) {
+    if (!_speciesNamesDataset.getCurrentDataset().isValid() || !_mainPointsDataset.getCurrentDataset().isValid() || !_topClusterNamesDataset.getCurrentDataset().isValid() || !_middleClusterNamesDataset.getCurrentDataset().isValid() || !_bottomClusterNamesDataset.getCurrentDataset().isValid() || !_referenceTreeDataset.getCurrentDataset().isValid()) {
         qDebug() << "Datasets are not valid";
         return;
     }
@@ -2227,28 +2387,198 @@ void SettingsAction::precomputeTreesFromHierarchy()
     auto middleClusterNamesDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
     auto bottomClusterNamesDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
 
-    if (speciesNamesDataset.isValid() && mainPointsDataset.isValid() && topClusterNamesDataset.isValid() && middleClusterNamesDataset.isValid() && bottomClusterNamesDataset.isValid()) {
-        auto speciesclusters = speciesNamesDataset->getClusters();
+    auto referenceTreeDataset = mv::data().getDataset<CrossSpeciesComparisonTree>(_referenceTreeDataset.getCurrentDataset().getDatasetId());
+    QJsonObject speciesDataJson = referenceTreeDataset->getTreeData();
+    QStringList speciesNamesVerify = referenceTreeDataset->getTreeLeafNames();
+    if (speciesDataJson.isEmpty() || speciesNamesVerify.isEmpty())
+    {
+        qDebug() << "Reference tree data is empty";
+        return;
+    }
+
+
+    if (speciesNamesDataset.isValid() && mainPointsDataset.isValid() && topClusterNamesDataset.isValid() && middleClusterNamesDataset.isValid() && bottomClusterNamesDataset.isValid())
+    {
+        auto speciesClusters = speciesNamesDataset->getClusters();
+
+        //check if speciesNamesVerify and speciesClusters contain the same strings maybe in different order but same number and same value
+        if (speciesNamesVerify.size() != speciesClusters.size())
+        {
+            qDebug() << "Species names do not match";
+            return;
+        }
+        for (int i = 0; i < speciesNamesVerify.size(); i++)
+        {
+            if (speciesNamesVerify[i] != speciesClusters[i].getName())
+            {
+                qDebug() << "Species names do not match";
+                return;
+            }
+        }
+
+
         auto mainPointDimensionNames = mainPointsDataset->getDimensionNames();
         auto mainPointsNumOfIndices = mainPointsDataset->getNumPoints();
         auto mainPointsNumOfDims = mainPointsDataset->getNumDimensions();
 
-        auto topClusters = topClusterNamesDataset->getClusters();
-        auto middleClusters = middleClusterNamesDataset->getClusters();
-        auto bottomClusters = bottomClusterNamesDataset->getClusters();
+        QVector<Cluster> topClusters = topClusterNamesDataset->getClusters();
+        QVector<Cluster>  middleClusters = middleClusterNamesDataset->getClusters();
+        QVector<Cluster>  bottomClusters = bottomClusterNamesDataset->getClusters();
 
- 
+        if (!mainPointDimensionNames.empty()) {
+            std::map<QString, QVector<Cluster>> combinedClusters = {
+                {"top", topClusters},
+                {"middle", middleClusters},
+                {"bottom", bottomClusters}
+            };
+
+            QMutex mutex; // Mutex for thread safety
+
+            QtConcurrent::blockingMap(combinedClusters, [&](const auto& pair) {
+                const auto& hierarchyType = pair.first;
+                const auto& clusters = pair.second;
+
+                for (const auto& cluster : clusters) {
+                    const auto& clusterName = cluster.getName();
+                    auto clusterIndices = cluster.getIndices();
+                    std::sort(clusterIndices.begin(), clusterIndices.end());
+                    std::map<QString, std::map<QString, Stats>> topSpeciesToGeneExpressionMap;
+
+                    QtConcurrent::blockingMap(speciesClusters, [&](const auto& species) {
+                        const auto& speciesName = species.getName();
+                        auto speciesIndices = species.getIndices();
+                        std::sort(speciesIndices.begin(), speciesIndices.end());
+
+                        std::vector<int> commonPointsIndices;
+                        std::set_intersection(speciesIndices.begin(), speciesIndices.end(), clusterIndices.begin(), clusterIndices.end(), std::back_inserter(commonPointsIndices));
+
+                        if (commonPointsIndices.empty()) {
+                            //qDebug() << "No common points found";
+                            return;
+                        }
+
+                        std::vector<float> resultContainerShort(commonPointsIndices.size());
+                        std::vector<int> geneIndexContainer(1);
+
+                        QtConcurrent::blockingMap(mainPointDimensionNames, [&](const QString& geneName) {
+                            auto it = std::find(mainPointDimensionNames.begin(), mainPointDimensionNames.end(), geneName);
+                            int geneIndex = (it != mainPointDimensionNames.end()) ? std::distance(mainPointDimensionNames.begin(), it) : -1;
+                            geneIndexContainer[0] = geneIndex;
+
+                            const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName]["allCells"];
+                            int allCellCounts = nonSelectionDetails.first;
+                            float allCellMean = nonSelectionDetails.second;
+
+                            mainPointsDataset->populateDataForDimensions(resultContainerShort, geneIndexContainer, commonPointsIndices);
+
+                            StatisticsSingle calculateStatisticsShort = calculateStatistics(resultContainerShort);
+
+                            float allCellTotal = allCellMean * allCellCounts;
+                            int nonSelectedCells = allCellCounts - calculateStatisticsShort.countVal;
+                            float nonSelectedMean = (nonSelectedCells > 0) ? (allCellTotal - calculateStatisticsShort.meanVal * calculateStatisticsShort.countVal) / nonSelectedCells : 0.0f;
+
+                            StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
+                            int topHierarchyCountValue = (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) ? _clusterSpeciesFrequencyMap[speciesName]["topCells"] : 0;
+                            float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue : 0.0f;
+
+                            QMutexLocker locker(&mutex); // Lock the mutex for thread safety
+                            topSpeciesToGeneExpressionMap[speciesName][geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyCountValue);
+                            });
+                        });
+
+                    enum class SelectionOption {
+                        AbsoluteTopN,
+                        PositiveTopN,
+                        NegativeTopN
+                    };
+
+                    auto optionValue = _typeofTopNGenes.getCurrentText();
+                    SelectionOption option = SelectionOption::AbsoluteTopN;
+                    if (optionValue == "Positive") {
+                        option = SelectionOption::PositiveTopN;
+                    }
+                    else if (optionValue == "Negative") {
+                        option = SelectionOption::NegativeTopN;
+                    }
+
+                    std::map<QString, std::vector<std::pair<QString, int>>> rankingMap;
+
+                    for (const auto& [speciesName, geneMap] : topSpeciesToGeneExpressionMap) {
+                        std::vector<std::pair<QString, float>> geneExpressionVec;
+                        geneExpressionVec.reserve(geneMap.size());
+                        for (const auto& [geneName, stats] : geneMap) {
+                            float differenceMeanValue = stats.meanSelected - stats.meanNonSelected;
+                            geneExpressionVec.emplace_back(geneName, differenceMeanValue);
+                        }
+
+                        if (option == SelectionOption::AbsoluteTopN) {
+                            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                                return std::abs(a.second) > std::abs(b.second);
+                                });
+                        }
+                        else {
+                            std::sort(geneExpressionVec.begin(), geneExpressionVec.end(), [](const auto& a, const auto& b) {
+                                return a.second > b.second;
+                                });
+                            if (option == SelectionOption::NegativeTopN) {
+                                std::reverse(geneExpressionVec.begin(), geneExpressionVec.end());
+                            }
+                        }
+
+                        for (int i = 0; i < geneExpressionVec.size(); ++i) {
+                            int rank = (option == SelectionOption::NegativeTopN) ? geneExpressionVec.size() - i : i + 1;
+                            QMutexLocker locker(&mutex); // Lock the mutex for thread safety
+                            rankingMap[geneExpressionVec[i].first].emplace_back(speciesName, rank);
+                        }
+                    }
+
+                    for (auto& [geneName, speciesRankVec] : rankingMap) {
+                        std::map<QString, InitialStatistics> utilityMap;
+                        for (const auto& [speciesName, rank] : speciesRankVec) {
+                            InitialStatistics tempStats;
+                            tempStats.rankVal = rank;
+                            tempStats.geneName = geneName;
+                            tempStats.meanVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected;
+                            tempStats.differentialVal = topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected - topSpeciesToGeneExpressionMap[speciesName][geneName].meanNonSelected;
+                            tempStats.abundanceVal = (topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop != 0) ? topSpeciesToGeneExpressionMap[speciesName][geneName].meanSelected / topSpeciesToGeneExpressionMap[speciesName][geneName].abundanceCountTop : 0.0f;
+                            utilityMap[speciesName] = tempStats;
+                        }
+
+                        QMutexLocker locker(&mutex); // Lock the mutex for thread safety
+                        createTreeInitial(speciesDataJson, utilityMap);
+
+                        //convert QJsonObjectToString to store in a more space efficientway and then again convert the string to QJSONObject
+                        QString jsonString = QJsonDocument(speciesDataJson).toJson(QJsonDocument::Compact);
+                        
+
+                        _precomputedTreesFromTheHierarchy[hierarchyType][clusterName][geneName] = jsonString;
+                    }
+                }
+                });
+
+        }
+
+        else
+        {
+            qDebug() << "Datasets are not valid";
+            return;
+            }
+
     }
     else
     {
         qDebug() << "Datasets are not valid";
+        return;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "Time taken for precomputeTreesFromHierarchy : " + QString::number(duration / 1000.0) + " s";
-
+    //_popupMessageInit.hide();
+    //_popupMessageTreeCreationCompletion->show();
+    //QApplication::processEvents();
 }
+
 
 void SettingsAction::computeGeneMeanExpressionMap()
 {
@@ -3126,6 +3456,7 @@ void SettingsAction::enableActions()
     _performGeneTableTsneKnn.setDisabled(false);
     _performGeneTableTsneDistance.setDisabled(false);
     _performGeneTableTsneTrigger.setDisabled(false);
+    _computeTreesToDisplayFromHierarchy.setDisabled(false);
     _referenceTreeDataset.setDisabled(false);
     _mainPointsDataset.setDisabled(false);
     _embeddingDataset.setDisabled(false);
@@ -3142,6 +3473,8 @@ void SettingsAction::enableActions()
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
     _clusterOrderHierarchy.setDisabled(false);
+    _rightClickedCluster.setDisabled(false);
+    _clearRightClickedCluster.setDisabled(false);
     _statusColorAction.setDisabled(false);
     _searchBox->setDisabled(false);
     enableDisableButtonsAutomatically();
@@ -3154,10 +3487,12 @@ void SettingsAction::enableActions()
         _startComputationTriggerAction.setDisabled(false);
     }
     _toggleScatterplotSelection.setChecked(true);
+    QApplication::processEvents();
 }
 void SettingsAction::disableActions()
 {
     _statusColorAction.setString("R");
+    _clearRightClickedCluster.trigger();
     _startComputationTriggerAction.setDisabled(true);
     _topNGenesFilter.setDisabled(true);
     _typeofTopNGenes.setDisabled(true);
@@ -3175,6 +3510,7 @@ void SettingsAction::disableActions()
     _performGeneTableTsneKnn.setDisabled(true);
     _performGeneTableTsneDistance.setDisabled(true);
     _performGeneTableTsneTrigger.setDisabled(true);
+    _computeTreesToDisplayFromHierarchy.setDisabled(true);
     _referenceTreeDataset.setDisabled(true);
     _mainPointsDataset.setDisabled(true);
     _embeddingDataset.setDisabled(true);
@@ -3188,8 +3524,11 @@ void SettingsAction::disableActions()
     _bottomHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
     _clusterOrderHierarchy.setDisabled(true);
+    _rightClickedCluster.setDisabled(true);
+    _clearRightClickedCluster.setDisabled(true);
     _statusColorAction.setDisabled(true);
     _searchBox->setDisabled(true);
+    QApplication::processEvents();
 }
 
 void SettingsAction::enableDisableButtonsAutomatically()
@@ -3705,6 +4044,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _clusterOrderHierarchy.fromParentVariantMap(variantMap);
+    _rightClickedCluster.fromParentVariantMap(variantMap);
+    _clearRightClickedCluster.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
     _speciesExplorerInMapTrigger.fromParentVariantMap(variantMap);
@@ -3750,6 +4091,8 @@ QVariantMap SettingsAction::toVariantMap() const
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _clusterOrderHierarchy.insertIntoVariantMap(variantMap);
+    _rightClickedCluster.insertIntoVariantMap(variantMap);
+    _clearRightClickedCluster.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);
     _speciesExplorerInMapTrigger.insertIntoVariantMap(variantMap);

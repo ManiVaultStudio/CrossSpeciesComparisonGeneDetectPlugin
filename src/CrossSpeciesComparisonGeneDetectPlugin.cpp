@@ -274,6 +274,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
+            _settingsAction.getClearRightClickedCluster().trigger();
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -316,7 +317,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             }
             //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
             clearTableSelection(_settingsAction.getSelectionDetailsTable());
-
+            _settingsAction.getClearRightClickedCluster().trigger();
         };
 
     connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
@@ -328,7 +329,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
         };
 
-    connect(&_settingsAction.getSelctedSpeciesVals(), &StringAction::changed, this, updateSelctedSpeciesVals);
+    connect(&_settingsAction.getSelctedSpeciesVals(), &StringAction::stringChanged, this, updateSelctedSpeciesVals);
 
 
     const auto updateTableModel = [this]() -> void
@@ -551,6 +552,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getSelctedSpeciesVals());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getStatusColorAction());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterOrderHierarchy());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getRightClickedCluster());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClearRightClickedCluster());
 
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
@@ -563,6 +566,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
     tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
     tsneOptionsGroup->addAction(&_settingsAction.getBottomHierarchyClusterNamesFrequencyInclusionList());
+    tsneOptionsGroup->addAction(&_settingsAction.getComputeTreesToDisplayFromHierarchy());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneKnn());
@@ -1724,6 +1728,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             //_settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autopspecies);
             //_settingsAction.getSelctedSpeciesVals().setString(species);
             //geneExplorer(species);
+            _settingsAction.getClearRightClickedCluster().trigger();
             });
         
 
