@@ -1177,9 +1177,16 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             _startComputationTriggerAction.setDisabled(false);
 
+
+            QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            computeGeneMeanExpressionMap();
+            future.waitForFinished();
+            _startComputationTriggerAction.trigger();
+            
+            /*
+            
             _popupMessageInit->show();
             QApplication::processEvents();
-
             try {
                 QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
                 QFuture<void> future2 = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
@@ -1208,6 +1215,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
             _popupMessageInit->hide();
             QApplication::processEvents();
+            */
         }
         else
         {
