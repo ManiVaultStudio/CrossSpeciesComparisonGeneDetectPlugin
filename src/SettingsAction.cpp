@@ -1921,10 +1921,14 @@ void SettingsAction::updateButtonTriggered()
                             }
                             int nonSelectedCellsCount = allCellCount - selectedCellCount;
 
+
+
+
                             for (const auto& cluster : _topHierarchyClusterMap) {
                                 bool clusterPresent = false;
 
                                 if (inclusionList.contains(cluster.first)) {
+                                  
                                     int clusterSize = cluster.second.size();
                                     allTopCounts += clusterSize;
                                     for (auto ind : commonSelectedIndices) {
@@ -1936,9 +1940,10 @@ void SettingsAction::updateButtonTriggered()
                                     if (clusterPresent) {
                                         allMiddleCounts += clusterSize;
                                     }
+
+
                                 }
                             }
-
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };

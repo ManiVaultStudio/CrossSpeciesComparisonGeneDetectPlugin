@@ -1460,49 +1460,43 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Fraction of Neuronal", "Fraction of Middle", "Count Selected", "Count All"/* "Count\nNon\nSelected"*/ });
+        model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of Middle", "Count Selected", "Count All" });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
-            // Calculate the brightness of the background color
             qreal brightness = backgroundColor.lightnessF();
-
-            // Choose text color based on the brightness of the background color
             QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
+
+            // Species column
             QStandardItem* speciesItem = new QStandardItem(species);
             speciesItem->setBackground(backgroundColor);
-            speciesItem->setForeground(textColor); // Set text color
+            speciesItem->setForeground(textColor);
             rowItems << speciesItem;
 
-            QStandardItem* item;
-
-
-
-            // Add new column for "Frequency Relative Top Hierarchy"
-            item = new QStandardItem();
-
-            QString formattedValueTop = QString::number(details.abundanceTop, 'f', 2);
+            // Fraction of Neuronal column
+            QStandardItem* item = new QStandardItem();
+            QString formattedValueTop = QString::number(details.abundanceTop, 'f', 6);
             item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
-            QString formattedValueMiddle = QString::number(details.abundanceMiddle, 'f', 2);
+            // Fraction of Middle column
+            item = new QStandardItem();
+            QString formattedValueMiddle = QString::number(details.abundanceMiddle, 'f', 6);
             item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
             rowItems << item;
 
+            // Count Selected column
             item = new QStandardItem();
             item->setData(QVariant(details.selectedCellsCount), Qt::EditRole);
             rowItems << item;
 
+            // Count All column
             item = new QStandardItem();
             auto total = details.selectedCellsCount + details.nonSelectedCellsCount;
             item->setData(QVariant(total), Qt::EditRole);
             rowItems << item;
-
-            //item = new QStandardItem();
-            //item->setData(QVariant(details.nonSelectedCellsCount), Qt::EditRole);
-            //rowItems << item;
 
             model->appendRow(rowItems);
         }
@@ -1588,7 +1582,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 item = new QStandardItem();
                 float difference = (it->second.meanSelected - it->second.meanNonSelected);
-                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
+                item->setData(QVariant(QString::number(difference, 'f', 62)), Qt::EditRole);
                 rowItems << item; //1 Mean\nDifference
 
                 item = new QStandardItem();
@@ -1602,12 +1596,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
                 }*/
                 item = new QStandardItem();
-                QString formattedValueTop = QString::number(it->second.abundanceTop, 'f', 2);
+                QString formattedValueTop = QString::number(it->second.abundanceTop, 'f', 6);
                 item->setData(QVariant(formattedValueTop), Qt::EditRole);
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
                 item = new QStandardItem();
-                QString formattedValueMiddle = QString::number(it->second.abundanceMiddle, 'f', 2);
+                QString formattedValueMiddle = QString::number(it->second.abundanceMiddle, 'f', 6);
                 item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
                 rowItems << item; //4 Relative\nAbundance\nNeuronal\Middle\nHierarchy
 
