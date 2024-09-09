@@ -1929,18 +1929,30 @@ void SettingsAction::updateButtonTriggered()
 
                                 if (inclusionList.contains(cluster.first)) {
                                   
-                                    int clusterSize = cluster.second.size();
-                                    allTopCounts += clusterSize;
+                                    auto currentInclusionClusterMap = cluster.second;
+
+                                    int clusterSize = 0;
+
+                                    for (auto speciesIndex : speciesIndices)
+                                    {
+                                        if (cluster.second[speciesIndex])
+                                        {
+                                            clusterSize++;
+                                        }
+                                    }
+                                    
                                     for (auto ind : commonSelectedIndices) {
                                         if (cluster.second[ind]) {
                                             selectedInclusionCounts++;
                                             clusterPresent = true;
                                         }
                                     }
+                                    allTopCounts += clusterSize;
+
                                     if (clusterPresent) {
                                         allMiddleCounts += clusterSize;
                                     }
-
+                                    
 
                                 }
                             }
@@ -2322,13 +2334,15 @@ void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatist
             float topAbundance = 0.0;
             if (it->second.abundanceTop != 0)
             {
-                topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+ 
+                topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
             }
 
             float middleAbundance = 0.0;
             if (it->second.abundanceMiddle != 0)
             {
-                middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+
+                middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
             }
 
 

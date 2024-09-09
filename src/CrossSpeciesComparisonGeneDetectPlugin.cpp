@@ -1613,9 +1613,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item = new QStandardItem();
 
                 float topAbundance = 0.0;
-                if (it->second.abundanceTop != 0)
-                {
-                    topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+                if (it->second.abundanceTop != 0) {
+                    topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
                 }
 
                 QString formattedValueTop = QString::number(topAbundance, 'f', 2);
@@ -1625,7 +1624,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 float middleAbundance = 0.0;
                 if (it->second.abundanceMiddle != 0)
                 {
-                    middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+                    middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
                 }
 
                 item = new QStandardItem();
@@ -1793,13 +1792,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             float topAbundance = 0.0;
             if (it->second.abundanceTop != 0)
             {
-                topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+                topAbundance =  (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
             }
 
             float middleAbundance = 0.0;
             if (it->second.abundanceMiddle != 0)
             {
-                middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+                middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
             }
 
             node["abundanceTop"] = topAbundance;
