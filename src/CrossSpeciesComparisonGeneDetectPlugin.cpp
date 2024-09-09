@@ -1531,7 +1531,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
-
+    /*
     for (const auto& pair : statisticsValues) {
         const QString& species = pair.first;
         const SpeciesDetailsStats& stats = pair.second;
@@ -1547,7 +1547,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             ;
 
     }
-
+    */
 
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {

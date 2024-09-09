@@ -1936,12 +1936,12 @@ void SettingsAction::updateButtonTriggered()
                                             selectedInclusionCounts = selectedInclusionCounts + 1;
                                             clusterPresent = true;
                                         }
-                                        if (clusterPresent)
-                                        {
-                                            allMiddleCounts = allMiddleCounts + cluster.second.size();
-                                        }
-                                    }
 
+                                    }
+                                    if (clusterPresent)
+                                    {
+                                        allMiddleCounts = allMiddleCounts + cluster.second.size();
+                                    }
 
 
                                 }
@@ -1997,8 +1997,35 @@ void SettingsAction::updateButtonTriggered()
 
 
                                 Stats valueStats;
-                                valueStats.abundanceMiddle = allMiddleCounts;
-                                valueStats.abundanceTop = allTopCounts;
+                                if (allMiddleCounts != 0)
+                                {
+                                    valueStats.abundanceMiddle = (selectedInclusionCounts/allMiddleCounts)*100;
+
+
+
+                                }
+                                else
+                                {
+                                    valueStats.abundanceMiddle = 0.0;
+
+
+     
+                                }
+                                if (allTopCounts != 0)
+                                {
+
+
+
+                                    valueStats.abundanceTop =  (selectedInclusionCounts /allTopCounts)*100;
+                                }
+                                else
+                                {
+
+
+                                    valueStats.abundanceTop = 0.0;
+                                }
+                                
+
                                 valueStats.countSelected = selectedCellCount;
                                 valueStats.countNonSelected = nonSelectedCellsCount;
                                 valueStats.meanSelected = nonSelectedMean;
