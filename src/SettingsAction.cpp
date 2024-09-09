@@ -278,40 +278,40 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _statusBarActionWidget = new QStatusBar();
 
 
-    _popupMessage = new QMessageBox();
-    _popupMessage->setIcon(QMessageBox::Information);
-    _popupMessage->setWindowTitle("Computation in Progress");
-    _popupMessage->setText("Data Precomputation in Progress");
-    _popupMessage->setInformativeText(
+    _popupMessageInit = new QMessageBox();
+    _popupMessageInit->setIcon(QMessageBox::Information);
+    _popupMessageInit->setWindowTitle("Computation in Progress");
+    _popupMessageInit->setText("Data Precomputation in Progress");
+    _popupMessageInit->setInformativeText(
         "The system is currently precomputing essential data to enhance your interactive exploration experience. "
         "This process may take some time based on the input data size, your memory and processor. <br> This popup will close automatically once initialization is complete. "
         "Thank you for using Cytosplore EvoViewer.<br><br>"
         "Please visit our website <a href=\"https://viewer.cytosplore.org/\">https://viewer.cytosplore.org/</a> to learn more."
     );
-    _popupMessage->setTextFormat(Qt::RichText); // Enable rich text formatting
-    _popupMessage->setTextInteractionFlags(Qt::TextBrowserInteraction); // Enable link interaction
-    _popupMessage->setStandardButtons(QMessageBox::NoButton);
-    _popupMessage->setModal(true);
+    _popupMessageInit->setTextFormat(Qt::RichText); // Enable rich text formatting
+    _popupMessageInit->setTextInteractionFlags(Qt::TextBrowserInteraction); // Enable link interaction
+    _popupMessageInit->setStandardButtons(QMessageBox::NoButton);
+    _popupMessageInit->setModal(true);
 
 
     /*
-    _popupMessage = new QMessageBox();
-    _popupMessage->setIcon(QMessageBox::Information);
-    _popupMessage->setWindowTitle("Computation in Progress");
-    _popupMessage->setText(
+    _popupMessageInit = new QMessageBox();
+    _popupMessageInit->setIcon(QMessageBox::Information);
+    _popupMessageInit->setWindowTitle("Computation in Progress");
+    _popupMessageInit->setText(
         "<div style='text-align: center;'>"
         "<h2 style='color: #333;'>Data Precomputation in Progress</h2>"
         "</div>"
     );
-    _popupMessage->setInformativeText(
+    _popupMessageInit->setInformativeText(
         "<div style='text-align: center;'>"
         "The system is currently precomputing essential data to enhance your interactive exploration experience. "
         "This process may take some time based on your data size and processor. The popup will close automatically "
         "once initialization is complete. Thank you for using Cytosplore EvoViewer."
         "</div>"
     );
-    _popupMessage->setStandardButtons(QMessageBox::NoButton);
-    _popupMessage->setModal(true);
+    _popupMessageInit->setStandardButtons(QMessageBox::NoButton);
+    _popupMessageInit->setModal(true);
     */
 
     _searchBox = new CustomLineEdit();
@@ -962,9 +962,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (string == "C")
         {
             _startComputationTriggerAction.setDisabled(true);
-            //if (_popupMessage->isVisible())
+            //if (_popupMessageInit->isVisible())
             //{
-                //_popupMessage->hide();
+                //_popupMessageInit->hide();
             //}
         }
         else
@@ -1175,7 +1175,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             _startComputationTriggerAction.setDisabled(false);
 
-            _popupMessage->show();
+            _popupMessageInit->show();
             QApplication::processEvents();
 
             try {
@@ -1186,7 +1186,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             }
             catch (const std::exception& e) {
                 std::cerr << "Error during computation: " << e.what() << std::endl;
-                _popupMessage->hide();
+                _popupMessageInit->hide();
                 QApplication::processEvents();
                 return;
             }
@@ -1199,12 +1199,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             }
             catch (const std::exception& e) {
                 std::cerr << "Error during tree precomputation: " << e.what() << std::endl;
-                _popupMessage->hide();
+                _popupMessageInit->hide();
                 QApplication::processEvents();
                 return;
             }
 
-            _popupMessage->hide();
+            _popupMessageInit->hide();
             QApplication::processEvents();
         }
         else
