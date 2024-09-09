@@ -88,7 +88,7 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
     QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
 
     // qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), AbundanceMiddle: (\\d+), CountAbundanceNumerator: ([\\d.]+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), AbundanceMiddle: (\\d+), CountAbundanceNumerator: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
@@ -98,7 +98,7 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
                 match.captured(2).toInt(),  // Rank
                 match.captured(3).toInt(),  // AbundanceTop
                 match.captured(4).toInt(),  // AbundanceMiddle
-                 match.captured(5).toInt(),  // CountAbundanceNumerator
+                match.captured(5).toInt(),  // CountAbundanceNumerator
                 match.captured(6).toFloat(),  // MeanSelected
                 match.captured(7).toInt(),  // CountSelected
                 match.captured(8).toFloat(),  // MeanNotSelected
