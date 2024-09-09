@@ -565,7 +565,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
-    tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
+    //tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
     //tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
     //tsneOptionsGroup->addAction(&_settingsAction.getBottomHierarchyClusterNamesFrequencyInclusionList());
     //tsneOptionsGroup->addAction(&_settingsAction.getComputeTreesToDisplayFromHierarchy());
@@ -1475,9 +1475,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor);
             rowItems << speciesItem;
-            qDebug() << "Top Abundance: " << details.abundanceTop;
-            qDebug() << "Count Abundance Numerator: " << details.countAbundanceNumerator;
-            qDebug() << "Middle Abundance: " << details.abundanceMiddle;
+            //qDebug() << "Top Abundance: " << details.abundanceTop;
+            //qDebug() << "Count Abundance Numerator: " << details.countAbundanceNumerator;
+            //qDebug() << "Middle Abundance: " << details.abundanceMiddle;
             // Fraction of Neuronal column
             QStandardItem* item = new QStandardItem();
             float topAbundance = 0.0;
@@ -1708,8 +1708,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         //_settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
 
-        
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
         emit model->layoutChanged();

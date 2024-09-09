@@ -434,7 +434,6 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
 
 
@@ -1932,7 +1931,7 @@ void SettingsAction::updateButtonTriggered()
                                   
                                     bool clusterPresent = false;
                                     auto currentInclusionClusterMap = cluster.second;
-
+                                    _currentHierarchyItemsTopForTable.append(cluster.first);
                                     int clusterSize = 0;
 
                                     for (auto speciesIndex : speciesIndices)
@@ -1953,6 +1952,7 @@ void SettingsAction::updateButtonTriggered()
 
                                     if (clusterPresent) {
                                         allMiddleCounts += clusterSize;
+                                        _currentHierarchyItemsMiddleForTable.append(cluster.first);
                                     }
                                     
 
