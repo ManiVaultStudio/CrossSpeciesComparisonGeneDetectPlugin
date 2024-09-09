@@ -431,7 +431,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectionDetailsTable->setFocusPolicy(Qt::StrongFocus);
     _selectionDetailsTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     _selectionDetailsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-
+    
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
@@ -1931,19 +1931,19 @@ void SettingsAction::updateButtonTriggered()
                                   
                                     bool clusterPresent = false;
                                     auto currentInclusionClusterMap = cluster.second;
-                                    _currentHierarchyItemsTopForTable.append(cluster.first);
+                                    _currentHierarchyItemsTopForTable.insert(cluster.first);
                                     int clusterSize = 0;
 
                                     for (auto speciesIndex : speciesIndices)
                                     {
-                                        if (cluster.second[speciesIndex])
+                                        if (currentInclusionClusterMap[speciesIndex])
                                         {
                                             clusterSize++;
                                         }
                                     }
                                     
                                     for (auto ind : commonSelectedIndices) {
-                                        if (cluster.second[ind]) {
+                                        if (currentInclusionClusterMap[ind]) {
                                             selectedInclusionCounts++;
                                             clusterPresent = true;
                                         }
@@ -1952,7 +1952,7 @@ void SettingsAction::updateButtonTriggered()
 
                                     if (clusterPresent) {
                                         allMiddleCounts += clusterSize;
-                                        _currentHierarchyItemsMiddleForTable.append(cluster.first);
+                                        _currentHierarchyItemsMiddleForTable.insert(cluster.first);
                                     }
                                     
 
@@ -2644,8 +2644,9 @@ void SettingsAction::computeHierarchyAppearanceVector()
             if (clusterDataset.isValid()) {
                 auto clusters = clusterDataset->getClusters();
                 if (!clusters.empty()) {
-                    std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                    
                     for (const auto& cluster : clusters) {
+                        std::vector<bool> clusterNamesAppearance(numOfPoints, false);
                         auto clusterName = cluster.getName();
                             for (const auto& index : cluster.getIndices()) {
                                 clusterNamesAppearance[index] = true;

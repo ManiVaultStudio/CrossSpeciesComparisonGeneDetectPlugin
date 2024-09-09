@@ -275,8 +275,8 @@ public: // Action getters
     TriggerAction& getClearRightClickedCluster() { return _clearRightClickedCluster; }
 
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
-    QStringList getCurrentHierarchyItemsTopForTable() { return _currentHierarchyItemsTopForTable; }
-    QStringList getCurrentHierarchyItemsMiddleForTable() { return _currentHierarchyItemsMiddleForTable; }
+    QSet<QString>   getCurrentHierarchyItemsTopForTable() { return _currentHierarchyItemsTopForTable; }
+    QSet<QString>   getCurrentHierarchyItemsMiddleForTable() { return _currentHierarchyItemsMiddleForTable; }
     //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
@@ -463,6 +463,6 @@ protected:
     StringAction              _rightClickedCluster;
     TriggerAction              _clearRightClickedCluster;
     std::map<QString, std::vector<bool>> _topHierarchyClusterMap;
-    QStringList                   _currentHierarchyItemsTopForTable;
-    QStringList                   _currentHierarchyItemsMiddleForTable;
+    QSet<QString>                   _currentHierarchyItemsTopForTable;
+    QSet<QString>                   _currentHierarchyItemsMiddleForTable;
 };
