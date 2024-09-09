@@ -1888,7 +1888,7 @@ void SettingsAction::updateButtonTriggered()
                     //stopCodeTimer("Part12.1");
 
                     //startCodeTimer("Part12.2");
-                    qDebug("***********************It's here in the computation***********************");
+                    _clusterSpeciesAbundanceMap.clear();
 
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
 
@@ -1994,17 +1994,18 @@ void SettingsAction::updateButtonTriggered()
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
 
-                                float topHierarchyValue = 0.0;
+                                float topAbundanceValue = 0.0;
                                 if (allTopCounts != 0) {
-                                    topHierarchyValue = static_cast<float>(selectedTopCounts) / allTopCounts;
+                                    topAbundanceValue = static_cast<float>(selectedTopCounts) / allTopCounts;
                                 }
 
-                                float middleHierarchyValue = 0.0;
+                                float middleAbundanceValue = 0.0;
                                 if (allMiddleCounts != 0) {
-                                    middleHierarchyValue = static_cast<float>(selectedMiddleCounts) / allMiddleCounts;
+                                    middleAbundanceValue = static_cast<float>(selectedMiddleCounts) / allMiddleCounts;
                                 }
-
-                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topHierarchyValue, middleHierarchyValue);
+                                middleAbundanceValue = middleAbundanceValue * 100;
+                                topAbundanceValue = topAbundanceValue * 100;
+                                localClusterNameToGeneNameToExpressionValue[geneName] = combineStatisticsSingle(calculateStatisticsShort, calculateStatisticsNot, topAbundanceValue, middleAbundanceValue);
                             }
 
                             // Merge results in a thread-safe manner
@@ -2014,8 +2015,12 @@ void SettingsAction::updateButtonTriggered()
                                     _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
                                     _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
-                                    _clusterSpeciesFrequencyMap[speciesName]["AbundanceTop"] = pair.second.abundanceTop;
-                                    _clusterSpeciesFrequencyMap[speciesName]["AbundanceMiddle"] = pair.second.abundanceMiddle;
+                                    _clusterSpeciesAbundanceMap[speciesName]["AbundanceTop"] = pair.second.abundanceTop;
+                                    _clusterSpeciesAbundanceMap[speciesName]["AbundanceMiddle"] = pair.second.abundanceMiddle;
+
+                                    // Debug statements
+                                    std::cout << "Inserted for species: " << speciesName.toStdString() << ", gene: " << pair.first.toStdString() << std::endl;
+                                    std::cout << "AbundanceTop: " << pair.second.abundanceTop << ", AbundanceMiddle: " << pair.second.abundanceMiddle << std::endl;
                                 }
                             }
                         });
@@ -2023,7 +2028,7 @@ void SettingsAction::updateButtonTriggered()
                     }
                     synchronizer.waitForFinished(); // Wait for all tasks to complete
 
-                    qDebug("***********************It's done***********************");
+
 
                     //stopCodeTimer("Part12.2");
 

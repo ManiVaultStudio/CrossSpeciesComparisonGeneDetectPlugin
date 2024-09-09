@@ -1481,10 +1481,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             float topHierarchyFrequencyValue = 0.0;
             float middleHierarchyFrequencyValue = 0.0;
-            if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
+            if (_settingsAction.getClusterSpeciesAbundanceMap().find(species) != _settingsAction.getClusterSpeciesAbundanceMap().end())
             {
-                topHierarchyFrequencyValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["AbundanceTop"];
-                middleHierarchyFrequencyValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["AbundanceMiddle"];
+                topHierarchyFrequencyValue = _settingsAction.getClusterSpeciesAbundanceMap()[species]["AbundanceTop"];
+                middleHierarchyFrequencyValue = _settingsAction.getClusterSpeciesAbundanceMap()[species]["AbundanceMiddle"];
  
             }
             else
@@ -1497,11 +1497,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             // Add new column for "Frequency Relative Top Hierarchy"
             item = new QStandardItem();
 
-            QString formattedValueTop = QString::number(topHierarchyFrequencyValue*100, 'f', 2);
+            QString formattedValueTop = QString::number(topHierarchyFrequencyValue, 'f', 2);
             item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
-            QString formattedValueMiddle = QString::number(middleHierarchyFrequencyValue * 100, 'f', 2);
+            QString formattedValueMiddle = QString::number(middleHierarchyFrequencyValue, 'f', 2);
             item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
             rowItems << item;
 
@@ -1616,12 +1616,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
                 }*/
                 item = new QStandardItem();
-                QString formattedValueTop = QString::number(it->second.abundanceTop*100, 'f', 2);
+                QString formattedValueTop = QString::number(it->second.abundanceTop, 'f', 2);
                 item->setData(QVariant(formattedValueTop), Qt::EditRole);
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
                 item = new QStandardItem();
-                QString formattedValueMiddle = QString::number(it->second.abundanceMiddle * 100, 'f', 2);
+                QString formattedValueMiddle = QString::number(it->second.abundanceMiddle, 'f', 2);
                 item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
                 rowItems << item; //4 Relative\nAbundance\nNeuronal\Middle\nHierarchy
 
@@ -1779,9 +1779,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
-            float topHierarchyFrequencyValue = it->second.abundanceTop*100;
+            float topHierarchyFrequencyValue = it->second.abundanceTop;
 
-            float middleHierarchyFrequencyValue = it->second.abundanceMiddle * 100;
+            float middleHierarchyFrequencyValue = it->second.abundanceMiddle;
 
 
             node["abundanceTop"] = topHierarchyFrequencyValue;
