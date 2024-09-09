@@ -581,49 +581,38 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     QTimer* bottomTimer = new QTimer(this);
     bottomTimer->setSingleShot(true);
-    const auto updateBottomHierarchyClusterNamesFrequencyInclusionList = [this, bottomTimer]() -> void
-        {
-            bottomTimer->start(delayMs);
-        };
+    const auto updateBottomHierarchyClusterNamesFrequencyInclusionList = [this, bottomTimer, delayMs]() -> void
+    {
+        bottomTimer->start(delayMs);
+    };
     connect(bottomTimer, &QTimer::timeout, this, [this]() {
-
-        {
-            computeFrequencyMapForHierarchyItemsChange("bottom");
-            _statusColorAction.setString("M");
-        }
-        });
+        computeFrequencyMapForHierarchyItemsChange("bottom");
+        _statusColorAction.setString("M");
+    });
     connect(&_bottomHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateBottomHierarchyClusterNamesFrequencyInclusionList);
 
     QTimer* middleTimer = new QTimer(this);
     middleTimer->setSingleShot(true);
-    const auto updateMiddleHierarchyClusterNamesFrequencyInclusionList = [this, middleTimer]() -> void
-        {
-            middleTimer->start(delayMs);
-        };
+    const auto updateMiddleHierarchyClusterNamesFrequencyInclusionList = [this, middleTimer, delayMs]() -> void
+    {
+        middleTimer->start(delayMs);
+    };
     connect(middleTimer, &QTimer::timeout, this, [this]() {
-
-        {
-            computeFrequencyMapForHierarchyItemsChange("middle");
-            _statusColorAction.setString("M");
-        }
-
-        });
+        computeFrequencyMapForHierarchyItemsChange("middle");
+        _statusColorAction.setString("M");
+    });
     connect(&_middleHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateMiddleHierarchyClusterNamesFrequencyInclusionList);
 
     QTimer* topTimer = new QTimer(this);
     topTimer->setSingleShot(true);
-    const auto updateTopHierarchyClusterNamesFrequencyInclusionList = [this, topTimer]() -> void
-        {
-            topTimer->start(delayMs);
-        };
+    const auto updateTopHierarchyClusterNamesFrequencyInclusionList = [this, topTimer, delayMs]() -> void
+    {
+        topTimer->start(delayMs);
+    };
     connect(topTimer, &QTimer::timeout, this, [this]() {
-
-        {
-            computeFrequencyMapForHierarchyItemsChange("top");
-            _statusColorAction.setString("M");
-        }
-
-        });
+        computeFrequencyMapForHierarchyItemsChange("top");
+        _statusColorAction.setString("M");
+    });
     connect(&_topHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateTopHierarchyClusterNamesFrequencyInclusionList);
 
     const auto updateGeneFilteringTrigger = [this]() -> void
