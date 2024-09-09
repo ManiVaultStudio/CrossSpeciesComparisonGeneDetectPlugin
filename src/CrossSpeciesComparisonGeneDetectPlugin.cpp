@@ -1597,7 +1597,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 item = new QStandardItem();
                 float difference = (it->second.meanSelected - it->second.meanNonSelected);
-                item->setData(QVariant(QString::number(difference, 'f', 62)), Qt::EditRole);
+                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
                 rowItems << item; //1 Mean\nDifference
 
                 item = new QStandardItem();
@@ -1618,7 +1618,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
                 }
 
-                QString formattedValueTop = QString::number(topAbundance, 'f', 6);
+                QString formattedValueTop = QString::number(topAbundance, 'f', 2);
                 item->setData(QVariant(formattedValueTop), Qt::EditRole);
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
@@ -1629,7 +1629,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 }
 
                 item = new QStandardItem();
-                QString formattedValueMiddle = QString::number(middleAbundance, 'f', 6);
+                QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
                 item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
                 rowItems << item; //4 Relative\nAbundance\nNeuronal\Middle\nHierarchy
 
