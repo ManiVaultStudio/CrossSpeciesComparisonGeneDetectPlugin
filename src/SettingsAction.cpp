@@ -256,8 +256,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _usePreComputedTSNE(this, "Use Precomputed TSNE"),
     _speciesExplorerInMap(this, "Leaves Explorer Options"),
     _topHierarchyClusterNamesFrequencyInclusionList(this, "Top Hierarchy Cluster Names Frequency Inclusion List"),
-    _middleHierarchyClusterNamesFrequencyInclusionList(this, "Middle Hierarchy Cluster Names Frequency Inclusion List"),
-    _bottomHierarchyClusterNamesFrequencyInclusionList(this, "Bottom Hierarchy Cluster Names Frequency Inclusion List"),
+    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned(this, "Middle Hierarchy Cluster Names Frequency Inclusion List"),
+    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned(this, "Bottom Hierarchy Cluster Names Frequency Inclusion List"),
     _speciesExplorerInMapTrigger(this, "Explore"),
     _applyLogTransformation(this, "Gene mapping log"),
     _clusterCountSortingType(this, "Cluster Count Sorting Type"),
@@ -438,7 +438,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
 
 
-
+    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
+_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
 
 
     _selectedCellClusterInfoStatusBar = new mv::gui::FlowLayout();
@@ -497,8 +498,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _hiddenShowncolumns.setSerializationName("CSCGDV:Hidden Shown Columns");
     _speciesExplorerInMap.setSerializationName("CSCGDV:Species Explorer In Map");
     _topHierarchyClusterNamesFrequencyInclusionList.setSerializationName("CSCGDV:Top Hierarchy Cluster Names Frequency Inclusion List");
-    _middleHierarchyClusterNamesFrequencyInclusionList.setSerializationName("CSCGDV:Middle Hierarchy Cluster Names Frequency Inclusion List");
-    _bottomHierarchyClusterNamesFrequencyInclusionList.setSerializationName("CSCGDV:Bottom Hierarchy Cluster Names Frequency Inclusion List");
+    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setSerializationName("CSCGDV:Middle Hierarchy Cluster Names Frequency Inclusion List");
+    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setSerializationName("CSCGDV:Bottom Hierarchy Cluster Names Frequency Inclusion List");
     _scatterplotReembedColorOption.setSerializationName("CSCGDV:Scatterplot Reembedding Color Option");
     _scatterplotEmbeddingPointsUMAPOption.setSerializationName("CSCGDV:Scatterplot Embedding UMAP Points Option");
     _typeofTopNGenes.setSerializationName("CSCGDV:Type of Top N Genes");
@@ -578,7 +579,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_speciesExplorerInMap, &OptionsAction::selectedOptionsChanged, this, updatespeciesExplorerInMap);
 
     const int delayMs = 500; // Delay in milliseconds
-
+    /*
     QTimer* bottomTimer = new QTimer(this);
     bottomTimer->setSingleShot(true);
     const auto updateBottomHierarchyClusterNamesFrequencyInclusionList = [this, bottomTimer, delayMs]() -> void
@@ -604,7 +605,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         _statusColorAction.setString("M");
     });
     connect(&_middleHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateMiddleHierarchyClusterNamesFrequencyInclusionList);
-
+    */
     QTimer* topTimer = new QTimer(this);
     topTimer->setSingleShot(true);
     const auto updateTopHierarchyClusterNamesFrequencyInclusionList = [this, topTimer, delayMs]() -> void
@@ -816,7 +817,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     clusterNames.append(cluster.getName());
                 }
             }
-            _middleHierarchyClusterNamesFrequencyInclusionList.setOptions(clusterNames);
+            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions(clusterNames);
             //QStringList removalStringList = { "Oligo","Astro", "OPC", "Micro-PVM, "Endo", "VLMC" };
             QStringList removalStringList = { "Oligo", "Astro", "OPC", "Micro-PVM", "Endo", "VLMC" };
 
@@ -830,11 +831,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             }
                 }
             
-            _middleHierarchyClusterNamesFrequencyInclusionList.setSelectedOptions(clusterNames);
+            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setSelectedOptions(clusterNames);
         }
         else
         {
-            _middleHierarchyClusterNamesFrequencyInclusionList.setOptions({});
+            _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions({});
         }
         };
 
@@ -854,7 +855,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     clusterNames.append(cluster.getName());
                 }
             }
-            _bottomHierarchyClusterNamesFrequencyInclusionList.setOptions(clusterNames);
+            _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions(clusterNames);
             QStringList removalStringList = { "Oligo_2","Oligo_1","Astro_2","Astro_1", "OPC", "Microglia/PVM", "Endo", "VLMC","LMC"};
 
             //if removal string present remove it
@@ -866,12 +867,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                 }
             }
-                _bottomHierarchyClusterNamesFrequencyInclusionList.setSelectedOptions(clusterNames);
+                _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setSelectedOptions(clusterNames);
             
         }
         else
         {
-            _bottomHierarchyClusterNamesFrequencyInclusionList.setOptions({});
+            _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setOptions({});
         }
         };
 
@@ -2678,11 +2679,11 @@ void SettingsAction::computeHierarchyAppearanceVector(QString hierarchyType)
 
         if (hierarchyType == "top") {
             processHierarchy(_topClusterNamesDataset, _topHierarchyClusterMap, _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
-        } else if (hierarchyType == "middle") {
+        } /*else if (hierarchyType == "middle") {
             processHierarchy(_middleClusterNamesDataset, _middleHierarchyClusterMap, _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
         } else if (hierarchyType == "bottom") {
             processHierarchy(_bottomClusterNamesDataset, _bottomHierarchyClusterMap, _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
-        }
+        }*/
     }
     
     auto endTimer = std::chrono::high_resolution_clock::now();
@@ -2718,6 +2719,7 @@ void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarch
         inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
     }
+    /*
     else if (hierarchyType == "middle" && _middleClusterNamesDataset.getCurrentDataset().isValid())
     {
         inclusionList = _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
@@ -2728,7 +2730,7 @@ void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarch
         inclusionList = _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         clusterDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
     }
-
+    */
     if (clusterDataset.isValid())
     {
         for (const auto& cluster : clusterDataset->getClusters())
@@ -3535,8 +3537,8 @@ void SettingsAction::enableActions()
     _topClusterNamesDataset.setDisabled(false);
     _speciesExplorerInMap.setDisabled(false);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
-    _middleHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
-    _bottomHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
+    //_middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(false);
+    //_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
@@ -3589,8 +3591,8 @@ void SettingsAction::disableActions()
     _topClusterNamesDataset.setDisabled(true);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(true);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
-    _middleHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
-    _bottomHierarchyClusterNamesFrequencyInclusionList.setDisabled(true);
+    //_middleHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
+    //_bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     _selectedSpeciesVals.setDisabled(true);
     _clusterOrderHierarchy.setDisabled(true);
     _rightClickedCluster.setDisabled(true);
@@ -4107,8 +4109,8 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _hiddenShowncolumns.fromParentVariantMap(variantMap);
     _speciesExplorerInMap.fromParentVariantMap(variantMap);
     _topHierarchyClusterNamesFrequencyInclusionList.fromParentVariantMap(variantMap);
-    _middleHierarchyClusterNamesFrequencyInclusionList.fromParentVariantMap(variantMap);
-    _bottomHierarchyClusterNamesFrequencyInclusionList.fromParentVariantMap(variantMap);
+    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.fromParentVariantMap(variantMap);
+    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.fromParentVariantMap(variantMap);
     _scatterplotReembedColorOption.fromParentVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.fromParentVariantMap(variantMap);
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
@@ -4154,8 +4156,8 @@ QVariantMap SettingsAction::toVariantMap() const
     _hiddenShowncolumns.insertIntoVariantMap(variantMap);
     _speciesExplorerInMap.insertIntoVariantMap(variantMap);
     _topHierarchyClusterNamesFrequencyInclusionList.insertIntoVariantMap(variantMap);
-    _middleHierarchyClusterNamesFrequencyInclusionList.insertIntoVariantMap(variantMap);
-    _bottomHierarchyClusterNamesFrequencyInclusionList.insertIntoVariantMap(variantMap);
+    _middleHierarchyClusterNamesFrequencyInclusionListAbandoned.insertIntoVariantMap(variantMap);
+    _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.insertIntoVariantMap(variantMap);
     _scatterplotReembedColorOption.insertIntoVariantMap(variantMap);
     _scatterplotEmbeddingPointsUMAPOption.insertIntoVariantMap(variantMap);
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
