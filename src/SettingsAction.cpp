@@ -1175,7 +1175,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker = [this]() -> void {
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
-            _startComputationTriggerAction.setDisabled(false);
+           // _startComputationTriggerAction.setDisabled(false);
             //computeFrequencyMapForHierarchyItemsChange("top");
 
             //_startComputationTriggerAction.trigger();
