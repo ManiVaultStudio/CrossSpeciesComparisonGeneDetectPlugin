@@ -1175,7 +1175,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker = [this]() -> void {
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
-            _startComputationTriggerAction.setDisabled(false);
+           // _startComputationTriggerAction.setDisabled(false);
             //computeFrequencyMapForHierarchyItemsChange("top");
 
             //_startComputationTriggerAction.trigger();
@@ -1329,7 +1329,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _statusColorAction.setString("M");
 }
-
+/*
 void SettingsAction::triggerTrippleHierarchyFrequencyChange()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -1442,7 +1442,7 @@ void SettingsAction::triggerTrippleHierarchyFrequencyChange()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
     qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for all 3 levels: " + QString::number(duration / 1000.0) + " s";
 }
-
+*/
 void SettingsAction::updateButtonTriggered()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
