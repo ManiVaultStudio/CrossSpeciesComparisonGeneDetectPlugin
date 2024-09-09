@@ -1890,131 +1890,124 @@ void SettingsAction::updateButtonTriggered()
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                     _currentHierarchyItemsTopForTable.clear();
                     _currentHierarchyItemsMiddleForTable.clear();
-                    for (auto& species : speciesValuesAll) 
 
+                    QMutex mutex; // Mutex for thread safety
+
+                    QtConcurrent::blockingMap(speciesValuesAll, [&](auto& species) {
+                        auto speciesIndices = species.getIndices();
+                        auto speciesName = species.getName();
+                        auto speciesColor = species.getColor();
+
+                        std::vector<int> commonSelectedIndices;
+
+                        std::sort(speciesIndices.begin(), speciesIndices.end());
+                        std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
+                        std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
+
+                        QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+
+                        int allTopCounts = 0;
+                        int selectedInclusionCounts = 0;
+                        int allMiddleCounts = 0;
+                        int allCellCount = 0;
+                        int selectedCellCount = commonSelectedIndices.size();
 
                         {
-                            auto speciesIndices = species.getIndices();
-                            auto speciesName = species.getName();
-                            auto speciesColor = species.getColor();
-
-                            std::vector<int> commonSelectedIndices;
-
-                            std::sort(speciesIndices.begin(), speciesIndices.end());
-                            std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-                            std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
-
-                            QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-
-                            int allTopCounts = 0;
-                            int selectedInclusionCounts = 0;
-                            int allMiddleCounts = 0;
-                            int allCellCount = 0;
-                            int selectedCellCount = commonSelectedIndices.size();
-
-                            {
-
-                                auto it = _clusterGeneMeanExpressionMap[speciesName].begin();
-                                if (it != _clusterGeneMeanExpressionMap[speciesName].end()) {
-                                    allCellCount = it->second.first;
-                                }
+                            QMutexLocker locker(&mutex);
+                            auto it = _clusterGeneMeanExpressionMap[speciesName].begin();
+                            if (it != _clusterGeneMeanExpressionMap[speciesName].end()) {
+                                allCellCount = it->second.first;
                             }
-                            int nonSelectedCellsCount = allCellCount - selectedCellCount;
+                        }
+                        int nonSelectedCellsCount = allCellCount - selectedCellCount;
 
-
-
-
-                            for (const auto& cluster : _topHierarchyClusterMap) {
-                                
-
-                                if (inclusionList.contains(cluster.first)) {
-                                  
-                                    bool clusterPresent = false;
-                                    auto currentInclusionClusterMap = cluster.second;
+                        for (const auto& cluster : _topHierarchyClusterMap) {
+                            if (inclusionList.contains(cluster.first)) {
+                                bool clusterPresent = false;
+                                auto currentInclusionClusterMap = cluster.second;
+                                {
+                                    QMutexLocker locker(&mutex);
                                     _currentHierarchyItemsTopForTable.insert(cluster.first);
-                                    int clusterSize = 0;
+                                }
+                                int clusterSize = 0;
 
-                                    for (auto speciesIndex : speciesIndices)
+                                for (auto speciesIndex : speciesIndices) {
+                                    if (currentInclusionClusterMap[speciesIndex]) {
+                                        clusterSize++;
+                                    }
+                                }
+
+                                for (auto ind : commonSelectedIndices) {
+                                    if (currentInclusionClusterMap[ind]) {
+                                        selectedInclusionCounts++;
+                                        clusterPresent = true;
+                                    }
+                                }
+                                allTopCounts += clusterSize;
+
+                                if (clusterPresent) {
+                                    allMiddleCounts += clusterSize;
                                     {
-                                        if (currentInclusionClusterMap[speciesIndex])
-                                        {
-                                            clusterSize++;
-                                        }
-                                    }
-                                    
-                                    for (auto ind : commonSelectedIndices) {
-                                        if (currentInclusionClusterMap[ind]) {
-                                            selectedInclusionCounts++;
-                                            clusterPresent = true;
-                                        }
-                                    }
-                                    allTopCounts += clusterSize;
-
-                                    if (clusterPresent) {
-                                        allMiddleCounts += clusterSize;
+                                        QMutexLocker locker(&mutex);
                                         _currentHierarchyItemsMiddleForTable.insert(cluster.first);
                                     }
-                                    
-
                                 }
                             }
-                            for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
-                                const auto& geneName = pointsDatasetallColumnNameList[i];
-                                std::vector<int> geneIndex = { i };
-
-                                float allCellMean;
-
-                                allCellMean = _clusterGeneMeanExpressionMap[speciesName][geneName].second;
-
-
-                                float nonSelectedMean = 0.0;
-                                if (!commonSelectedIndices.empty()) {
-                                    std::vector<float> resultContainerShort(commonSelectedIndices.size());
-                                    pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-
-                                    float allCellTotal = allCellMean * allCellCount;
-                                    float selectedCellsMean = calculateMean(resultContainerShort);
-
-                                    if (nonSelectedCellsCount > 0) {
-                                        nonSelectedMean = (allCellTotal - selectedCellsMean * selectedCellCount) / nonSelectedCellsCount;
-                                    }
-                                }
-                                else {
-                                    nonSelectedMean = allCellMean;
-                                }
-
-                                Stats valueStats;
-                                valueStats.abundanceMiddle = allMiddleCounts;
-                                valueStats.abundanceTop = allTopCounts;
-                                valueStats.countSelected = selectedCellCount;
-                                valueStats.countNonSelected = nonSelectedCellsCount;
-                                valueStats.meanSelected = nonSelectedMean;
-                                valueStats.meanNonSelected = allCellMean;
-                                valueStats.color = speciesColor;
-                                valueStats.countAbundanceNumerator = selectedInclusionCounts;
-                                // print  valueStats and its value to debug
-                                //qDebug() << "abundanceMiddle: Value Stats: " << valueStats.abundanceMiddle<< "Main: "<< allMiddleCounts;
-                                //qDebug() << "abundanceTop: Value Stats: " << valueStats.abundanceTop << "Main: " << allTopCounts;
-
-                                //qDebug() << "countAbundanceNumerator: Value Stats: " << valueStats.countAbundanceNumerator << "Main: " << selectedInclusionCounts;
-
-
-                                localClusterNameToGeneNameToExpressionValue[geneName] = valueStats;
-                            }
-
-                            
-
-                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
-                                    _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
-                                    _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
-                                    _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
-                                    _selectedSpeciesCellCountMap[speciesName].countAbundanceNumerator = pair.second.countAbundanceNumerator;
-
-                                }
-                            
                         }
+
+                        for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
+                            const auto& geneName = pointsDatasetallColumnNameList[i];
+                            std::vector<int> geneIndex = { i };
+
+                            float allCellMean = 0.0f;
+                            {
+                                QMutexLocker locker(&mutex);
+                                allCellMean = _clusterGeneMeanExpressionMap[speciesName][geneName].second;
+                            }
+
+                            float nonSelectedCellsMean = 0.0;
+                            float selectedCellsMean = 0.0;
+                            if (!commonSelectedIndices.empty()) {
+                                std::vector<float> resultContainerShort(commonSelectedIndices.size());
+                                pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
+
+                                float allCellTotal = allCellMean * allCellCount;
+                                selectedCellsMean = calculateMean(resultContainerShort);
+
+                                if (nonSelectedCellsCount > 0) {
+                                    float selectedCellsTotal = selectedCellsMean * selectedCellCount;
+                                    float nonSelectedCellsTotal = allCellTotal - selectedCellsTotal;
+                                    nonSelectedCellsMean = selectedCellsTotal / nonSelectedCellsCount;
+                                }
+                            }
+                            else {
+                                nonSelectedCellsMean = allCellMean;
+                            }
+
+                            Stats valueStats;
+                            valueStats.abundanceMiddle = allMiddleCounts;
+                            valueStats.abundanceTop = allTopCounts;
+                            valueStats.countSelected = selectedCellCount;
+                            valueStats.countNonSelected = nonSelectedCellsCount;
+                            valueStats.meanSelected = selectedCellsMean;
+                            valueStats.meanNonSelected = nonSelectedCellsMean;
+                            valueStats.color = speciesColor;
+                            valueStats.countAbundanceNumerator = selectedInclusionCounts;
+
+                            localClusterNameToGeneNameToExpressionValue[geneName] = valueStats;
+                        }
+
+                        QMutexLocker locker(&mutex);
+                        for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                            _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
+                            _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
+                            _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
+                            _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
+                            _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
+                            _selectedSpeciesCellCountMap[speciesName].countAbundanceNumerator = pair.second.countAbundanceNumerator;
+                        }
+                        });
+
 
                     
 
