@@ -1713,14 +1713,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);
 
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
-        if (singleColumn)
-        {
-            _settingsAction.getSelectionDetailsTable()->hideColumn(4);
-        }
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
-
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
+
+        if (singleColumn) {
+            _settingsAction.getSelectionDetailsTable()->hideColumn(4);
+        }
+
         emit model->layoutChanged();
 
         // Add a connect for row selection

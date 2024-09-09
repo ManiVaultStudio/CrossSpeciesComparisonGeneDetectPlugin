@@ -1975,11 +1975,9 @@ void SettingsAction::updateButtonTriggered()
                                 selectedCellsMean = calculateMean(resultContainerShort);
 
                                 if (nonSelectedCellsCount > 0) {
-
                                     nonSelectedMean = (allCellTotal - (selectedCellsMean * selectedCellCount)) / nonSelectedCellsCount;
                                 }
-                            }
-                            else {
+                            } else {
                                 nonSelectedMean = allCellMean;
                             }
 
@@ -2005,7 +2003,7 @@ void SettingsAction::updateButtonTriggered()
                             _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
                             _selectedSpeciesCellCountMap[speciesName].countAbundanceNumerator = pair.second.countAbundanceNumerator;
                         }
-                        });
+                    });
 
 
 
