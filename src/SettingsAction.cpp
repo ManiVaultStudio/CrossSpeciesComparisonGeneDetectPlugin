@@ -1903,7 +1903,6 @@ void SettingsAction::updateButtonTriggered()
 
                             std::sort(speciesIndices.begin(), speciesIndices.end());
                             std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
-
                             std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
 
                             QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
@@ -1914,6 +1913,7 @@ void SettingsAction::updateButtonTriggered()
                             
                             int allCellCount = 0;
                             int selectedCellCount = commonSelectedIndices.size();
+
                             auto& tempDetails = _clusterGeneMeanExpressionMap[speciesName];
                             auto it = tempDetails.begin();
                             if (it != tempDetails.end()) {
@@ -1927,7 +1927,8 @@ void SettingsAction::updateButtonTriggered()
                                 if (isInInclusionList)
                                 {
                                     qDebug() << "Here 2: ";
-                                    allTopCounts = allTopCounts + cluster.second.size();
+                                    int clusterSize = cluster.second.size();
+                                    allTopCounts = allTopCounts + clusterSize;
                                     auto checkVector = cluster.second;
                                     for (auto ind : commonSelectedIndices)
                                     {
@@ -1940,7 +1941,7 @@ void SettingsAction::updateButtonTriggered()
                                     }
                                     if (clusterPresent)
                                     {
-                                        allMiddleCounts = allMiddleCounts + cluster.second.size();
+                                        allMiddleCounts = allMiddleCounts + clusterSize;
                                     }
 
 
@@ -2044,6 +2045,10 @@ void SettingsAction::updateButtonTriggered()
                                 _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
                                 _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
                                 _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
+                                qDebug() << "Selected Species Cell Count Map: "<< speciesName << _selectedSpeciesCellCountMap[speciesName].selectedCellsCount;
+                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount;
+                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceMiddle;
+                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceTop;
 
                             }
                             });
