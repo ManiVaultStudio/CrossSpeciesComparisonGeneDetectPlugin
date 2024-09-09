@@ -170,7 +170,7 @@ struct SpeciesColorCountStorageVals {
     int nonSelectedCellsCount;
     int abundanceTop;
     int abundanceMiddle;
-    int countAbunbdanceNumerator;
+    int countAbundanceNumerator;
     //int allCellsCount;
 };
 

@@ -1925,10 +1925,11 @@ void SettingsAction::updateButtonTriggered()
 
 
                             for (const auto& cluster : _topHierarchyClusterMap) {
-                                bool clusterPresent = false;
+                                
 
                                 if (inclusionList.contains(cluster.first)) {
                                   
+                                    bool clusterPresent = false;
                                     auto currentInclusionClusterMap = cluster.second;
 
                                     int clusterSize = 0;
@@ -1996,6 +1997,12 @@ void SettingsAction::updateButtonTriggered()
                                 valueStats.meanNonSelected = allCellMean;
                                 valueStats.color = speciesColor;
                                 valueStats.countAbundanceNumerator = selectedInclusionCounts;
+                                // print  valueStats and its value to debug
+                                //qDebug() << "abundanceMiddle: Value Stats: " << valueStats.abundanceMiddle<< "Main: "<< allMiddleCounts;
+                                //qDebug() << "abundanceTop: Value Stats: " << valueStats.abundanceTop << "Main: " << allTopCounts;
+
+                                //qDebug() << "countAbundanceNumerator: Value Stats: " << valueStats.countAbundanceNumerator << "Main: " << selectedInclusionCounts;
+
 
                                 localClusterNameToGeneNameToExpressionValue[geneName] = valueStats;
                             }
@@ -2008,11 +2015,8 @@ void SettingsAction::updateButtonTriggered()
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
                                     _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
                                     _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
-                                    _selectedSpeciesCellCountMap[speciesName].countAbunbdanceNumerator = pair.second.countAbundanceNumerator;
-                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].selectedCellsCount;
-                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount;
-                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceMiddle;
-                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceTop;
+                                    _selectedSpeciesCellCountMap[speciesName].countAbundanceNumerator = pair.second.countAbundanceNumerator;
+
                                 }
                             
                         }

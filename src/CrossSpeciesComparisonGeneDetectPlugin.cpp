@@ -1475,13 +1475,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor);
             rowItems << speciesItem;
-
+            qDebug() << "Top Abundance: " << details.abundanceTop;
+            qDebug() << "Count Abundance Numerator: " << details.countAbundanceNumerator;
+            qDebug() << "Middle Abundance: " << details.abundanceMiddle;
             // Fraction of Neuronal column
             QStandardItem* item = new QStandardItem();
             float topAbundance = 0.0;
             if (details.abundanceTop!=0)
             {
-                topAbundance = static_cast<float>(details.countAbunbdanceNumerator / details.abundanceTop) * 100;
+                topAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceTop)) * 100;
 
             }
 
@@ -1495,7 +1497,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             float middleAbundance = 0.0;
             if (details.abundanceMiddle != 0)
             {
-                middleAbundance = static_cast<float>(details.countAbunbdanceNumerator / details.abundanceMiddle) * 100;
+                middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
 
             }
             QString formattedValueMiddle = QString::number(middleAbundance, 'f', 6);
