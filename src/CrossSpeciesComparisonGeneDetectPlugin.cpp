@@ -1460,7 +1460,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Fraction\nof\nNeuronal", "Fraction\nof\nMiddle", "Count\nSelected", "Count\nAll"/* "Count\nNon\nSelected"*/ });
+        model->setHorizontalHeaderLabels({ "Species","Fraction of Neuronal", "Fraction of Middle", "Count Selected", "Count All"/* "Count\nNon\nSelected"*/ });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
@@ -1555,7 +1555,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Fraction\nof\nNeuronal", "Fraction\nof\nMiddle", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
+        model->setHorizontalHeaderLabels({ "Species","Mean Difference","Appearance Rank", "Fraction of Neuronal", "Fraction of Middle", "Count Selected","Mean Selected","Count Non Selected",  "Mean Non Selected"/*,"Count\nAll",  "Mean\nAll"*/ });
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
         auto ValuesColor = colorValues[1];
