@@ -1118,11 +1118,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
             //_startComputationTriggerAction.trigger();
 
-            QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            //QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
             QFuture<void> future2 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector(); });
             
-            future.waitForFinished();
+            //future.waitForFinished();
 
             future1.waitForFinished();
             future2.waitForFinished();
@@ -1917,6 +1917,10 @@ void SettingsAction::updateButtonTriggered()
                                 clusterSizes[cluster.first] = cluster.second.size();
                             }
 
+                            // Precompute the sorted commonSelectedIndices for binary search
+                            std::vector<int> sortedCommonSelectedIndices = commonSelectedIndices;
+                            std::sort(sortedCommonSelectedIndices.begin(), sortedCommonSelectedIndices.end());
+
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
@@ -1948,17 +1952,17 @@ void SettingsAction::updateButtonTriggered()
                                         if (isInInclusionList) {
                                             allTopCounts += clusterSize;
                                             selectedTopCounts += std::count_if(cluster.second.begin(), cluster.second.end(), [&](int index) {
-                                                return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                                return std::binary_search(sortedCommonSelectedIndices.begin(), sortedCommonSelectedIndices.end(), index);
                                             });
                                         } else {
                                             bool hasCommonIndex = std::any_of(cluster.second.begin(), cluster.second.end(), [&](int index) {
-                                                return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                                return std::binary_search(sortedCommonSelectedIndices.begin(), sortedCommonSelectedIndices.end(), index);
                                             });
 
                                             if (hasCommonIndex) {
                                                 allMiddleCounts += clusterSize;
                                                 selectedMiddleCounts += std::count_if(cluster.second.begin(), cluster.second.end(), [&](int index) {
-                                                    return std::binary_search(commonSelectedIndices.begin(), commonSelectedIndices.end(), index);
+                                                    return std::binary_search(sortedCommonSelectedIndices.begin(), sortedCommonSelectedIndices.end(), index);
                                                 });
                                             }
                                         }
@@ -1986,14 +1990,7 @@ void SettingsAction::updateButtonTriggered()
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
 
-                                int topHierarchyCountValue = 0;
-                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) {
-                                    topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
-                                }
-                                float topHierarchyFrequencyValue = 0.0;
-                                if (topHierarchyCountValue != 0.0f) {
-                                    topHierarchyFrequencyValue = static_cast<float>(calculateStatisticsShort.countVal) / topHierarchyCountValue;
-                                }
+
                                 float topHierarchyValue = 0.0;
                                 if (allTopCounts != 0) {
                                     topHierarchyValue = static_cast<float>(selectedTopCounts) / allTopCounts;
@@ -3424,7 +3421,7 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3,  AbundanceMiddle: %3, MeanSelected: %4, CountSelected: %5, MeanNotSelected: %6, CountNotSelected: %7;\n")//, MeanAll: %7, CountAll: %8
+            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3,  AbundanceMiddle: %4, MeanSelected: %5, CountSelected: %6, MeanNotSelected: %7, CountNotSelected: %8;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
                 .arg(stats.abundanceTop, 0, 'f', 2)

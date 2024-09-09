@@ -1487,6 +1487,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
                 middleHierarchyFrequencyValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["AbundanceMiddle"];
  
             }
+            else
+            {
+                qDebug() << "Species not found in cluster species frequency map";
+            }
 
 
 
@@ -1542,7 +1546,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
 
-    /*for (const auto& pair : statisticsValues) {
+    for (const auto& pair : statisticsValues) {
         const QString& species = pair.first;
         const SpeciesDetailsStats& stats = pair.second;
         qDebug() << "Species:" << species
@@ -1551,11 +1555,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             << "CountSelected:" << stats.countSelected
             << "MeanNonSelected:" << stats.meanNonSelected
             << "CountNonSelected:" << stats.countNonSelected
-            << "AbundanceCountTop:" << stats.abundanceCountTop;
+            << "AbundanceCountTop:" << stats.abundanceTop
+            << "AbundanceMiddle:" << stats.abundanceMiddle;
 
             ;
 
-    }*/
+    }
 
 
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
@@ -1658,6 +1663,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A"); //5
                 rowItems << new QStandardItem("N/A"); //6
                 rowItems << new QStandardItem("N/A"); //7
+                rowItems << new QStandardItem("N/A"); //8
             }
 
             //QStringList speciesChosen = {};
