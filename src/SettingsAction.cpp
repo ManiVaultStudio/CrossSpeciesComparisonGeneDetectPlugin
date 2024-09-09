@@ -69,7 +69,7 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
 
 
 
-Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const float topAbundance,const float middleAbundance/*, const StatisticsSingle& allSelected*/) {
+Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected,const int topAbundance,const int middleAbundance, const int countAbundanceNumerator/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
     combinedStats.countSelected = selected.countVal;
@@ -82,7 +82,7 @@ Stats combineStatisticsSingle(const StatisticsSingle& selected, const Statistics
 
     combinedStats.abundanceTop = topAbundance;
     combinedStats.abundanceMiddle = middleAbundance;
-
+    combinedStats.countAbundanceNumerator = countAbundanceNumerator;
     return combinedStats;
 }
 
@@ -1976,13 +1976,14 @@ void SettingsAction::updateButtonTriggered()
                                 float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(selectedCellCount) / topHierarchyCountValue : 0.0f;
 
                                 Stats valueStats;
-                                valueStats.abundanceMiddle = (allMiddleCounts != 0) ? (selectedInclusionCounts / allMiddleCounts) * 100 : 0.0f;
-                                valueStats.abundanceTop = (allTopCounts != 0) ? (selectedInclusionCounts / allTopCounts) * 100 : 0.0f;
+                                valueStats.abundanceMiddle = allMiddleCounts;
+                                valueStats.abundanceTop = allTopCounts;
                                 valueStats.countSelected = selectedCellCount;
                                 valueStats.countNonSelected = nonSelectedCellsCount;
                                 valueStats.meanSelected = nonSelectedMean;
                                 valueStats.meanNonSelected = allCellMean;
                                 valueStats.color = speciesColor;
+                                valueStats.countAbundanceNumerator = selectedInclusionCounts;
 
                                 localClusterNameToGeneNameToExpressionValue[geneName] = valueStats;
                             }
@@ -1995,6 +1996,7 @@ void SettingsAction::updateButtonTriggered()
                                     _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
                                     _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
                                     _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
+                                    _selectedSpeciesCellCountMap[speciesName].countAbunbdanceNumerator = pair.second.countAbundanceNumerator;
                                     //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].selectedCellsCount;
                                     //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount;
                                     //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceMiddle;
@@ -2315,8 +2317,23 @@ void createTreeInitial(QJsonObject& node, const std::map<QString, InitialStatist
         if (it != utilityMap.end()) {
             node["mean"] = std::round(it->second.meanVal * 100.0) / 100.0; // Round to 2 decimal places
             node["differential"] = std::round(it->second.differentialVal * 100.0) / 100.0; // Round to 2 decimal places
-            node["abundanceTop"] = it->second.abundanceTop;
-            node["abundanceMiddle"] = it->second.abundanceMiddle;
+
+
+            float topAbundance = 0.0;
+            if (it->second.abundanceTop != 0)
+            {
+                topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+            }
+
+            float middleAbundance = 0.0;
+            if (it->second.abundanceMiddle != 0)
+            {
+                middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+            }
+
+
+            node["abundanceTop"] = topAbundance;
+            node["abundanceMiddle"] = middleAbundance;
             node["rank"] = it->second.rankVal;
             node["gene"] = it->second.geneName;
         }
@@ -3396,11 +3413,12 @@ QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QS
 
         QString formattedStatistics;
         for (const auto& [species, stats] : statisticsValuesForSpeciesMap) {
-            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3,  AbundanceMiddle: %4, MeanSelected: %5, CountSelected: %6, MeanNotSelected: %7, CountNotSelected: %8;\n")//, MeanAll: %7, CountAll: %8
+            formattedStatistics += QString("Species: %1, Rank: %2, AbundanceTop: %3,  AbundanceMiddle: %4,  CountAbundanceNumerator: %5, MeanSelected: %6, CountSelected: %7, MeanNotSelected: %8, CountNotSelected: %9;\n")//, MeanAll: %7, CountAll: %8
                 .arg(species)
                 .arg(rankcounter[species])
-                .arg(stats.abundanceTop, 0, 'f', 2)
-                .arg(stats.abundanceMiddle, 0, 'f', 2)
+                .arg(stats.abundanceTop)
+                .arg(stats.abundanceMiddle)
+                .arg(stats.countAbundanceNumerator)
                 .arg(stats.meanSelected, 0, 'f', 2)
                 .arg(stats.countSelected)
                 .arg(stats.meanNonSelected, 0, 'f', 2)

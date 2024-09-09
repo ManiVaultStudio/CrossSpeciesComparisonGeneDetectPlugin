@@ -136,8 +136,9 @@ struct ClusterOrderContainer {
 
 struct SpeciesDetailsStats {
     int rank;
-    float abundanceTop;
-    float abundanceMiddle;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbundanceNumerator;
     float meanSelected;
     int countSelected;
     float meanNonSelected;
@@ -155,18 +156,21 @@ struct Stats {
     float meanNonSelected;
     int countNonSelected;
     QColor color;
-    float abundanceTop;
-    float abundanceMiddle;
+    int abundanceTop;
+    int  abundanceMiddle;
+    int countAbundanceNumerator;
     //float meanAll;
     //int countAll;
 
 };
+
 struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
-    float abundanceTop;
-    float abundanceMiddle;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbunbdanceNumerator;
     //int allCellsCount;
 };
 
@@ -179,8 +183,9 @@ struct StatisticsSingle {
 struct InitialStatistics {
     float meanVal;
     float differentialVal;
-    float abundanceTop;
-    float abundanceMiddle;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbundanceNumerator;
     int rankVal;
     QString geneName;
 };

@@ -88,7 +88,7 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
     QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
 
     // qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: ([\\d.]+), AbundanceMiddle: ([\\d.]+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), AbundanceMiddle: (\\d+), CountAbundanceNumerator: ([\\d.]+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
@@ -96,12 +96,13 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
             QString species = match.captured(1);
             SpeciesDetailsStats stats = {
                 match.captured(2).toInt(),  // Rank
-                match.captured(3).toFloat(),  // AbundanceTop
-                match.captured(3).toFloat(),  // AbundanceMiddle
-                match.captured(4).toFloat(),  // MeanSelected
-                match.captured(5).toInt(),  // CountSelected
-                match.captured(6).toFloat(),  // MeanNotSelected
-                match.captured(7).toInt()  // CountNotSelected
+                match.captured(3).toInt(),  // AbundanceTop
+                match.captured(4).toInt(),  // AbundanceMiddle
+                 match.captured(5).toInt(),  // CountAbundanceNumerator
+                match.captured(6).toFloat(),  // MeanSelected
+                match.captured(7).toInt(),  // CountSelected
+                match.captured(8).toFloat(),  // MeanNotSelected
+                match.captured(9).toInt()  // CountNotSelected
             };
             statisticsMap[species] = stats;
         }
@@ -1477,13 +1478,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             // Fraction of Neuronal column
             QStandardItem* item = new QStandardItem();
-            QString formattedValueTop = QString::number(details.abundanceTop, 'f', 6);
+            float topAbundance = 0.0;
+            if (details.abundanceTop!=0)
+            {
+                topAbundance = static_cast<float>(details.countAbunbdanceNumerator / details.abundanceTop) * 100;
+
+            }
+
+            QString formattedValueTop = QString::number(topAbundance, 'f', 6);
             item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
             // Fraction of Middle column
             item = new QStandardItem();
-            QString formattedValueMiddle = QString::number(details.abundanceMiddle, 'f', 6);
+
+            float middleAbundance = 0.0;
+            if (details.abundanceMiddle != 0)
+            {
+                middleAbundance = static_cast<float>(details.countAbunbdanceNumerator / details.abundanceMiddle) * 100;
+
+            }
+            QString formattedValueMiddle = QString::number(middleAbundance, 'f', 6);
             item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
             rowItems << item;
 
@@ -1596,12 +1611,25 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
                 }*/
                 item = new QStandardItem();
-                QString formattedValueTop = QString::number(it->second.abundanceTop, 'f', 6);
+
+                float topAbundance = 0.0;
+                if (it->second.abundanceTop != 0)
+                {
+                    topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+                }
+
+                QString formattedValueTop = QString::number(topAbundance, 'f', 6);
                 item->setData(QVariant(formattedValueTop), Qt::EditRole);
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
+                float middleAbundance = 0.0;
+                if (it->second.abundanceMiddle != 0)
+                {
+                    middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+                }
+
                 item = new QStandardItem();
-                QString formattedValueMiddle = QString::number(it->second.abundanceMiddle, 'f', 6);
+                QString formattedValueMiddle = QString::number(middleAbundance, 'f', 6);
                 item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
                 rowItems << item; //4 Relative\nAbundance\nNeuronal\Middle\nHierarchy
 
@@ -1759,13 +1787,23 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
-            float topHierarchyFrequencyValue = it->second.abundanceTop;
-
-            float middleHierarchyFrequencyValue = it->second.abundanceMiddle;
 
 
-            node["abundanceTop"] = topHierarchyFrequencyValue;
-            node["abundanceMiddle"] = middleHierarchyFrequencyValue;
+
+            float topAbundance = 0.0;
+            if (it->second.abundanceTop != 0)
+            {
+                topAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceTop) * 100;
+            }
+
+            float middleAbundance = 0.0;
+            if (it->second.abundanceMiddle != 0)
+            {
+                middleAbundance = static_cast<float>(it->second.countAbundanceNumerator / it->second.abundanceMiddle) * 100;
+            }
+
+            node["abundanceTop"] = topAbundance;
+            node["abundanceMiddle"] = middleAbundance;
         }
         if (it != speciesExpressionMap.end()) {
             node["cellCounts"] = it->second.countSelected;
