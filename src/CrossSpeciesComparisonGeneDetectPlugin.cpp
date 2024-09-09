@@ -1459,7 +1459,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Relative\nAbundance\nNeuronal\nTop\nHierarchy", "Count\nSelected", "Count\nNon\nSelected" });
+        model->setHorizontalHeaderLabels({ "Species","Fraction\nof\nNeuronal", "Count\nSelected", "Count\nAll"/* "Count\nNon\nSelected"*/ });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
@@ -1493,7 +1493,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             // Add new column for "Frequency Relative Top Hierarchy"
             item = new QStandardItem();
 
-            QString formattedValue = QString::number(topHierarchyFrequencyValue, 'f', 2);
+            QString formattedValue = QString::number(topHierarchyFrequencyValue*100, 'f', 2);
             item->setData(QVariant(formattedValue), Qt::EditRole);
             //item->setToolTip(QString::number(topHierarchyFrequencyValue));
             rowItems << item;
@@ -1503,8 +1503,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             rowItems << item;
 
             item = new QStandardItem();
-            item->setData(QVariant(details.nonSelectedCellsCount), Qt::EditRole);
+            auto total = details.selectedCellsCount + details.nonSelectedCellsCount;
+            item->setData(QVariant(total), Qt::EditRole);
             rowItems << item;
+
+            //item = new QStandardItem();
+            //item->setData(QVariant(details.nonSelectedCellsCount), Qt::EditRole);
+            //rowItems << item;
 
             model->appendRow(rowItems);
         }
@@ -1556,7 +1561,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Relative\nAbundance\nNeuronal\nTop\nHierarchy", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
+        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Fraction\nof\nNeuronal", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
         auto ValuesColor = colorValues[1];
@@ -1603,7 +1608,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
                 }
                 item = new QStandardItem();
-                QString formattedValue = QString::number(topHierarchyFrequencyValue, 'f', 2);
+                QString formattedValue = QString::number(topHierarchyFrequencyValue*100, 'f', 2);
                 item->setData(QVariant(formattedValue), Qt::EditRole);
                 rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
 
