@@ -1176,14 +1176,14 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (!_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
         {
             _startComputationTriggerAction.setDisabled(false);
-            computeFrequencyMapForHierarchyItemsChange("top");
+            //computeFrequencyMapForHierarchyItemsChange("top");
 
-            _startComputationTriggerAction.trigger();
-
-            //QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            //computeGeneMeanExpressionMap();
-            //future.waitForFinished();
             //_startComputationTriggerAction.trigger();
+
+            QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
+            computeGeneMeanExpressionMap();
+            future.waitForFinished();
+            _startComputationTriggerAction.trigger();
             
             /*
             
