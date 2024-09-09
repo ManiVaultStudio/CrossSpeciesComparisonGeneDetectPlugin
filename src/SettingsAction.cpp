@@ -1194,7 +1194,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             try {
                 QFuture<void> future3 = QtConcurrent::run([this]() { precomputeTreesFromHierarchy(); });
                 QFuture<void> future4 = QtConcurrent::run([this]() { _startComputationTriggerAction.trigger(); });
-                future3.waitForFinished();
+                //future3.waitForFinished();
                 future4.waitForFinished();
             }
             catch (const std::exception& e) {
