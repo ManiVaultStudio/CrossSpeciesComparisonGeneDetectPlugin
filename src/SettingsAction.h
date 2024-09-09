@@ -172,6 +172,14 @@ struct StatisticsSingle {
 
 };
 
+struct InitialStatistics {
+    float meanVal;
+    float differentialVal;
+    float abundanceVal;
+    int rankVal;
+    QString geneName;
+};
+
 class SettingsAction : public WidgetAction
 {
 public:
@@ -252,9 +260,11 @@ public: // Action getters
     OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
     OptionAction& getPerformGeneTableTsneDistance() { return _performGeneTableTsneDistance; }
     TriggerAction& getPerformGeneTableTsneTrigger() { return _performGeneTableTsneTrigger; }
+    TriggerAction& getComputeTreesToDisplayFromHierarchy() { return _computeTreesToDisplayFromHierarchy; }
     StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
     ToggleAction& getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker; }
-
+    StringAction& getRightClickedCluster() { return _rightClickedCluster; }
+    TriggerAction& getClearRightClickedCluster() { return _clearRightClickedCluster; }
 
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
 
@@ -282,7 +292,8 @@ public: // Action getters
     Dataset<Points> & getFilteredUMAPDatasetColors() { return _filteredUMAPDatasetColors; }
     Dataset<Points> & getFilteredUMAPDatasetClusters() { return _filteredUMAPDatasetClusters; }
     QStatusBar* getStatusBarActionWidget() const { return _statusBarActionWidget; }
-    QMessageBox* getPopupMessage() const { return _popupMessage; }
+    QMessageBox* getPopupMessageInit() const { return _popupMessageInit; }
+    QMessageBox* getPopupMessageTreeCreationCompletion() const { return _popupMessageTreeCreationCompletion; }
     QStringList& getInitColumnNames() { return _initColumnNames; }
     mv::gui::FlowLayout* getSelectedCellClusterInfoStatusBar() const { return _selectedCellClusterInfoStatusBar; }
     QTableView* getGeneTableView() const { return _geneTableView; }
@@ -292,7 +303,7 @@ public: // Action getters
     QHBoxLayout* getTableSplitter() const { return _splitter; }
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
-    std::unordered_map<QString, std::unordered_map<QString, QString>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
+    std::unordered_map<QString,std::unordered_map<QString, std::unordered_map<QString, QString>>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
@@ -398,7 +409,8 @@ protected:
     StringAction    _statusColorAction;
     std::vector<std::seed_seq::result_type> _selectedIndicesFromStorage;
     QStatusBar*                     _statusBarActionWidget;
-    QMessageBox* _popupMessage;
+    QMessageBox* _popupMessageInit;
+    QMessageBox* _popupMessageTreeCreationCompletion;
     mv::gui::FlowLayout*            _selectedCellClusterInfoStatusBar;
     //mv::gui::FlowLayout     _clustersLayout;
     QStringList _initColumnNames;
@@ -428,13 +440,16 @@ protected:
     OptionAction                   _performGeneTableTsneKnn;
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;
+    TriggerAction                 _computeTreesToDisplayFromHierarchy;
     Dataset<Points>                _selectedPointsTSNEDatasetForGeneTable;
     bool                           _pauseStatusUpdates=false;
     QStringList                   _deleteDatasetIds;
     std::vector<QString> _geneOrder;
     StringAction             _clusterOrderHierarchy;
     std::unordered_map<QString, std::vector<QString>> _clusterPositionMap;
-    std::unordered_map<QString, std::unordered_map<QString, QString>>  _precomputedTreesFromTheHierarchy;
+    std::unordered_map<QString, std::unordered_map<QString, std::unordered_map<QString, QString>>>  _precomputedTreesFromTheHierarchy;
     ToggleAction _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker;
     //std::vector<QString> _speciesOrder;
+    StringAction              _rightClickedCluster;
+    TriggerAction              _clearRightClickedCluster;
 };
