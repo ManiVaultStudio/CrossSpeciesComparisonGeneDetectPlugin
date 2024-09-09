@@ -340,7 +340,7 @@ public: // Action getters
     void createClusterPositionMap();
     //void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
-    void computeHierarchyAppearanceVector(QString hierarchyType);
+    void computeHierarchyAppearanceVector();
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -455,6 +455,4 @@ protected:
     StringAction              _rightClickedCluster;
     TriggerAction              _clearRightClickedCluster;
     std::map<QString, std::vector<bool>> _topHierarchyClusterMap;
-    std::map<QString, std::vector<bool>> _middleHierarchyClusterMap;
-    std::map<QString, std::vector<bool>> _bottomHierarchyClusterMap;
 };

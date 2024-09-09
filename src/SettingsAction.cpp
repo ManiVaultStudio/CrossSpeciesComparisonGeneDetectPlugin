@@ -614,7 +614,6 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     };
     connect(topTimer, &QTimer::timeout, this, [this]() {
         //computeFrequencyMapForHierarchyItemsChange("top");
-        computeHierarchyAppearanceVector("top");
         _statusColorAction.setString("M");
     });
     connect(&_topHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateTopHierarchyClusterNamesFrequencyInclusionList);
@@ -774,7 +773,7 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
        
         if (_topClusterNamesDataset.getCurrentDataset().isValid())
         {
-            computeHierarchyAppearanceVector("top");
+            computeHierarchyAppearanceVector();
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -806,7 +805,7 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     const auto updateMiddleHierarchyDatasetChanged = [this]() -> void {
         if (_middleClusterNamesDataset.getCurrentDataset().isValid())
         {
-            computeHierarchyAppearanceVector("middle");
+            //computeHierarchyAppearanceVector();
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -844,7 +843,7 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
     const auto updateBottomHierarchyDatasetChanged = [this]() -> void {
         if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
         {
-            computeHierarchyAppearanceVector("bottom");
+            //computeHierarchyAppearanceVector();
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -1189,16 +1188,12 @@ _bottomHierarchyClusterNamesFrequencyInclusionListAbandoned.setDisabled(true);
 
             QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
             QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
-            QFuture<void> future2 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("top"); });
-            QFuture<void> future3 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("middle"); });
-            QFuture<void> future4 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("bottom"); });
+            QFuture<void> future2 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector(); });
             
             future.waitForFinished();
 
             future1.waitForFinished();
             future2.waitForFinished();
-            future3.waitForFinished();
-            future4.waitForFinished();
             _startComputationTriggerAction.trigger();
             
             /*
@@ -2638,20 +2633,20 @@ void SettingsAction::computeGeneMeanExpressionMap()
     qDebug() << "Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
 }
 
-void SettingsAction::computeHierarchyAppearanceVector(QString hierarchyType)
+void SettingsAction::computeHierarchyAppearanceVector()
 {
-    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked() || hierarchyType.isEmpty())
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
     {
         return;
     }
 
     auto startTimer = std::chrono::high_resolution_clock::now();
-    qDebug() << "computeHierarchyAppearanceVector Start for " + hierarchyType;
+    qDebug() << "computeHierarchyAppearanceVector Start" ;
     if (_mainPointsDataset.getCurrentDataset().isValid()) {
         auto fullMainDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         auto numOfPoints = fullMainDataset->getNumPoints();
 
-        auto processClusters = [&](const auto& clusterDataset, auto& hierarchyClusterMap, const auto& inclusionList) {
+        auto processClusters = [&](const auto& clusterDataset, auto& hierarchyClusterMap) {
             if (clusterDataset.isValid()) {
                 auto clusters = clusterDataset->getClusters();
                 if (!clusters.empty()) {
@@ -2659,36 +2654,30 @@ void SettingsAction::computeHierarchyAppearanceVector(QString hierarchyType)
                     std::vector<bool> clusterNamesAppearance(numOfPoints, false);
                     for (const auto& cluster : clusters) {
                         auto clusterName = cluster.getName();
-                        if (inclusionList.contains(clusterName)) {
                             for (const auto& index : cluster.getIndices()) {
                                 clusterNamesAppearance[index] = true;
                             }
                             hierarchyClusterMap[clusterName] = clusterNamesAppearance;
-                        }
                     }
                 }
             }
         };
 
-        const auto& processHierarchy = [&](const auto& dataset, auto& hierarchyClusterMap, const auto& inclusionList) {
+        const auto& processHierarchy = [&](const auto& dataset, auto& hierarchyClusterMap) {
             if (dataset.getCurrentDataset().isValid()) {
                 auto clusterDataset = mv::data().getDataset<Clusters>(dataset.getCurrentDataset().getDatasetId());
-                processClusters(clusterDataset, hierarchyClusterMap, inclusionList);
+                processClusters(clusterDataset, hierarchyClusterMap);
             }
         };
 
-        if (hierarchyType == "top") {
-            processHierarchy(_topClusterNamesDataset, _topHierarchyClusterMap, _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
-        } /*else if (hierarchyType == "middle") {
-            processHierarchy(_middleClusterNamesDataset, _middleHierarchyClusterMap, _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
-        } else if (hierarchyType == "bottom") {
-            processHierarchy(_bottomClusterNamesDataset, _bottomHierarchyClusterMap, _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
-        }*/
+
+            processHierarchy(_topClusterNamesDataset, _topHierarchyClusterMap);
+
     }
     
     auto endTimer = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
-    qDebug() << "Time taken for computeHierarchyAppearanceVector for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
+    qDebug() << "Time taken for computeHierarchyAppearanceVector : " + QString::number(duration / 1000.0) + " s";
 
 }
 
