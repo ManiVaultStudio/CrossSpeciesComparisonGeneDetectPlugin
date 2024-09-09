@@ -586,7 +586,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         bottomTimer->start(delayMs);
     };
     connect(bottomTimer, &QTimer::timeout, this, [this]() {
-        computeFrequencyMapForHierarchyItemsChange("bottom");
+        //computeFrequencyMapForHierarchyItemsChange("bottom");
+        computeHierarchyAppearanceVector("bottom");
         _statusColorAction.setString("M");
     });
     connect(&_bottomHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateBottomHierarchyClusterNamesFrequencyInclusionList);
@@ -598,7 +599,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         middleTimer->start(delayMs);
     };
     connect(middleTimer, &QTimer::timeout, this, [this]() {
-        computeFrequencyMapForHierarchyItemsChange("middle");
+        //computeFrequencyMapForHierarchyItemsChange("middle");
+        computeHierarchyAppearanceVector("middle");
         _statusColorAction.setString("M");
     });
     connect(&_middleHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateMiddleHierarchyClusterNamesFrequencyInclusionList);
@@ -610,7 +612,8 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         topTimer->start(delayMs);
     };
     connect(topTimer, &QTimer::timeout, this, [this]() {
-        computeFrequencyMapForHierarchyItemsChange("top");
+        //computeFrequencyMapForHierarchyItemsChange("top");
+        computeHierarchyAppearanceVector("top");
         _statusColorAction.setString("M");
     });
     connect(&_topHierarchyClusterNamesFrequencyInclusionList, &OptionsAction::selectedOptionsChanged, this, updateTopHierarchyClusterNamesFrequencyInclusionList);
@@ -770,6 +773,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
        
         if (_topClusterNamesDataset.getCurrentDataset().isValid())
         {
+            computeHierarchyAppearanceVector("top");
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -801,6 +805,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateMiddleHierarchyDatasetChanged = [this]() -> void {
         if (_middleClusterNamesDataset.getCurrentDataset().isValid())
         {
+            computeHierarchyAppearanceVector("middle");
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_middleClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -838,6 +843,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     const auto updateBottomHierarchyDatasetChanged = [this]() -> void {
         if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
         {
+            computeHierarchyAppearanceVector("bottom");
             auto clusterFullDataset = mv::data().getDataset<Clusters>(_bottomClusterNamesDataset.getCurrentDataset().getDatasetId());
             auto clusters = clusterFullDataset->getClusters();
             QStringList clusterNames = {};
@@ -1181,8 +1187,17 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             //_startComputationTriggerAction.trigger();
 
             QFuture<void> future = QtConcurrent::run([this]() { computeFrequencyMapForHierarchyItemsChange("top"); });
-            computeGeneMeanExpressionMap();
+            QFuture<void> future1 = QtConcurrent::run([this]() { computeGeneMeanExpressionMap(); });
+            QFuture<void> future2 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("top"); });
+            QFuture<void> future3 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("middle"); });
+            QFuture<void> future4 = QtConcurrent::run([this]() { computeHierarchyAppearanceVector("bottom"); });
+            
             future.waitForFinished();
+
+            future1.waitForFinished();
+            future2.waitForFinished();
+            future3.waitForFinished();
+            future4.waitForFinished();
             _startComputationTriggerAction.trigger();
             
             /*
@@ -2621,6 +2636,61 @@ void SettingsAction::computeGeneMeanExpressionMap()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "Time taken for computeGeneMeanExpressionMap : " + QString::number(duration / 1000.0) + " s";
 }
+
+void SettingsAction::computeHierarchyAppearanceVector(QString hierarchyType)
+{
+    if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked() || hierarchyType.isEmpty())
+    {
+        return;
+    }
+
+    auto startTimer = std::chrono::high_resolution_clock::now();
+    qDebug() << "computeHierarchyAppearanceVector Start for " + hierarchyType;
+    if (_mainPointsDataset.getCurrentDataset().isValid()) {
+        auto fullMainDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
+        auto numOfPoints = fullMainDataset->getNumPoints();
+
+        auto processClusters = [&](const auto& clusterDataset, auto& hierarchyClusterMap, const auto& inclusionList) {
+            if (clusterDataset.isValid()) {
+                auto clusters = clusterDataset->getClusters();
+                if (!clusters.empty()) {
+                    hierarchyClusterMap.clear();
+                    std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                    for (const auto& cluster : clusters) {
+                        auto clusterName = cluster.getName();
+                        if (inclusionList.contains(clusterName)) {
+                            for (const auto& index : cluster.getIndices()) {
+                                clusterNamesAppearance[index] = true;
+                            }
+                            hierarchyClusterMap[clusterName] = clusterNamesAppearance;
+                        }
+                    }
+                }
+            }
+        };
+
+        const auto& processHierarchy = [&](const auto& dataset, auto& hierarchyClusterMap, const auto& inclusionList) {
+            if (dataset.getCurrentDataset().isValid()) {
+                auto clusterDataset = mv::data().getDataset<Clusters>(dataset.getCurrentDataset().getDatasetId());
+                processClusters(clusterDataset, hierarchyClusterMap, inclusionList);
+            }
+        };
+
+        if (hierarchyType == "top") {
+            processHierarchy(_topClusterNamesDataset, _topHierarchyClusterMap, _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
+        } else if (hierarchyType == "middle") {
+            processHierarchy(_middleClusterNamesDataset, _middleHierarchyClusterMap, _middleHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
+        } else if (hierarchyType == "bottom") {
+            processHierarchy(_bottomClusterNamesDataset, _bottomHierarchyClusterMap, _bottomHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions());
+        }
+    }
+    
+    auto endTimer = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+    qDebug() << "Time taken for computeHierarchyAppearanceVector for " + hierarchyType + " : " + QString::number(duration / 1000.0) + " s";
+
+}
+
 
 void SettingsAction::computeFrequencyMapForHierarchyItemsChange(QString hierarchyType)
 {
