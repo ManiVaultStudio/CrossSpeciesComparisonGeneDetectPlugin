@@ -1329,7 +1329,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _statusColorAction.setString("M");
 }
-
+/*
 void SettingsAction::triggerTrippleHierarchyFrequencyChange()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
@@ -1442,7 +1442,7 @@ void SettingsAction::triggerTrippleHierarchyFrequencyChange()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
     qDebug() << "Time taken for computeFrequencyMapForHierarchyItemsChange for all 3 levels: " + QString::number(duration / 1000.0) + " s";
 }
-
+*/
 void SettingsAction::updateButtonTriggered()
 {
     if (_mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.isChecked())
