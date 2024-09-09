@@ -1926,12 +1926,16 @@ void SettingsAction::updateButtonTriggered()
                                 std::vector<int> geneIndex = { i };
 
                                 // Access shared data in a thread-safe manner
-                                QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
-                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
-                                locker.unlock();
+                                StatisticsSingle nonSelectionDetails;
+                                {
+                                    QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
+                                    auto pair = _clusterGeneMeanExpressionMap[speciesName][geneName];
+                                    nonSelectionDetails.countVal = pair.first;
+                                    nonSelectionDetails.meanVal = pair.second;
+                                }
 
-                                int allCellCounts = nonSelectionDetails.first;
-                                float allCellMean = nonSelectionDetails.second;
+                                int allCellCounts = nonSelectionDetails.countVal;
+                                float allCellMean = nonSelectionDetails.meanVal;
 
                                 float nonSelectedMean = 0.0;
                                 int nonSelectedCells = 0;
@@ -1990,7 +1994,6 @@ void SettingsAction::updateButtonTriggered()
 
                                 StatisticsSingle calculateStatisticsNot = { nonSelectedMean, nonSelectedCells };
 
-
                                 float topHierarchyValue = 0.0;
                                 if (allTopCounts != 0) {
                                     topHierarchyValue = static_cast<float>(selectedTopCounts) / allTopCounts;
@@ -2005,13 +2008,15 @@ void SettingsAction::updateButtonTriggered()
                             }
 
                             // Merge results in a thread-safe manner
-                            QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
-                            for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
-                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
-                                _clusterSpeciesFrequencyMap[speciesName]["AbundanceTop"] = pair.second.abundanceTop;
-                                _clusterSpeciesFrequencyMap[speciesName]["AbundanceMiddle"] = pair.second.abundanceMiddle;
+                            {
+                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
+                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
+                                    _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
+                                    _clusterSpeciesFrequencyMap[speciesName]["AbundanceTop"] = pair.second.abundanceTop;
+                                    _clusterSpeciesFrequencyMap[speciesName]["AbundanceMiddle"] = pair.second.abundanceMiddle;
+                                }
                             }
                         });
                         synchronizer.addFuture(future); // Add each future to the synchronizer
