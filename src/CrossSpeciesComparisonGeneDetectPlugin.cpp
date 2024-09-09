@@ -1460,7 +1460,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
         // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Fraction\nof\nNeuronal", "Fraction\nof\Middle", "Count\nSelected", "Count\nAll"/* "Count\nNon\nSelected"*/ });
+        model->setHorizontalHeaderLabels({ "Species","Fraction\nof\nNeuronal", "Fraction\nof\nMiddle", "Count\nSelected", "Count\nAll"/* "Count\nNon\nSelected"*/ });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
@@ -1479,29 +1479,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             QStandardItem* item;
 
 
-            float topHierarchyFrequencyValue = 0.0;
-            float middleHierarchyFrequencyValue = 0.0;
-            if (_settingsAction.getClusterSpeciesAbundanceMap().find(species) != _settingsAction.getClusterSpeciesAbundanceMap().end())
-            {
-                topHierarchyFrequencyValue = _settingsAction.getClusterSpeciesAbundanceMap()[species]["AbundanceTop"];
-                middleHierarchyFrequencyValue = _settingsAction.getClusterSpeciesAbundanceMap()[species]["AbundanceMiddle"];
- 
-            }
-            else
-            {
-                qDebug() << "Species not found in cluster species frequency map";
-            }
-
-
 
             // Add new column for "Frequency Relative Top Hierarchy"
             item = new QStandardItem();
 
-            QString formattedValueTop = QString::number(topHierarchyFrequencyValue, 'f', 2);
+            QString formattedValueTop = QString::number(details.abundanceTop, 'f', 2);
             item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
-            QString formattedValueMiddle = QString::number(middleHierarchyFrequencyValue, 'f', 2);
+            QString formattedValueMiddle = QString::number(details.abundanceMiddle, 'f', 2);
             item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
             rowItems << item;
 
