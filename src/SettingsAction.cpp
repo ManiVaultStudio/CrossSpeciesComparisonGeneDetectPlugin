@@ -1891,7 +1891,7 @@ void SettingsAction::updateButtonTriggered()
                     QMutex clusterGeneMeanExpressionMapMutex;
                     QMutex clusterNameToGeneNameToExpressionValueMutex;
 
-                    QFutureSynchronizer<void> synchronizer; // Use QFutureSynchronizer to wait for all tasks
+                    QFutureSynchronizer<void> synchronizer;
 
                     for (auto& species : speciesValuesAll) {
                         auto future = QtConcurrent::run([&, species]() {
@@ -1906,153 +1906,100 @@ void SettingsAction::updateButtonTriggered()
                             std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
 
                             QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+                            
                             int allTopCounts = 0;
                             int selectedInclusionCounts = 0; 
                             int allMiddleCounts = 0;
-
-                            
                             int allCellCount = 0;
                             int selectedCellCount = commonSelectedIndices.size();
 
-                            auto& tempDetails = _clusterGeneMeanExpressionMap[speciesName];
-                            auto it = tempDetails.begin();
-                            if (it != tempDetails.end()) {
-                                allCellCount = it->second.first;
+                            {
+                                QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
+                                auto it = _clusterGeneMeanExpressionMap[speciesName].begin();
+                                if (it != _clusterGeneMeanExpressionMap[speciesName].end()) {
+                                    allCellCount = it->second.first;
+                                }
                             }
-                            int nonSelectedCellsCount = allCellCount- selectedCellCount;
+                            int nonSelectedCellsCount = allCellCount - selectedCellCount;
 
                             for (const auto& cluster : _topHierarchyClusterMap) {
                                 bool clusterPresent = false;
-                                auto isInInclusionList = inclusionList.contains(cluster.first);
-                                if (isInInclusionList)
-                                {
-                                    qDebug() << "Here 2: ";
+                                qDebug() << "Inclusion List: " << inclusionList;
+                                qDebug() << "Cluster First: " << cluster.first;
+                                if (inclusionList.contains(cluster.first)) {
                                     int clusterSize = cluster.second.size();
-                                    allTopCounts = allTopCounts + clusterSize;
-                                    auto checkVector = cluster.second;
-                                    for (auto ind : commonSelectedIndices)
-                                    {
-                                        if (checkVector[ind])
-                                        {
-                                            selectedInclusionCounts = selectedInclusionCounts + 1;
+                                    allTopCounts += clusterSize;
+                                    for (auto ind : commonSelectedIndices) {
+                                        if (cluster.second[ind]) {
+                                            selectedInclusionCounts++;
                                             clusterPresent = true;
                                         }
-
                                     }
-                                    if (clusterPresent)
-                                    {
-                                        allMiddleCounts = allMiddleCounts + clusterSize;
+                                    if (clusterPresent) {
+                                        allMiddleCounts += clusterSize;
                                     }
-
-
                                 }
-
                             }
- 
-  
-
-
 
                             for (int i = 0; i < pointsDatasetallColumnNameList.size(); i++) {
                                 const auto& geneName = pointsDatasetallColumnNameList[i];
                                 std::vector<int> geneIndex = { i };
 
-                                // Access shared data in a thread-safe manner
-                                QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
-                                const auto& nonSelectionDetails = _clusterGeneMeanExpressionMap[speciesName][geneName];
-                                locker.unlock();
+                                float allCellMean;
+                                {
+                                    QMutexLocker locker(&clusterGeneMeanExpressionMapMutex);
+                                    allCellMean = _clusterGeneMeanExpressionMap[speciesName][geneName].second;
+                                }
 
-                                float allCellMean = nonSelectionDetails.second;
                                 float nonSelectedMean = 0.0;
-
-
                                 if (!commonSelectedIndices.empty()) {
                                     std::vector<float> resultContainerShort(commonSelectedIndices.size());
                                     pointsDatasetRaw->populateDataForDimensions(resultContainerShort, geneIndex, commonSelectedIndices);
-                                    
-                                    float allCellTotal = allCellMean * allCellCount;
 
-                                    float selectedCellsMean= calculateMean(resultContainerShort);
-   
-                                    // Check to prevent division by zero
+                                    float allCellTotal = allCellMean * allCellCount;
+                                    float selectedCellsMean = calculateMean(resultContainerShort);
+
                                     if (nonSelectedCellsCount > 0) {
                                         nonSelectedMean = (allCellTotal - selectedCellsMean * selectedCellCount) / nonSelectedCellsCount;
                                     }
-                                    else {
-                                        nonSelectedMean = 0.0f;
-                                    }
-                                }
-                                else {
+                                } else {
                                     nonSelectedMean = allCellMean;
                                 }
 
                                 int topHierarchyCountValue = 0;
-                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end())
-                                {
+                                if (_clusterSpeciesFrequencyMap.find(speciesName) != _clusterSpeciesFrequencyMap.end()) {
                                     topHierarchyCountValue = _clusterSpeciesFrequencyMap[speciesName]["topCells"];
                                 }
-                                float topHierarchyFrequencyValue = 0.0;
-                                if (topHierarchyCountValue != 0.0f) {
-                                    topHierarchyFrequencyValue = static_cast<float>(selectedCellCount) / topHierarchyCountValue;
-                                }
-
+                                float topHierarchyFrequencyValue = (topHierarchyCountValue != 0) ? static_cast<float>(selectedCellCount) / topHierarchyCountValue : 0.0f;
 
                                 Stats valueStats;
-                                if (allMiddleCounts != 0)
-                                {
-                                    valueStats.abundanceMiddle = (selectedInclusionCounts/allMiddleCounts)*100;
-
-
-
-                                }
-                                else
-                                {
-                                    valueStats.abundanceMiddle = 0.0;
-
-
-     
-                                }
-                                if (allTopCounts != 0)
-                                {
-
-
-
-                                    valueStats.abundanceTop =  (selectedInclusionCounts /allTopCounts)*100;
-                                }
-                                else
-                                {
-
-
-                                    valueStats.abundanceTop = 0.0;
-                                }
-                                
-
+                                valueStats.abundanceMiddle = (allMiddleCounts != 0) ? (selectedInclusionCounts / allMiddleCounts) * 100 : 0.0f;
+                                valueStats.abundanceTop = (allTopCounts != 0) ? (selectedInclusionCounts / allTopCounts) * 100 : 0.0f;
                                 valueStats.countSelected = selectedCellCount;
                                 valueStats.countNonSelected = nonSelectedCellsCount;
                                 valueStats.meanSelected = nonSelectedMean;
                                 valueStats.meanNonSelected = allCellMean;
                                 valueStats.color = speciesColor;
-                                
 
                                 localClusterNameToGeneNameToExpressionValue[geneName] = valueStats;
                             }
 
-                            // Merge results in a thread-safe manner
-                            QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
-                            for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
-                                _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
-                                _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
-                                _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
-                                _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
-                                _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
-                                qDebug() << "Selected Species Cell Count Map: "<< speciesName << _selectedSpeciesCellCountMap[speciesName].selectedCellsCount;
-                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount;
-                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceMiddle;
-                                qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceTop;
-
+                            {
+                                QMutexLocker locker(&clusterNameToGeneNameToExpressionValueMutex);
+                                for (const auto& pair : localClusterNameToGeneNameToExpressionValue) {
+                                    _clusterNameToGeneNameToExpressionValue[speciesName][pair.first] = pair.second;
+                                    _selectedSpeciesCellCountMap[speciesName].selectedCellsCount = pair.second.countSelected;
+                                    _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount = pair.second.countNonSelected;
+                                    _selectedSpeciesCellCountMap[speciesName].abundanceMiddle = pair.second.abundanceMiddle;
+                                    _selectedSpeciesCellCountMap[speciesName].abundanceTop = pair.second.abundanceTop;
+                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].selectedCellsCount;
+                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].nonSelectedCellsCount;
+                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceMiddle;
+                                    //qDebug() << "Selected Species Cell Count Map: " << speciesName << _selectedSpeciesCellCountMap[speciesName].abundanceTop;
+                                }
                             }
-                            });
-                        synchronizer.addFuture(future); // Add each future to the synchronizer
+                        });
+                        synchronizer.addFuture(future);
                     }
 
                     synchronizer.waitForFinished();
