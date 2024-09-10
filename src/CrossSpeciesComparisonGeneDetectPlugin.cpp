@@ -1473,18 +1473,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         }
         else if (middleSet.size() == 1)
         {
-            QString temp = *middleSet.begin();
-            QStringList selectedValues = _settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList().getSelectedOptions();
-            if (selectedValues.contains(temp))
-            {
-                headerStringToAdd = "Neuronal";
-                singleColumn = true;
-            }
-            else
-            {
+
+            
                 headerStringToAdd = *middleSet.begin();
                 singleColumn = false;
-            }
+            
 
 
         }
@@ -1585,20 +1578,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         }
         else if (middleSet.size() == 1)
         {
-            QString temp = *middleSet.begin();
-            QStringList selectedValues= _settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList().getSelectedOptions();
-            if (selectedValues.contains(temp))
-            {
-                headerStringToAdd = "Neuronal";
-                singleColumn = true;
-            }
-            else
-            {
-                headerStringToAdd = *middleSet.begin();
-                singleColumn = false;
-            }
 
-            
+
+            headerStringToAdd = *middleSet.begin();
+            singleColumn = false;
+
+
+
         }
 
 

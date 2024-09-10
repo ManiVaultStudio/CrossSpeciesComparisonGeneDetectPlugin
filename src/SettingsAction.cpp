@@ -1893,7 +1893,7 @@ void SettingsAction::updateButtonTriggered()
                     _currentHierarchyItemsTopForTable.clear();
                     _currentHierarchyItemsMiddleForTable.clear();
                     QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
-
+                    _currentHierarchyItemsMiddleForTable = QSet<QString>{};
                     //
                     for (const auto& [key, clusterIndicesMap] : _topHierarchyClusterMap)
                     {
@@ -1902,12 +1902,16 @@ void SettingsAction::updateButtonTriggered()
                         {
                             if (clusterIndicesMap.at(index))
                             {
-                                _currentHierarchyItemsMiddleForTable.insert(key);
+                                
+                                if (inclusionList.contains(key))
+                                {
+                                    _currentHierarchyItemsMiddleForTable.insert(key);
+                                }
                                 break;
                             }
                         }
                     }
-                    qDebug() << "Middle Hierarchy Items: " << _currentHierarchyItemsMiddleForTable;
+                    //qDebug() << "Middle Hierarchy Items: " << _currentHierarchyItemsMiddleForTable;
 
                     //
 
@@ -2651,17 +2655,24 @@ void SettingsAction::computeHierarchyAppearanceVector()
         auto fullMainDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         auto numOfPoints = fullMainDataset->getNumPoints();
         auto clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+        QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         if (clusterDataset.isValid()) {
             auto clusters = clusterDataset->getClusters();
             if (!clusters.empty()) {
 
                 for (const auto& cluster : clusters) {
-                    std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                    
                     auto clusterName = cluster.getName();
-                    for (const auto& index : cluster.getIndices()) {
-                        clusterNamesAppearance[index] = true;
+                    if (inclusionList.contains(clusterName))
+                    {
+                        std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                        for (const auto& index : cluster.getIndices()) {
+                            clusterNamesAppearance[index] = true;
+                        }
+                        _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
                     }
-                    _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
+
+                
                 }
             }
         }
