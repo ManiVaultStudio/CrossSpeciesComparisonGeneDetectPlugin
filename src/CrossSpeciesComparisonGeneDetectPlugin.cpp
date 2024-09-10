@@ -1779,8 +1779,53 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
+            QString clusterNames = "N/A";
+            if (_settingsAction.getTsneDatasetClusterColors().isValid())
+            {
+                //auto clusterDataset = mv::data().getDataset<Clusters>(_tsneDatasetClusterColors.getDatasetId());
+
+                auto clusterValues = _settingsAction.getTsneDatasetClusterColors()->getClusters();
+
+                if (!clusterValues.empty())
+                {
+                    clusterNames = "";
+                    for (const auto& cluster : clusterValues) {
+                        auto name = cluster.getName();
+                        clusterNames = clusterNames + name + ", ";
+                    }
+                    // Remove the last comma and space
+                    if (!clusterNames.isEmpty()) {
+                        clusterNames.chop(2);
+                    }
+                }
+            }
+            node["clusterName"] = clusterNames;
 
 
+            QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+
+            bool singleColumn;
+            QString headerStringToAdd = "";
+
+            if (middleSet.size() > 1)
+            {
+                headerStringToAdd = "Neuronal";
+                singleColumn = true;
+            }
+            else if (middleSet.size() == 1)
+            {
+
+
+                headerStringToAdd = *middleSet.begin();
+                singleColumn = false;
+            }
+            else
+            {
+                headerStringToAdd = "Abundance";
+            }
+
+
+            node["middleAbundanceClusterName"] = headerStringToAdd;
 
             float topAbundance = 0.0;
             if (it->second.abundanceTop != 0)
