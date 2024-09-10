@@ -88,7 +88,7 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
     QStringList speciesStatsList = formattedStatistics.split(";", Qt::SkipEmptyParts); // Qt 5.14 and later
 
     // qDebug() << speciesStatsList;
-    QRegularExpression regex("Species: (.*), Rank: (\\d+), AbundanceTop: (\\d+), MeanSelected: ([\\d.]+), CountSelected: (\\d+), MeanNotSelected: ([\\d.]+), CountNotSelected: (\\d+)");
+    QRegularExpression regex(R"(Species: (.*), Rank: (\d+), AbundanceTop: (\d+),  AbundanceMiddle: (\d+),  CountAbundanceNumerator: (\d+), MeanSelected: ([\d.]+), CountSelected: (\d+), MeanNotSelected: ([\d.]+), CountNotSelected: (\d+))");
 
     for (const QString& speciesStats : speciesStatsList) {
         QRegularExpressionMatch match = regex.match(speciesStats.trimmed());
@@ -97,10 +97,12 @@ std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& for
             SpeciesDetailsStats stats = {
                 match.captured(2).toInt(),  // Rank
                 match.captured(3).toInt(),  // AbundanceTop
-                match.captured(4).toFloat(),  // MeanSelected
-                match.captured(5).toInt(),  // CountSelected
-                match.captured(6).toFloat(),  // MeanNotSelected
-                match.captured(7).toInt()  // CountNotSelected
+                match.captured(4).toInt(),  // AbundanceMiddle
+                match.captured(5).toInt(),  // CountAbundanceNumerator
+                match.captured(6).toFloat(),  // MeanSelected
+                match.captured(7).toInt(),  // CountSelected
+                match.captured(8).toFloat(),  // MeanNotSelected
+                match.captured(9).toInt()  // CountNotSelected
             };
             statisticsMap[species] = stats;
         }
@@ -563,10 +565,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
     tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
-    tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
-    tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
-    tsneOptionsGroup->addAction(&_settingsAction.getBottomHierarchyClusterNamesFrequencyInclusionList());
-    tsneOptionsGroup->addAction(&_settingsAction.getComputeTreesToDisplayFromHierarchy());
+    //tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
+    //tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
+    //tsneOptionsGroup->addAction(&_settingsAction.getBottomHierarchyClusterNamesFrequencyInclusionList());
+    //tsneOptionsGroup->addAction(&_settingsAction.getComputeTreesToDisplayFromHierarchy());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneAction());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getPerformGeneTableTsneKnn());
@@ -1458,58 +1460,87 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Fraction\nof\nNeuronal", "Count\nSelected", "Count\nAll"/* "Count\nNon\nSelected"*/ });
+        QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
+        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+        bool singleColumn = false;
+        bool isSameStringValues = false; // Ensure this variable is declared
+
+        //qDebug() << "Top Set:" << topSet;
+        //qDebug() << "Middle Set:" << middleSet;
+
+        if (topSet == middleSet) {
+            isSameStringValues = true;
+        } else {
+            isSameStringValues = false;
+        }
+
+        QString headerStringToAdd = "";
+        if (!isSameStringValues)
+        {
+            if (middleSet.size() > 1)
+            {
+                headerStringToAdd = "Combined";
+                singleColumn = false;
+            }
+            else if (middleSet.size() == 1)
+            {
+                headerStringToAdd = *middleSet.begin();
+                singleColumn = false;
+            }
+        }
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
+        }
+
+        model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
-            // Calculate the brightness of the background color
             qreal brightness = backgroundColor.lightnessF();
-
-            // Choose text color based on the brightness of the background color
             QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
+
+            // Species column
             QStandardItem* speciesItem = new QStandardItem(species);
             speciesItem->setBackground(backgroundColor);
-            speciesItem->setForeground(textColor); // Set text color
+            speciesItem->setForeground(textColor);
             rowItems << speciesItem;
 
-            QStandardItem* item;
-
-
-            int topHierarchyCountValue = 0;
-            if (_settingsAction.getClusterSpeciesFrequencyMap().find(species) != _settingsAction.getClusterSpeciesFrequencyMap().end())
+            // Fraction of Neuronal column
+            QStandardItem* item = new QStandardItem();
+            float topAbundance = 0.0;
+            if (details.abundanceTop != 0)
             {
-                topHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["topCells"];
-                //middleHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["middleCells"];
-                //bottomHierarchyCountValue = _settingsAction.getClusterSpeciesFrequencyMap()[species]["bottomCells"];
+                topAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceTop)) * 100;
             }
-            float topHierarchyFrequencyValue = 0.0;
-            if (topHierarchyCountValue != 0.0f) {
-                topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
-            }
-
-            // Add new column for "Frequency Relative Top Hierarchy"
-            item = new QStandardItem();
-
-            QString formattedValue = QString::number(topHierarchyFrequencyValue*100, 'f', 2);
-            item->setData(QVariant(formattedValue), Qt::EditRole);
-            //item->setToolTip(QString::number(topHierarchyFrequencyValue));
+            QString formattedValueTop = QString::number(topAbundance, 'f', 2);
+            item->setData(QVariant(formattedValueTop), Qt::EditRole);
             rowItems << item;
 
+            // Fraction of Middle column
+            item = new QStandardItem();
+            float middleAbundance = 0.0;
+            if (details.abundanceMiddle != 0)
+            {
+                middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
+            }
+            QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
+            item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
+            rowItems << item;
+
+            // Count Selected column
             item = new QStandardItem();
             item->setData(QVariant(details.selectedCellsCount), Qt::EditRole);
             rowItems << item;
 
+            // Count All column
             item = new QStandardItem();
             auto total = details.selectedCellsCount + details.nonSelectedCellsCount;
             item->setData(QVariant(total), Qt::EditRole);
             rowItems << item;
-
-            //item = new QStandardItem();
-            //item->setData(QVariant(details.nonSelectedCellsCount), Qt::EditRole);
-            //rowItems << item;
 
             model->appendRow(rowItems);
         }
@@ -1517,19 +1548,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         // Set the model to the table view
         _settingsAction.getSelectionDetailsTable()->setModel(model);
 
-        // Sort the model by the fourth column (Frequency Relative Top Hierarchy) in descending order
+        // Sort the model by the fourth column (Count Selected) in descending order
         model->sort(3, Qt::DescendingOrder);
 
         // Configure the table view
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        if (singleColumn)
+        {
+            _settingsAction.getSelectionDetailsTable()->hideColumn(2);
+        }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
 
         // Emit layoutChanged signal to notify views of the model change
         emit model->layoutChanged();
     }
-
 
     adjustTableWidths("small");
 }
@@ -1538,33 +1572,51 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(std::map<QString, SpeciesDetailsStats> statisticsValues, QStringList selectedSpecies)
 {
-
-    /*for (const auto& pair : statisticsValues) {
-        const QString& species = pair.first;
-        const SpeciesDetailsStats& stats = pair.second;
-        qDebug() << "Species:" << species
-            << "Rank:" << stats.rank
-            << "MeanSelected:" << stats.meanSelected
-            << "CountSelected:" << stats.countSelected
-            << "MeanNonSelected:" << stats.meanNonSelected
-            << "CountNonSelected:" << stats.countNonSelected
-            << "AbundanceCountTop:" << stats.abundanceCountTop;
-
-            ;
-
-    }*/
-
-
     if (!_settingsAction.getSelectedSpeciesCellCountMap().empty())
     {
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        // Set headers
-        model->setHorizontalHeaderLabels({ "Species","Mean\nDifference","Appearance\nRank", "Fraction\nof\nNeuronal", "Count\nSelected","Mean\nSelected","Count\nNon\nSelected",  "Mean\nNon\nSelected"/*,"Count\nAll",  "Mean\nAll"*/ });
+        QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
+        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+        bool singleColumn = false;
+        bool isSameStringValues = false; // Ensure this variable is declared
+
+        //qDebug() << "Top Set:" << topSet;
+        //qDebug() << "Middle Set:" << middleSet;
+
+        if (topSet == middleSet) {
+            isSameStringValues = true;
+        }
+        else {
+            isSameStringValues = false;
+        }
+
+        QString headerStringToAdd = "";
+        if (!isSameStringValues)
+        {
+            if (middleSet.size() > 1)
+            {
+                headerStringToAdd = "Combined";
+                singleColumn = false;
+            }
+            else if (middleSet.size() == 1)
+            {
+                headerStringToAdd = *middleSet.begin();
+                singleColumn = false;
+            }
+        }
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
+        }
+
+        model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
+
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
-        auto ValuesColor = colorValues[1];
+        auto valuesColor = colorValues[1];
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -1577,169 +1629,145 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-            // replace underscore with space in species
-            QString speciesCopy = species; // Make a copy if species is const
+            QString speciesCopy = species;
             speciesCopy.replace("_", " ");
             QStandardItem* item = new QStandardItem(species);
             item->setBackground(backgroundColor);
-            item->setForeground(textColor); // Set text color
-            rowItems << item; //0 Species
-
+            item->setForeground(textColor);
+            rowItems << item;
 
             // Find statistics for the species
             auto it = statisticsValues.find(species);
             if (it != statisticsValues.end()) {
-
                 QStandardItem* item;
 
                 item = new QStandardItem();
                 float difference = (it->second.meanSelected - it->second.meanNonSelected);
                 item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
-                rowItems << item; //1 Mean\nDifference
+                rowItems << item;
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.rank), Qt::EditRole);
-                rowItems << item; //2 Appearance\nRank
+                rowItems << item;
 
+                item = new QStandardItem();
+                float topAbundance = 0.0;
+                if (it->second.abundanceTop != 0) {
+                    topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
+                }
+                QString formattedValueTop = QString::number(topAbundance, 'f', 2);
+                item->setData(QVariant(formattedValueTop), Qt::EditRole);
+                rowItems << item;
 
-                int topHierarchyCountValue = it->second.abundanceCountTop;
-                float topHierarchyFrequencyValue = 0.0;
-                if (topHierarchyCountValue != 0.0f) {
-                    topHierarchyFrequencyValue = static_cast<float>(details.selectedCellsCount) / topHierarchyCountValue;
+                float middleAbundance = 0.0;
+                if (it->second.abundanceMiddle != 0)
+                {
+                    middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
                 }
                 item = new QStandardItem();
-                QString formattedValue = QString::number(topHierarchyFrequencyValue*100, 'f', 2);
-                item->setData(QVariant(formattedValue), Qt::EditRole);
-                rowItems << item; //3 Relative\nAbundance\nNeuronal\nTop\nHierarchy
-
+                QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
+                item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
+                rowItems << item;
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.countSelected), Qt::EditRole);
-                rowItems << item; //4 Count\nSelected
-
+                rowItems << item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.meanSelected), Qt::EditRole);
-                rowItems << item; //5 Mean\nSelected
+                QString formattedMeanSelected = QString::number(it->second.meanSelected, 'f', 2);
+                item->setData(QVariant(formattedMeanSelected), Qt::EditRole);
+                rowItems << item;
 
                 item = new QStandardItem();
                 item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
-                rowItems << item;  //6 Count\nNon\nSelected
+                rowItems << item;
 
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.meanNonSelected), Qt::EditRole);
-                rowItems << item; //7 Mean\nNon\nSelected
-
-
+                QString formattedMeanNonSelected = QString::number(it->second.meanNonSelected, 'f', 2);
+                item->setData(QVariant(formattedMeanNonSelected), Qt::EditRole);
+                rowItems << item;
             }
             else {
-                
                 qDebug() << "Species: " + species + " not found in map auto it = statisticsValues.find(species);";
-                // print auto it = statisticsValues.find(species);
-                
                 for (auto it = statisticsValues.begin(); it != statisticsValues.end(); ++it)
                 {
                     qDebug() << it->first;
                 }
-                //_settingsAction.setErrorOutFlag(true);
-                //_settingsAction.getStatusColorAction().setString("E");
-                // Fill with placeholders if no statistics found
-                rowItems << new QStandardItem("N/A"); //1
-                rowItems << new QStandardItem("N/A"); //2
-                rowItems << new QStandardItem("N/A"); //3
-                rowItems << new QStandardItem("N/A"); //4
-                rowItems << new QStandardItem("N/A"); //5
-                rowItems << new QStandardItem("N/A"); //6
-                rowItems << new QStandardItem("N/A"); //7
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
+                rowItems << new QStandardItem("N/A");
             }
 
-            //QStringList speciesChosen = {};
-            // Check if the species is in the selectedSpecies list and color the row if it is
             if (selectedSpecies.contains(species)) {
                 for (int i = 1; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
-                    rowItems[i]->setForeground(QBrush(QColor(ValuesColor)));
+                    rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
-
             }
             else
             {
                 for (int i = 1; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor(systemColor)));
-                    rowItems[i]->setForeground(QBrush(QColor(ValuesColor)));
+                    rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
-
-
             }
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);
-
 
             model->appendRow(rowItems);
         }
         _settingsAction.getSelectionDetailsTable()->setModel(model);
-        model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);////"Absolute","Negative","Positive","Mixed"
+        model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);
 
-        //_settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
-
-        
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+        if (singleColumn) {
+            _settingsAction.getSelectionDetailsTable()->hideColumn(4);
+        }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
         _settingsAction.getSelectionDetailsTable()->update();
-        emit model->layoutChanged();
 
+
+
+        emit model->layoutChanged();
 
         // Add a connect for row selection
         connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
             static QModelIndex lastSelectedIndex;
 
-            //qDebug() << "Selection changed"; // Debug statement to check if the slot is triggered
             if (selected.isEmpty()) {
-               // qDebug() << "No selection"; // Debug statement to check if selection is empty
                 return;
             }
             QModelIndexList selectedIndexes = selected.indexes();
             if (selectedIndexes.isEmpty()) {
-               // qDebug() << "No selected indexes"; // Debug statement to check if selected indexes are empty
                 return;
             }
             QModelIndex selectedIndex = selectedIndexes.at(0);
             if (!selectedIndex.isValid()) {
-               // qDebug() << "Invalid index"; // Debug statement to check if the index is valid
                 return;
             }
 
-            // Check if the same row is clicked a second time
-            /*if (selectedIndex == lastSelectedIndex) {
-                clearTableSelection(_settingsAction.getSelectionDetailsTable());
-                lastSelectedIndex = QModelIndex(); // Reset the last selected index
-                qDebug() << "Selection cleared"; // Debug statement to indicate selection is cleared
-                return;
-            }*/
-
-            lastSelectedIndex = selectedIndex; // Update the last selected index
+            lastSelectedIndex = selectedIndex;
             QString species = selectedIndex.siblingAtColumn(0).data().toString();
-            //qDebug() << "Species selected" << species; // Debug statement to print the selected species
             QStringList autoSpecies = { species };
 
             if (!(autoSpecies.size() == 1 && autoSpecies.first().isEmpty())) {
                 if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
                 {
                     _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
-                    //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
                     geneExplorer();
                 }
             }
-            //_settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autopspecies);
-            //_settingsAction.getSelctedSpeciesVals().setString(species);
-            //geneExplorer(species);
             _settingsAction.getClearRightClickedCluster().trigger();
             });
-        
-
     }
     adjustTableWidths("large");
 }
+
 
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
@@ -1766,14 +1794,23 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
-            int topHierarchyCountValue = it->second.abundanceCountTop;
 
-            float topHierarchyFrequencyValue = 0.0;
-            if (topHierarchyCountValue != 0.0f) {
-                topHierarchyFrequencyValue = static_cast<float>(it->second.countSelected) / topHierarchyCountValue;
+
+
+            float topAbundance = 0.0;
+            if (it->second.abundanceTop != 0)
+            {
+                topAbundance =  (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
             }
 
-            node["abundance"] = topHierarchyFrequencyValue;
+            float middleAbundance = 0.0;
+            if (it->second.abundanceMiddle != 0)
+            {
+                middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
+            }
+
+            node["abundanceTop"] = std::round(topAbundance * 100.0) / 100.0;
+            node["abundanceMiddle"] =  std::round(middleAbundance * 100.0) / 100.0;
         }
         if (it != speciesExpressionMap.end()) {
             node["cellCounts"] = it->second.countSelected;

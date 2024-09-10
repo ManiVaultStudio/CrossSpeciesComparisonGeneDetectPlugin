@@ -136,7 +136,9 @@ struct ClusterOrderContainer {
 
 struct SpeciesDetailsStats {
     int rank;
-    int abundanceCountTop;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbundanceNumerator;
     float meanSelected;
     int countSelected;
     float meanNonSelected;
@@ -154,15 +156,21 @@ struct Stats {
     float meanNonSelected;
     int countNonSelected;
     QColor color;
-    int abundanceCountTop;
+    int abundanceTop;
+    int  abundanceMiddle;
+    int countAbundanceNumerator;
     //float meanAll;
     //int countAll;
 
 };
+
 struct SpeciesColorCountStorageVals {
     QColor color;
     int selectedCellsCount;
     int nonSelectedCellsCount;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbundanceNumerator;
     //int allCellsCount;
 };
 
@@ -175,7 +183,9 @@ struct StatisticsSingle {
 struct InitialStatistics {
     float meanVal;
     float differentialVal;
-    float abundanceVal;
+    int abundanceTop;
+    int abundanceMiddle;
+    int countAbundanceNumerator;
     int rankVal;
     QString geneName;
 };
@@ -249,8 +259,6 @@ public: // Action getters
     ToggleAction& getUsePreComputedTSNE() { return _usePreComputedTSNE; }
     OptionsAction& getSpeciesExplorerInMap() { return _speciesExplorerInMap; }
     OptionsAction& getTopHierarchyClusterNamesFrequencyInclusionList() { return _topHierarchyClusterNamesFrequencyInclusionList; }
-    OptionsAction& getMiddleHierarchyClusterNamesFrequencyInclusionList() { return _middleHierarchyClusterNamesFrequencyInclusionList; }
-    OptionsAction& getBottomHierarchyClusterNamesFrequencyInclusionList() { return _bottomHierarchyClusterNamesFrequencyInclusionList; }
     TriggerAction& getSpeciesExplorerInMapTrigger() { return _speciesExplorerInMapTrigger; }
     TriggerAction& getRevertRowSelectionChangesToInitial() { return _revertRowSelectionChangesToInitial; }
     ToggleAction& getApplyLogTransformation() { return _applyLogTransformation; }
@@ -267,7 +275,8 @@ public: // Action getters
     TriggerAction& getClearRightClickedCluster() { return _clearRightClickedCluster; }
 
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
-
+    QSet<QString>   getCurrentHierarchyItemsTopForTable() { return _currentHierarchyItemsTopForTable; }
+    QSet<QString>   getCurrentHierarchyItemsMiddleForTable() { return _currentHierarchyItemsMiddleForTable; }
     //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
@@ -307,6 +316,7 @@ public: // Action getters
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
+    
     QSet<QString>& getUniqueReturnGeneList() { return _uniqueReturnGeneList; }
     std::vector<QString>& getTotalGeneList() { return _totalGeneList; }
     Dataset<Points>& getGeneSimilarityPoints() { return _geneSimilarityPoints; }
@@ -340,6 +350,7 @@ public: // Action getters
     void createClusterPositionMap();
     //void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
+    void computeHierarchyAppearanceVector();
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -436,8 +447,6 @@ protected:
     QSet<QString>               _uniqueReturnGeneList;
     IntegralAction                _performGeneTableTsnePerplexity;
     OptionsAction                 _topHierarchyClusterNamesFrequencyInclusionList;
-    OptionsAction                 _middleHierarchyClusterNamesFrequencyInclusionList;
-    OptionsAction                 _bottomHierarchyClusterNamesFrequencyInclusionList;
     OptionAction                   _performGeneTableTsneKnn;
     OptionAction                   _performGeneTableTsneDistance;
     TriggerAction                  _performGeneTableTsneTrigger;
@@ -453,4 +462,7 @@ protected:
     //std::vector<QString> _speciesOrder;
     StringAction              _rightClickedCluster;
     TriggerAction              _clearRightClickedCluster;
+    std::map<QString, std::vector<bool>> _topHierarchyClusterMap;
+    QSet<QString>                   _currentHierarchyItemsTopForTable;
+    QSet<QString>                   _currentHierarchyItemsMiddleForTable;
 };
