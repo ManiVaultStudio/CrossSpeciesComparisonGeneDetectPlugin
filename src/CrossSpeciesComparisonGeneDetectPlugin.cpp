@@ -556,6 +556,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterOrderHierarchy());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getRightClickedCluster());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClearRightClickedCluster());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getTopSelectedHierarchyStatus());
 
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
@@ -1461,7 +1462,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         QStandardItemModel* model = new QStandardItemModel();
 
 
-        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+        QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
 
         bool singleColumn;
         QString headerStringToAdd = "";
@@ -1481,7 +1482,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
 
         }
-
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
+        }
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
 
@@ -1566,7 +1571,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+        QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
 
         bool singleColumn;
         QString headerStringToAdd = "";
@@ -1586,7 +1591,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
 
         }
-
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
+        }
 
         model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
 
