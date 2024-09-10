@@ -623,8 +623,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
     auto linkerandtsneLayout = new QVBoxLayout();
-    auto linkerWidget = datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget());
-    linkerWidget->setMaximumHeight(22);
+    //auto linkerWidget = datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget());
+    //linkerWidget->setMaximumHeight(22);
     //linkerandtsneLayout->addWidget(linkerWidget);
     auto tsneWidget = tsneOptionsGroup->createCollapsedWidget(&getWidget());
     tsneWidget->setMaximumHeight(22);
