@@ -266,6 +266,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _computeTreesToDisplayFromHierarchy(this, "Compute Trees To Display From Hierarchy"),
     _clusterOrderHierarchy(this, "Cluster Order Hierarchy"),
     _rightClickedCluster(this, "Right Clicked Cluster"),
+    _topSelectedHierarchyStatus(this, "Top Selected Hierarchy Status"),
     _clearRightClickedCluster(this, "Clear Right Clicked Cluster"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
@@ -454,6 +455,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _selectedSpeciesVals.setSerializationName("CSCGDV:Selected Species Vals");
     _clusterOrderHierarchy.setSerializationName("CSCGDV:Cluster Order Hierarchy");
     _rightClickedCluster.setSerializationName("CSCGDV:Right Clicked Cluster");
+    _topSelectedHierarchyStatus.setSerializationName("CSCGDV:Top Selected Hierarchy Status");
     _clearRightClickedCluster.setSerializationName("CSCGDV:Clear Right Clicked Cluster");
     _removeRowSelection.setSerializationName("CSCGDV:Remove Row Selection");
     _removeRowSelection.setDisabled(true);
@@ -478,6 +480,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _performGeneTableTsneTrigger.setDisabled(true);
     _clusterOrderHierarchy.setString("");
     _rightClickedCluster.setString("");
+    _topSelectedHierarchyStatus.setString("");
     _tsnePerplexity.setSerializationName("CSCGDV:TSNE Perplexity");
     _tsnePerplexity.setMinimum(1);
     _tsnePerplexity.setMaximum(50);
@@ -1078,7 +1081,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     if (speciesDataJson.isEmpty())
                     {
                         _clearRightClickedCluster.trigger();
-                        qDebug() << "Species Data Json Empty";
+                        //qDebug() << "Species Data Json Empty";
                         return;
                     }
                     referenceTree->setTreeData(speciesDataJson);
@@ -1103,6 +1106,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_rightClickedCluster, &StringAction::stringChanged, this, updateRightClickedCluster);
+    const auto updateTopSelectedHierarchyStatus = [this]() -> void {
+
+
+
+        };
+    connect(&_topSelectedHierarchyStatus, &StringAction::stringChanged, this, updateTopSelectedHierarchyStatus);
 
     const auto updateApplyLogTransformation = [this]() -> void {
         _statusColorAction.setString("M");
@@ -1886,11 +1895,56 @@ void SettingsAction::updateButtonTriggered()
                     futureSpeciesCVals.waitForFinished();
                     //stopCodeTimer("Part12.1");
 
+
+
                     //startCodeTimer("Part12.2");
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
-                    _currentHierarchyItemsTopForTable.clear();
-                    _currentHierarchyItemsMiddleForTable.clear();
+                    //_currentHierarchyItemsTopForTable.clear();
+                    //_currentHierarchyItemsMiddleForTable.clear();
                     QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+                    _currentHierarchyItemsMiddleForTable = QStringList{};
+                    if (_topSelectedHierarchyStatus.getString() != "")
+                    {
+
+                        QStringList list = _topSelectedHierarchyStatus.getString().split(" @%$,$%@ ");
+                        for (const auto& item : list) {
+
+                            if (inclusionList.contains(item))
+                            {
+                                _currentHierarchyItemsMiddleForTable.push_back(item);
+                            }
+                            
+                        }
+                    }
+                    else
+                    {
+                        _currentHierarchyItemsMiddleForTable = QStringList{};
+                    }
+
+
+                    //_currentHierarchyItemsMiddleForTable = QSet<QString>{};
+                    //
+                    /*for (const auto& [key, clusterIndicesMap] : _topHierarchyClusterMap)
+                    {
+                        
+                        for (const auto& index : _selectedIndicesFromStorage)
+                        {
+                            if (clusterIndicesMap.at(index))
+                            {
+                                
+                                if (inclusionList.contains(key))
+                                {
+                                    _currentHierarchyItemsMiddleForTable.insert(key);
+                                }
+                                break;
+                            }
+                        }
+                    }*/
+                    //qDebug() << "Middle Hierarchy Items: " << _currentHierarchyItemsMiddleForTable;
+
+                    //
+
+                    
                     QMutex mutex; // Mutex for thread safety
 
                     QtConcurrent::blockingMap(speciesValuesAll, [&](auto& species) {
@@ -1926,8 +1980,8 @@ void SettingsAction::updateButtonTriggered()
                                 bool clusterPresent = false;
                                 auto currentInclusionClusterMap = cluster.second;
                                 {
-                                    QMutexLocker locker(&mutex);
-                                    _currentHierarchyItemsTopForTable.insert(cluster.first);
+                                    //QMutexLocker locker(&mutex);
+                                    //_currentHierarchyItemsTopForTable.insert(cluster.first);
                                 }
                                 int clusterSize = 0;
 
@@ -1948,8 +2002,8 @@ void SettingsAction::updateButtonTriggered()
                                 if (clusterPresent) {
                                     allMiddleCounts += clusterSize;
                                     {
-                                        QMutexLocker locker(&mutex);
-                                        _currentHierarchyItemsMiddleForTable.insert(cluster.first);
+                                        //QMutexLocker locker(&mutex);
+                                        //_currentHierarchyItemsMiddleForTable.insert(cluster.first);
                                     }
                                 }
                             }
@@ -2630,17 +2684,24 @@ void SettingsAction::computeHierarchyAppearanceVector()
         auto fullMainDataset = mv::data().getDataset<Points>(_mainPointsDataset.getCurrentDataset().getDatasetId());
         auto numOfPoints = fullMainDataset->getNumPoints();
         auto clusterDataset = mv::data().getDataset<Clusters>(_topClusterNamesDataset.getCurrentDataset().getDatasetId());
+        QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
         if (clusterDataset.isValid()) {
             auto clusters = clusterDataset->getClusters();
             if (!clusters.empty()) {
 
                 for (const auto& cluster : clusters) {
-                    std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                    
                     auto clusterName = cluster.getName();
-                    for (const auto& index : cluster.getIndices()) {
-                        clusterNamesAppearance[index] = true;
+                    if (inclusionList.contains(clusterName))
+                    {
+                        std::vector<bool> clusterNamesAppearance(numOfPoints, false);
+                        for (const auto& index : cluster.getIndices()) {
+                            clusterNamesAppearance[index] = true;
+                        }
+                        _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
                     }
-                    _topHierarchyClusterMap[clusterName] = clusterNamesAppearance;
+
+                
                 }
             }
         }
@@ -3506,6 +3567,7 @@ void SettingsAction::enableActions()
     _selectedSpeciesVals.setDisabled(false);
     _clusterOrderHierarchy.setDisabled(false);
     _rightClickedCluster.setDisabled(false);
+    _topSelectedHierarchyStatus.setDisabled(false);
     _clearRightClickedCluster.setDisabled(false);
     _statusColorAction.setDisabled(false);
     _searchBox->setDisabled(false);
@@ -3555,6 +3617,7 @@ void SettingsAction::disableActions()
     _selectedSpeciesVals.setDisabled(true);
     _clusterOrderHierarchy.setDisabled(true);
     _rightClickedCluster.setDisabled(true);
+    _topSelectedHierarchyStatus.setDisabled(true);
     _clearRightClickedCluster.setDisabled(true);
     _statusColorAction.setDisabled(true);
     _searchBox->setDisabled(true);
@@ -4073,6 +4136,7 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
     _selectedSpeciesVals.fromParentVariantMap(variantMap);
     _clusterOrderHierarchy.fromParentVariantMap(variantMap);
     _rightClickedCluster.fromParentVariantMap(variantMap);
+    _topSelectedHierarchyStatus.fromParentVariantMap(variantMap);
     _clearRightClickedCluster.fromParentVariantMap(variantMap);
     _removeRowSelection.fromParentVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.fromParentVariantMap(variantMap);
@@ -4118,6 +4182,7 @@ QVariantMap SettingsAction::toVariantMap() const
     _selectedSpeciesVals.insertIntoVariantMap(variantMap);
     _clusterOrderHierarchy.insertIntoVariantMap(variantMap);
     _rightClickedCluster.insertIntoVariantMap(variantMap);
+    _topSelectedHierarchyStatus.insertIntoVariantMap(variantMap);
     _clearRightClickedCluster.insertIntoVariantMap(variantMap);
     _removeRowSelection.insertIntoVariantMap(variantMap);
     _revertRowSelectionChangesToInitial.insertIntoVariantMap(variantMap);

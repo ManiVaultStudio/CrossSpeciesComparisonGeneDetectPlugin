@@ -272,11 +272,12 @@ public: // Action getters
     StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
     ToggleAction& getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker; }
     StringAction& getRightClickedCluster() { return _rightClickedCluster; }
+    StringAction& getTopSelectedHierarchyStatus() { return _topSelectedHierarchyStatus; }
     TriggerAction& getClearRightClickedCluster() { return _clearRightClickedCluster; }
 
     Dataset<Points>& getSelectedPointsTSNEDatasetForGeneTable() { return _selectedPointsTSNEDatasetForGeneTable; }
-    QSet<QString>   getCurrentHierarchyItemsTopForTable() { return _currentHierarchyItemsTopForTable; }
-    QSet<QString>   getCurrentHierarchyItemsMiddleForTable() { return _currentHierarchyItemsMiddleForTable; }
+
+    QStringList   getCurrentHierarchyItemsMiddleForTable() { return _currentHierarchyItemsMiddleForTable; }
     //IntegralAction& setPerformGeneTableTsnePerplexity() { return _performGeneTableTsnePerplexity; }
     //tsne relatedDatasets
     /*
@@ -463,6 +464,7 @@ protected:
     StringAction              _rightClickedCluster;
     TriggerAction              _clearRightClickedCluster;
     std::map<QString, std::vector<bool>> _topHierarchyClusterMap;
-    QSet<QString>                   _currentHierarchyItemsTopForTable;
-    QSet<QString>                   _currentHierarchyItemsMiddleForTable;
+
+    QStringList                   _currentHierarchyItemsMiddleForTable;
+    StringAction               _topSelectedHierarchyStatus;
 };
