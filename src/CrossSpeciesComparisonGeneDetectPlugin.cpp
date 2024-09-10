@@ -556,6 +556,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClusterOrderHierarchy());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getRightClickedCluster());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getClearRightClickedCluster());
+    datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getTopSelectedHierarchyStatus());
 
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
@@ -1460,38 +1461,31 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
-        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
-        bool singleColumn = false;
-        bool isSameStringValues = false; // Ensure this variable is declared
 
-        //qDebug() << "Top Set:" << topSet;
-        //qDebug() << "Middle Set:" << middleSet;
+        QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
 
-        if (topSet == middleSet) {
-            isSameStringValues = true;
-        } else {
-            isSameStringValues = false;
-        }
-
+        bool singleColumn;
         QString headerStringToAdd = "";
-        if (!isSameStringValues)
+
+        if (middleSet.size() > 1)
         {
-            if (middleSet.size() > 1)
-            {
-                headerStringToAdd = "Combined";
-                singleColumn = false;
-            }
-            else if (middleSet.size() == 1)
-            {
+            headerStringToAdd = "Neuronal";
+            singleColumn = true;
+        }
+        else if (middleSet.size() == 1)
+        {
+
+            
                 headerStringToAdd = *middleSet.begin();
                 singleColumn = false;
-            }
+            
+
+
         }
         else
         {
-            headerStringToAdd = "Parent";
-            singleColumn = false;
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
@@ -1577,39 +1571,30 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
-        QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
-        bool singleColumn = false;
-        bool isSameStringValues = false; // Ensure this variable is declared
+        QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
 
-        //qDebug() << "Top Set:" << topSet;
-        //qDebug() << "Middle Set:" << middleSet;
-
-        if (topSet == middleSet) {
-            isSameStringValues = true;
-        }
-        else {
-            isSameStringValues = false;
-        }
-
+        bool singleColumn;
         QString headerStringToAdd = "";
-        if (!isSameStringValues)
+
+        if (middleSet.size() > 1)
         {
-            if (middleSet.size() > 1)
-            {
-                headerStringToAdd = "Combined";
-                singleColumn = false;
-            }
-            else if (middleSet.size() == 1)
-            {
-                headerStringToAdd = *middleSet.begin();
-                singleColumn = false;
-            }
+            headerStringToAdd = "Neuronal";
+            singleColumn = true;
+        }
+        else if (middleSet.size() == 1)
+        {
+
+
+            headerStringToAdd = *middleSet.begin();
+            singleColumn = false;
+
+
+
         }
         else
         {
-            headerStringToAdd = "Parent";
-            singleColumn = false;
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
