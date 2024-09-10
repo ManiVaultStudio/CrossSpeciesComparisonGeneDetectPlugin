@@ -1488,7 +1488,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             singleColumn = true;
         }
 
-        model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
+        model->setHorizontalHeaderLabels({ "Species", "Fraction in Neuronal", "Fraction in " + headerStringToAdd , "Count of Selected", "Count of All" });
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
             QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
@@ -1597,7 +1597,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             singleColumn = true;
         }
 
-        model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
+        model->setHorizontalHeaderLabels({ "Species", "Mean Differential Expression", "Appearance Rank", "Fraction in Neuronal", "Fraction in " + headerStringToAdd, "Count of Selected", "Mean Expression of Selected", "Count of Non Selected", "Mean Expression of Non Selected" });
 
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
@@ -1789,14 +1789,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
                 if (!clusterValues.empty())
                 {
                     clusterNames = "";
-                    for (const auto& cluster : clusterValues) {
-                        auto name = cluster.getName();
-                        clusterNames = clusterNames + name + ", ";
+                    if (clusterValues.size() > 1)
+                    {
+                        clusterNames = "selected cells";
                     }
-                    // Remove the last comma and space
-                    if (!clusterNames.isEmpty()) {
-                        clusterNames.chop(2);
+                    else
+                    {
+                        clusterNames= clusterValues.at(0).getName();
                     }
+
                 }
             }
             node["clusterName"] = clusterNames;
@@ -1821,7 +1822,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             }
             else
             {
-                headerStringToAdd = "Abundance";
+                headerStringToAdd = "parent cluster";
             }
 
 
