@@ -563,8 +563,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
     //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
-    tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
-    tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
+    //tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
+    //tsneOptionsGroup->addAction(&_settingsAction.getScatterplotReembedColorOption());
     tsneOptionsGroup->addAction(&_settingsAction.getApplyLogTransformation());
     //tsneOptionsGroup->addAction(&_settingsAction.getTopHierarchyClusterNamesFrequencyInclusionList());
     //tsneOptionsGroup->addAction(&_settingsAction.getMiddleHierarchyClusterNamesFrequencyInclusionList());
