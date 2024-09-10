@@ -1078,7 +1078,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                     if (speciesDataJson.isEmpty())
                     {
                         _clearRightClickedCluster.trigger();
-                        qDebug() << "Species Data Json Empty";
+                        //qDebug() << "Species Data Json Empty";
                         return;
                     }
                     referenceTree->setTreeData(speciesDataJson);
@@ -1886,11 +1886,32 @@ void SettingsAction::updateButtonTriggered()
                     futureSpeciesCVals.waitForFinished();
                     //stopCodeTimer("Part12.1");
 
+
+
                     //startCodeTimer("Part12.2");
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                     _currentHierarchyItemsTopForTable.clear();
                     _currentHierarchyItemsMiddleForTable.clear();
                     QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+
+                    //
+                    for (const auto& [key, clusterIndicesMap] : _topHierarchyClusterMap)
+                    {
+                        
+                        for (const auto& index : _selectedIndicesFromStorage)
+                        {
+                            if (clusterIndicesMap.at(index))
+                            {
+                                _currentHierarchyItemsMiddleForTable.insert(key);
+                                break;
+                            }
+                        }
+                    }
+                    qDebug() << "Middle Hierarchy Items: " << _currentHierarchyItemsMiddleForTable;
+
+                    //
+
+                    
                     QMutex mutex; // Mutex for thread safety
 
                     QtConcurrent::blockingMap(speciesValuesAll, [&](auto& species) {
@@ -1926,8 +1947,8 @@ void SettingsAction::updateButtonTriggered()
                                 bool clusterPresent = false;
                                 auto currentInclusionClusterMap = cluster.second;
                                 {
-                                    QMutexLocker locker(&mutex);
-                                    _currentHierarchyItemsTopForTable.insert(cluster.first);
+                                    //QMutexLocker locker(&mutex);
+                                    //_currentHierarchyItemsTopForTable.insert(cluster.first);
                                 }
                                 int clusterSize = 0;
 
@@ -1948,8 +1969,8 @@ void SettingsAction::updateButtonTriggered()
                                 if (clusterPresent) {
                                     allMiddleCounts += clusterSize;
                                     {
-                                        QMutexLocker locker(&mutex);
-                                        _currentHierarchyItemsMiddleForTable.insert(cluster.first);
+                                        //QMutexLocker locker(&mutex);
+                                        //_currentHierarchyItemsMiddleForTable.insert(cluster.first);
                                     }
                                 }
                             }
