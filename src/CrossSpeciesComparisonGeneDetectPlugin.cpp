@@ -1459,11 +1459,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
     {
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
-        bool isSameStringValues = false;
 
         QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
         QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
         bool singleColumn = false;
+        bool isSameStringValues = false; // Ensure this variable is declared
+
+        //qDebug() << "Top Set:" << topSet;
+        //qDebug() << "Middle Set:" << middleSet;
 
         if (topSet == middleSet) {
             isSameStringValues = true;
@@ -1471,11 +1474,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             isSameStringValues = false;
         }
 
-        qDebug() << "Middle: " << _settingsAction.getCurrentHierarchyItemsMiddleForTable();
-        qDebug() << "Top: " << _settingsAction.getCurrentHierarchyItemsTopForTable();
-        QString headerStringToAdd = "Abundance";
-
-        // Set headers
+        QString headerStringToAdd = "";
         if (!isSameStringValues)
         {
             if (middleSet.size() > 1)
@@ -1485,9 +1484,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             }
             else if (middleSet.size() == 1)
             {
-                headerStringToAdd =  *middleSet.begin();
+                headerStringToAdd = *middleSet.begin();
                 singleColumn = false;
             }
+        }
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
@@ -1573,32 +1577,39 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         // Create a new model for the table view
         QStandardItemModel* model = new QStandardItemModel();
 
-        bool isSameStringValues = false;
-
         QSet<QString> topSet = _settingsAction.getCurrentHierarchyItemsTopForTable();
         QSet<QString> middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
         bool singleColumn = false;
+        bool isSameStringValues = false; // Ensure this variable is declared
+
+        //qDebug() << "Top Set:" << topSet;
+        //qDebug() << "Middle Set:" << middleSet;
 
         if (topSet == middleSet) {
             isSameStringValues = true;
         }
         else {
-            isSameStringValues = true;
+            isSameStringValues = false;
         }
 
-        QString headerStringToAdd = "Abundance";
+        QString headerStringToAdd = "";
         if (!isSameStringValues)
         {
             if (middleSet.size() > 1)
             {
-                headerStringToAdd = "Fraction of Combined";
+                headerStringToAdd = "Combined";
                 singleColumn = false;
             }
             else if (middleSet.size() == 1)
             {
-                headerStringToAdd = "Fraction of " + *middleSet.begin();
+                headerStringToAdd = *middleSet.begin();
                 singleColumn = false;
             }
+        }
+        else
+        {
+            headerStringToAdd = "Abundance";
+            singleColumn = true;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
@@ -1714,12 +1725,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
-        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
-        _settingsAction.getSelectionDetailsTable()->update();
-
         if (singleColumn) {
             _settingsAction.getSelectionDetailsTable()->hideColumn(4);
         }
+        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        _settingsAction.getSelectionDetailsTable()->update();
+
+
 
         emit model->layoutChanged();
 

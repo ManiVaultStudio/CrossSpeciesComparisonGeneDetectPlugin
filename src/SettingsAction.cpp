@@ -1890,7 +1890,7 @@ void SettingsAction::updateButtonTriggered()
                     std::sort(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end());
                     _currentHierarchyItemsTopForTable.clear();
                     _currentHierarchyItemsMiddleForTable.clear();
-
+                    QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
                     QMutex mutex; // Mutex for thread safety
 
                     QtConcurrent::blockingMap(speciesValuesAll, [&](auto& species) {
@@ -1904,7 +1904,7 @@ void SettingsAction::updateButtonTriggered()
                         std::set_intersection(_selectedIndicesFromStorage.begin(), _selectedIndicesFromStorage.end(), speciesIndices.begin(), speciesIndices.end(), std::back_inserter(commonSelectedIndices));
                         std::unordered_map<QString, Stats> localClusterNameToGeneNameToExpressionValue;
 
-                        QStringList inclusionList = _topHierarchyClusterNamesFrequencyInclusionList.getSelectedOptions();
+                        
 
                         int allTopCounts = 0;
                         int selectedInclusionCounts = 0;
