@@ -1597,7 +1597,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             singleColumn = true;
         }
 
-        model->setHorizontalHeaderLabels({ "Species", "Mean Gene Differential Expression", "Gene Appearance Rank", "Fraction in Neuronal", "Fraction in " + headerStringToAdd, "Count of Selected", "Mean Expression of Selected", "Count of Non Selected", "Mean Expression of Non Selected" });
+        model->setHorizontalHeaderLabels({ "Species", "Mean Gene Differential Expression", "Gene Appearance Rank", "Fraction in Neuronal", "Fraction in " + headerStringToAdd, "Count of Selected", "Mean Gene Expression of Selected", "Count of Non Selected", "Mean Gene Expression of Non Selected" });
 
         auto colorValues = _settingsAction.getSystemModeColor();
         auto systemColor = colorValues[0];
