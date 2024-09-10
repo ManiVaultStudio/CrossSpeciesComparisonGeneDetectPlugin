@@ -1490,8 +1490,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         }
         else
         {
-            headerStringToAdd = "Abundance";
-            singleColumn = true;
+            headerStringToAdd = "Parent";
+            singleColumn = false;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction of Neuronal", "Fraction of " + headerStringToAdd , "Count Selected", "Count All" });
@@ -1608,8 +1608,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         }
         else
         {
-            headerStringToAdd = "Abundance";
-            singleColumn = true;
+            headerStringToAdd = "Parent";
+            singleColumn = false;
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Mean Difference", "Appearance Rank", "Fraction of Neuronal", "Fraction of " + headerStringToAdd, "Count Selected", "Mean Selected", "Count Non Selected", "Mean Non Selected" });
