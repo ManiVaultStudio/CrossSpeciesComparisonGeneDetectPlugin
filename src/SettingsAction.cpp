@@ -876,7 +876,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                         return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                         });
@@ -1733,7 +1733,7 @@ void SettingsAction::updateButtonTriggered()
 
                                                     if (samplerActionAction)
                                                     {
-                                                        samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                                        samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                                             QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                                             return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                                             });
@@ -3251,7 +3251,7 @@ void SettingsAction::findTopNGenesPerCluster() {
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                         return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                         });
@@ -3863,38 +3863,18 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     }
 
     // Generate HTML output
-    //QString html = "<html><head><style>"
-    //    "table { border-collapse: collapse; width: 100%; font-size: 12px; }"
-    //    "th, td { border: 1px solid black; padding: 4px; text-align: left; }"
-    //    "th { background-color: #f2f2f2; }"
-    //    "</style></head><body>";
-    //html += "<table>";
-    //html += "<tr><th>Cluster Name</th><th>Count</th></tr>";
-
-    //// Populate the table with cluster data
-    //for (const auto& entry : clusterCountMap) {
-    //    QString clusterName = entry.first;
-    //    int count = entry.second.first;
-    //    QString colorHex = entry.second.second.name();
-
-    //    html += "<tr>";
-    //    html += "<td style='background-color:" + colorHex + ";'>" + clusterName + "</td>";
-    //    html += "<td>" + QString::number(count) + "</td>";
-    //    html += "</tr>";
-    //}
-
-    //html += "</table></body></html>";
-    //return html;
     QString html = "<html><head><style>"
-        "body { display: flex; flex-wrap: wrap; max-width: 800px; }" // Set max-width to control wrapping
-        "div { display: inline-block; padding: 4px; margin: 2px; border: 1px solid black; font-size: 12px; }"
+        "body { display: flex; flex-direction: column; align-items: flex-start; }"
+        ".bar-container { display: flex; align-items: center; margin: 2px 0; }"
+        ".bar { height: 20px; margin-right: 5px; }"
+        ".label { font-size: 12px; }"
         "</style></head><body>";
 
     // Function to determine if a color is dark
     auto isDarkColor = [](const QColor& color) {
         int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
         return brightness < 128;
-        };
+    };
 
     // Convert the map to a vector of pairs for sorting
     std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
@@ -3902,7 +3882,10 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     // Sort the vector by count in descending order
     std::sort(clusterVector.begin(), clusterVector.end(), [](const auto& a, const auto& b) {
         return a.second.first > b.second.first;
-        });
+    });
+
+    // Find the maximum count for scaling the bars
+    int maxCount = clusterVector.front().second.first;
 
     // Populate the divs with cluster data
     for (const auto& entry : clusterVector) {
@@ -3912,18 +3895,16 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         QColor color(entry.second.second);
 
         QString textColor = isDarkColor(color) ? "white" : "black";
+        int barWidth = static_cast<int>((static_cast<double>(count) / maxCount) * 100);
 
-        html += "<div style='background-color:" + colorHex + "; color:" + textColor + ";'>";
-        html += clusterName + ":" + QString::number(count);
+        html += "<div class='bar-container'>";
+        html += "<div class='bar' style='width:" + QString::number(barWidth) + "%; background-color:" + colorHex + "; color:" + textColor + ";'></div>";
+        html += "<div class='label'>" + clusterName + ": " + QString::number(count) + "</div>";
         html += "</div>";
     }
 
     html += "</body></html>";
     return html;
-
-
-
-
 }
 
 

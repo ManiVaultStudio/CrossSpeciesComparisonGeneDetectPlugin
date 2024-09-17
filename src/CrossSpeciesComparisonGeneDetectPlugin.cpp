@@ -122,6 +122,24 @@ CrossSpeciesComparisonGeneDetectPlugin::CrossSpeciesComparisonGeneDetectPlugin(c
 
 void CrossSpeciesComparisonGeneDetectPlugin::init()
 {
+    auto& shortcuts = getShortcuts();
+
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Update Info", "Click update button to update outdated table. Current cells need to be selected in the scatterplot" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Select species", "Click individual species in the table to explore gene expression across dataset for specific species" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Select genes", "Click individual genes in the table to see species details" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Explore", "Explore multiple selected species" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Revert", "Revert to initial selected species" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Toggle scatterplot selection", "Select and deselect selection in the scatterplot" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Top N", "View N number of highly differentially expressed genes per species" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "N Type", "Type of differential expression calculation" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "DeSelect", "Remove current gene selection scatterplot to view whole dataset scatterplot" });
+    shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Search", "Search all genes in the dataset" });
+    getLearningCenterAction().setPluginTitle("Gene Identification View");
+
+
+
+
+
 
     const auto updateSelectedRowIndex = [this]() -> void
         {
@@ -237,7 +255,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
                                     if (samplerActionAction)
                                     {
-                                        samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                        samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                             QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
                                             return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                             });
@@ -416,7 +434,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                     });
@@ -820,7 +838,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                     });
@@ -981,7 +999,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                     });
@@ -1297,7 +1315,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setTooltipGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                         return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                         });
