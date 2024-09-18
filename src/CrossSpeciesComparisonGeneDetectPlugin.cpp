@@ -529,17 +529,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
     ////////////*********temporary changes need to fix**********///////////////
-    // Ensure the horizontal header sections are resizable
-    _settingsAction.getSelectionDetailsTable()->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     // Set the default alignment and text wrapping
     _settingsAction.getSelectionDetailsTable()->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter | (Qt::Alignment)Qt::TextWordWrap);
 
     // Adjust the minimum height of the header
     _settingsAction.getSelectionDetailsTable()->horizontalHeader()->setMinimumHeight(50);
-
-    // Ensure the table's viewport is updated
-    _settingsAction.getSelectionDetailsTable()->viewport()->update();
 
     ////////////*********temporary changes need to fix**********///////////////
 
