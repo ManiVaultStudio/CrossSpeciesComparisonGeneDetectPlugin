@@ -1181,10 +1181,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         auto scatterplotViewFactory = mv::plugins().getPluginFactory("Scatterplot View");
         mv::gui::DecimalAction* overlayopacityAction;
+        mv::gui::DecimalAction* overlayscaleAction;
 
         if (scatterplotViewFactory) {
             for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                 if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                    
                     overlayopacityAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Selection/Opacity"));
                     if (overlayopacityAction)
                     {
@@ -1198,6 +1200,20 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                             overlayopacityAction->setValue(0.0);
                         }
                     }
+                    overlayscaleAction = dynamic_cast<DecimalAction*>(plugin->findChildByPath("Settings/Selection/Scale"));
+                    if (overlayscaleAction)
+                    {
+                        //qDebug() << "Overlay opacity action found";
+                        if (_toggleScatterplotSelection.isChecked())
+                        {
+                            overlayscaleAction->setValue(200.0);
+                        }
+                        else
+                        {
+                            overlayscaleAction->setValue(100.0);
+                        }
+                    }
+
                 }
             }
         }
@@ -3793,12 +3809,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     // If there is no cluster dataset ID, return a summary of total points
     if (clusterDatasetId.isEmpty()) {
-        return QString("<table> \
-<tr> \
-<td><b>Total points: </b></td> \
-<td>%1</td> \
-</tr> \
-</table>").arg(global_local_PointIndices.size());
+        return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
 
     // Retrieve the cluster dataset
@@ -3806,12 +3817,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     // If the dataset is invalid, return a summary of total points
     if (!clusterFullDataset.isValid()) {
-        return QString("<table> \
-<tr> \
-<td><b>Total points: </b></td> \
-<td>%1</td> \
-</tr> \
-</table>").arg(global_local_PointIndices.size());
+        return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
 
     // Get the clusters from the dataset
@@ -3819,12 +3825,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     // If the clusters data is empty, return a summary of total points
     if (clusterValuesData.isEmpty()) {
-        return QString("<table> \
-<tr> \
-<td><b>Total points: </b></td> \
-<td>%1</td> \
-</tr> \
-</table>").arg(global_local_PointIndices.size());
+        return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
 
     // Process each cluster and find intersections with global point indices
@@ -3834,17 +3835,10 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         QColor clusterColor = cluster.getColor();
         const auto& clusterIndices = cluster.getIndices();
 
-        std::vector<std::seed_seq::result_type> sortedClusterIndices = clusterIndices;
-        std::vector<std::seed_seq::result_type> sortedGlobalLocalPointIndices = global_local_PointIndices;
-
-        std::sort(sortedClusterIndices.begin(), sortedClusterIndices.end());
-        std::sort(sortedGlobalLocalPointIndices.begin(), sortedGlobalLocalPointIndices.end());
-
         std::vector<std::seed_seq::result_type> intersect;
-        intersect.reserve(std::min(sortedClusterIndices.size(), sortedGlobalLocalPointIndices.size()));
-        std::set_intersection(sortedClusterIndices.begin(), sortedClusterIndices.end(),
-            sortedGlobalLocalPointIndices.begin(), sortedGlobalLocalPointIndices.end(),
-            std::back_inserter(intersect));
+        std::set_intersection(clusterIndices.begin(), clusterIndices.end(),
+                              global_local_PointIndices.begin(), global_local_PointIndices.end(),
+                              std::back_inserter(intersect));
 
         // If there is an intersection, store the result in the map
         if (!intersect.empty()) {
@@ -3854,21 +3848,18 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     // If no clusters were found, return a summary of total points
     if (clusterCountMap.empty()) {
-        return QString("<table> \
-<tr> \
-<td><b>Total points: </b></td> \
-<td>%1</td> \
-</tr> \
-</table>").arg(global_local_PointIndices.size());
+        return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
 
     // Generate HTML output
     QString html = "<html><head><style>"
-        "body { display: flex; flex-direction: column; align-items: flex-start; }"
-        ".bar-container { display: flex; align-items: center; margin: 2px 0; }"
-        ".bar { height: 20px; margin-right: 5px; }"
-        ".label { font-size: 12px; }"
-        "</style></head><body>";
+                   "body { display: flex; flex-direction: column; align-items: flex-start; }"
+                   ".bar-container { display: flex; align-items: center; margin: 2px 0; }"
+                   ".bar { height: 20px; margin-right: 5px; }"
+                   ".label { font-size: 12px; }"
+                   ".chart { width: 100%; }"
+                   ".bar { height: 20px; margin: 5px 0; }"
+                   "</style></head><body>";
 
     // Function to determine if a color is dark
     auto isDarkColor = [](const QColor& color) {
@@ -3888,6 +3879,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     int maxCount = clusterVector.front().second.first;
 
     // Populate the divs with cluster data
+    html += "<div class='chart'>";
     for (const auto& entry : clusterVector) {
         QString clusterName = entry.first;
         int count = entry.second.first;
@@ -3902,6 +3894,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         html += "<div class='label'>" + clusterName + ": " + QString::number(count) + "</div>";
         html += "</div>";
     }
+    html += "</div>";
 
     html += "</body></html>";
     return html;
