@@ -517,6 +517,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _removeRowSelection.setIcon(removeIcon);
     _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
+
+    QIcon saveGeneTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    _saveGeneTable.setIcon(saveGeneTableIcon);
+    _saveGeneTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon saveSpeciesTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    _saveSpeciesTable.setIcon(saveSpeciesTableIcon);
+    _saveSpeciesTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
     QIcon revertIcon = Application::getIconFont("FontAwesome").getIcon("undo");
     _revertRowSelectionChangesToInitial.setIcon(revertIcon);
     _revertRowSelectionChangesToInitial.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
@@ -1263,6 +1272,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto triggerSaveSpeciesTable = [this]() -> void {
 
+        qDebug() << "Selected Gene:" << _selectedGene.getString();
         exportTableViewToCSV(_selectionDetailsTable);
 
         };
@@ -3418,7 +3428,7 @@ void SettingsAction::findTopNGenesPerCluster() {
     QVariant returnedmodel = createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
 
     setModifiedTriggeredData(returnedmodel);
-
+    _selectedGene.setString("");
     //return returnedmodel;
 }
 void SettingsAction::removeDatasets(int groupId)
