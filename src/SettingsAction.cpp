@@ -66,9 +66,6 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
     return indexA < indexB;
 }
 
-
-
-
 Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected, const int topAbundance, const int middleAbundance, const int countAbundanceNumerator/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
@@ -269,7 +266,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _topSelectedHierarchyStatus(this, "Top Selected Hierarchy Status"),
     _clearRightClickedCluster(this, "Clear Right Clicked Cluster"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
-    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
+    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker"),
+    _saveSpeciesTable(this, "Save Species Table"),
+    _saveGeneTable(this, "Save Gene Table")
 {
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.setChecked(true);
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -1254,6 +1253,22 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
+
+    const auto triggerSaveGeneTable = [this]() -> void {
+
+        exportTableViewToCSV(_geneTableView);
+
+        };
+    connect(&_saveGeneTable, &TriggerAction::triggered, this, triggerSaveGeneTable);
+
+    const auto triggerSaveSpeciesTable = [this]() -> void {
+
+        exportTableViewToCSV(_selectionDetailsTable);
+
+        };
+    connect(&_saveSpeciesTable, &TriggerAction::triggered, this, triggerSaveSpeciesTable);
+    
+    
     const auto updateComputeTreesToDisplayFromHierarchy = [this]() -> void {
 
         _computeTreesToDisplayFromHierarchy.setDisabled(true);
@@ -3536,6 +3551,58 @@ QStringList SettingsAction::getSystemModeColor() {
     }
 }
 
+
+void SettingsAction::exportTableViewToCSV(QTableView* tableView) {
+    if (!tableView) {
+        qWarning() << "TableView is null.";
+        return;
+    }
+
+    QAbstractItemModel* model = tableView->model();
+    if (!model) {
+        qWarning() << "TableView model is null.";
+        return;
+    }
+
+    QString filePath = QFileDialog::getSaveFileName(nullptr, "Save CSV", "", "CSV Files (*.csv);;All Files (*)");
+    if (filePath.isEmpty()) {
+        qWarning() << "No file selected for saving.";
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QTextStream stream(&file);
+
+    // Write header
+    for (int col = 0; col < model->columnCount(); ++col) {
+        if (col > 0) {
+            stream << ",";
+        }
+        stream << model->headerData(col, Qt::Horizontal).toString();
+    }
+    stream << "\n";
+
+    // Write data
+    for (int row = 0; row < model->rowCount(); ++row) {
+        for (int col = 0; col < model->columnCount(); ++col) {
+            if (col > 0) {
+                stream << ",";
+            }
+            stream << model->data(model->index(row, col)).toString();
+        }
+        stream << "\n";
+    }
+
+    file.close();
+}
+
+
+
 void SettingsAction::populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames)
 {
     (void)QtConcurrent::run([this, datasetId, pointVector, numPoints, numDimensions, dimensionNames]() {
@@ -3578,6 +3645,8 @@ void SettingsAction::enableActions()
     _speciesExplorerInMap.setDisabled(false);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
+    _saveGeneTable.setDisabled(false);
+    _saveSpeciesTable.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
@@ -3610,6 +3679,8 @@ void SettingsAction::disableActions()
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
     _speciesExplorerInMapTrigger.setDisabled(true);
+    _saveGeneTable.setDisabled(true);
+    _saveSpeciesTable.setDisabled(true);
     _usePreComputedTSNE.setDisabled(true);
     _applyLogTransformation.setDisabled(true);
     _speciesExplorerInMap.setDisabled(true);

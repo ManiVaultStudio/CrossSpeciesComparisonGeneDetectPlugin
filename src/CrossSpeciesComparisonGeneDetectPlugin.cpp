@@ -659,6 +659,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     
     mainOptionsLayout->addLayout(linkerandtsneLayout);
 
+    auto downloadOptionsGroup = new VerticalGroupAction(this, "Save table as CSV");
+    downloadOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("download"));
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveGeneTable());
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveSpeciesTable());
+
+    auto downloadLayout = new QVBoxLayout();
+    auto downloadWidget = downloadOptionsGroup->createCollapsedWidget(&getWidget());
+    downloadWidget->setMaximumHeight(22);
+    downloadLayout->addWidget(downloadWidget);
+
+    mainOptionsLayout->addLayout(downloadLayout);
+
     //mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     //mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
     //mainOptionsLayout->addWidget(extraOptionsGroup->createCollapsedWidget(&getWidget()), 1);
