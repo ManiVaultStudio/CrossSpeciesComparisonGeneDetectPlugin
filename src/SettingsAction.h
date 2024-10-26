@@ -355,6 +355,7 @@ public: // Action getters
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
     void computeHierarchyAppearanceVector();
     void exportTableViewToCSV(QTableView* tableView);
+    void exportTableViewToCSVPerGene(QTableView* tableView);
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);

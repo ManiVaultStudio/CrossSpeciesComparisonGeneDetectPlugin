@@ -1265,15 +1265,23 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     const auto triggerSaveGeneTable = [this]() -> void {
 
-        exportTableViewToCSV(_geneTableView);
+        exportTableViewToCSV(_selectionDetailsTable);
 
         };
     connect(&_saveGeneTable, &TriggerAction::triggered, this, triggerSaveGeneTable);
 
     const auto triggerSaveSpeciesTable = [this]() -> void {
 
-        qDebug() << "Selected Gene:" << _selectedGene.getString();
-        exportTableViewToCSV(_selectionDetailsTable);
+
+        if (_selectedGene.getString()!="")
+        {
+            exportTableViewToCSVPerGene(_geneTableView);
+        }
+        else
+        {
+            exportTableViewToCSV(_geneTableView);
+        }
+        
 
         };
     connect(&_saveSpeciesTable, &TriggerAction::triggered, this, triggerSaveSpeciesTable);
@@ -3611,7 +3619,82 @@ void SettingsAction::exportTableViewToCSV(QTableView* tableView) {
     file.close();
 }
 
+void SettingsAction::exportTableViewToCSVPerGene(QTableView* tableView) {
+    if (!tableView) {
+        qWarning() << "TableView is null.";
+        return;
+    }
 
+    QAbstractItemModel* model = tableView->model();
+    if (!model) {
+        qWarning() << "TableView model is null.";
+        return;
+    }
+
+    QString filePath = QFileDialog::getSaveFileName(nullptr, "Save CSV", "", "CSV Files (*.csv);;All Files (*)");
+    if (filePath.isEmpty()) {
+        qWarning() << "No file selected for saving.";
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QTextStream stream(&file);
+
+    // Write header
+    for (int col = 0; col < model->columnCount(); ++col) {
+        if (col > 0) {
+            stream << ",";
+        }
+        QString headerVal = model->headerData(col, Qt::Horizontal).toString();
+        // Remove all occurrences of "\n" from the headerVal
+        headerVal.replace("\n", "");
+        stream << headerVal;
+    }
+    stream << "\n";
+
+    // Find the row index of the selected gene for column 0
+    int geneRowIndex = -1;
+    for (int row = 0; row < model->rowCount(); ++row) {
+        if (model->data(model->index(row, 0)).toString() == _selectedGene.getString()) {
+            geneRowIndex = row;
+            break;
+        }
+    }
+
+
+    qDebug() << "Gene row index: " << geneRowIndex;
+
+    // If the gene row index is found, write the matching row
+
+    if (geneRowIndex != -1) {
+        for (int col = 0; col < model->columnCount(); ++col) {
+            if (col > 0) {
+                stream << ",";
+            }
+            stream << model->data(model->index(geneRowIndex, col)).toString();
+        }
+        stream << "\n";
+    }
+    else
+    {
+        for (int row = 0; row < model->rowCount(); ++row) {
+            for (int col = 0; col < model->columnCount(); ++col) {
+                if (col > 0) {
+                    stream << ",";
+                }
+                stream << model->data(model->index(row, col)).toString();
+            }
+            stream << "\n";
+        }
+    }
+  
+    file.close();
+}
 
 void SettingsAction::populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames)
 {
