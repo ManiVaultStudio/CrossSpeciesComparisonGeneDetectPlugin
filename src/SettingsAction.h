@@ -354,7 +354,7 @@ public: // Action getters
     //void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
     void computeHierarchyAppearanceVector();
-    void exportTableViewToCSV(QTableView* tableView);
+    void exportTableViewToCSVForGenes(QTableView* tableView);
     void exportTableViewToCSVPerGene(QTableView* tableView);
 private:
     
