@@ -1537,9 +1537,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-
+            QString speciesCopy = species;
+            speciesCopy.replace("_", " ");
             // Species column
-            QStandardItem* speciesItem = new QStandardItem(species);
+            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
+            speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor);
             rowItems << speciesItem;
@@ -1657,7 +1659,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
-            QStandardItem* item = new QStandardItem(species);
+            QStandardItem* item = new QStandardItem(speciesCopy);
+            item->setData(species, Qt::UserRole); // Store the original species value in a user role
             item->setBackground(backgroundColor);
             item->setForeground(textColor);
             rowItems << item;
@@ -1761,7 +1764,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
         emit model->layoutChanged();
 
-        // Add a connect for row selection
+        // Selection handling code
         connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
             static QModelIndex lastSelectedIndex;
 
@@ -1778,12 +1781,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
 
             lastSelectedIndex = selectedIndex;
-            QString species = selectedIndex.siblingAtColumn(0).data().toString();
+            // Retrieve the original species value from the user role
+            QString species = selectedIndex.siblingAtColumn(0).data(Qt::UserRole).toString();
             QStringList autoSpecies = { species };
 
             if (!(autoSpecies.size() == 1 && autoSpecies.first().isEmpty())) {
-                if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
-                {
+                if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0) {
                     _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
                     geneExplorer();
                 }
