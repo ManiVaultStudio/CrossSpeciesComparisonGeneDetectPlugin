@@ -293,8 +293,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
+            _settingsAction.getSelectedGeneAction().setString("");
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
             _settingsAction.getClearRightClickedCluster().trigger();
+
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -658,6 +660,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     linkerandtsneLayout->addWidget(tsneWidget);
     
     mainOptionsLayout->addLayout(linkerandtsneLayout);
+
+    auto downloadOptionsGroup = new VerticalGroupAction(this, "Save table as CSV");
+    downloadOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("download"));
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveGeneTable());
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveSpeciesTable());
+
+    auto downloadLayout = new QVBoxLayout();
+    auto downloadWidget = downloadOptionsGroup->createCollapsedWidget(&getWidget());
+    downloadWidget->setMaximumHeight(22);
+    downloadLayout->addWidget(downloadWidget);
+
+    mainOptionsLayout->addLayout(downloadLayout);
 
     //mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     //mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);

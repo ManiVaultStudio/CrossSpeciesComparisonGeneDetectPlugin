@@ -66,9 +66,6 @@ bool sortByCustomList(const ClusterOrderContainer& a, const ClusterOrderContaine
     return indexA < indexB;
 }
 
-
-
-
 Stats combineStatisticsSingle(const StatisticsSingle& selected, const StatisticsSingle& nonSelected, const int topAbundance, const int middleAbundance, const int countAbundanceNumerator/*, const StatisticsSingle& allSelected*/) {
     Stats combinedStats;
     combinedStats.meanSelected = selected.meanVal;
@@ -269,7 +266,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _topSelectedHierarchyStatus(this, "Top Selected Hierarchy Status"),
     _clearRightClickedCluster(this, "Clear Right Clicked Cluster"),
     _toggleScatterplotSelection(this, "Show Scatterplot Selection"),
-    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker")
+    _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker(this, "Map For Hierarchy Items Change Method Stop For Project Load Blocker"),
+    _saveSpeciesTable(this, "Save Left Gene Table"),
+    _saveGeneTable(this, "Save Right Species Selection Table")
 {
     _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker.setChecked(true);
     setSerializationName("CSCGDV:CrossSpeciesComparison Gene Detect Plugin Settings");
@@ -517,6 +516,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     QIcon removeIcon = Application::getIconFont("FontAwesome").getIcon("backspace");
     _removeRowSelection.setIcon(removeIcon);
     _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+
+    QIcon saveGeneTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    _saveGeneTable.setIcon(saveGeneTableIcon);
+    _saveGeneTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
+
+    QIcon saveSpeciesTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    _saveSpeciesTable.setIcon(saveSpeciesTableIcon);
+    _saveSpeciesTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
     QIcon revertIcon = Application::getIconFont("FontAwesome").getIcon("undo");
     _revertRowSelectionChangesToInitial.setIcon(revertIcon);
@@ -1254,6 +1262,33 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
         };
     connect(&_performGeneTableTsneTrigger, &TriggerAction::triggered, this, recomputeGeneTableTSNE);
+
+    const auto triggerSaveGeneTable = [this]() -> void {
+
+        exportTableViewToCSVPerGene(_geneTableView);
+
+        /*if (_selectedGene.getString() != "")
+        {
+            exportTableViewToCSVPerGene(_geneTableView);
+        }
+        else
+        {
+            exportTableViewToCSV(_geneTableView);_selectionDetailsTable
+        }*/
+
+        };
+    connect(&_saveGeneTable, &TriggerAction::triggered, this, triggerSaveGeneTable);
+
+    const auto triggerSaveSpeciesTable = [this]() -> void {
+
+
+        exportTableViewToCSVForGenes(_geneTableView);
+        
+
+        };
+    connect(&_saveSpeciesTable, &TriggerAction::triggered, this, triggerSaveSpeciesTable);
+    
+    
     const auto updateComputeTreesToDisplayFromHierarchy = [this]() -> void {
 
         _computeTreesToDisplayFromHierarchy.setDisabled(true);
@@ -3403,7 +3438,7 @@ void SettingsAction::findTopNGenesPerCluster() {
     QVariant returnedmodel = createModelFromData(_clusterNameToGeneNameToExpressionValue, geneAppearanceCounter, rankingMap, n);
 
     setModifiedTriggeredData(returnedmodel);
-
+    _selectedGene.setString("");
     //return returnedmodel;
 }
 void SettingsAction::removeDatasets(int groupId)
@@ -3536,6 +3571,276 @@ QStringList SettingsAction::getSystemModeColor() {
     }
 }
 
+
+void SettingsAction::exportTableViewToCSVForGenes(QTableView* tableView) {
+    if (!tableView) {
+        qWarning() << "TableView is null.";
+        return;
+    }
+
+    QAbstractItemModel* model = tableView->model();
+    if (!model) {
+        qWarning() << "TableView model is null.";
+        return;
+    }
+
+    QString filePath = QFileDialog::getSaveFileName(nullptr, "Save CSV", "", "CSV Files (*.csv);;All Files (*)");
+    if (filePath.isEmpty()) {
+        qWarning() << "No file selected for saving.";
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QTextStream stream(&file);
+
+    if (model->columnCount() == 4) 
+    {
+        //ID,Species Appearance,Gene Appearance Species Names,Statistics
+        QString headerString = "ID,Species Appearance,Gene Appearance Species Names";
+        stream << headerString;
+        stream << "\n";
+
+        for (int row = 0; row < model->rowCount(); ++row) {
+            for (int col = 0; col < model->columnCount(); ++col)
+            {
+                if(col < 3){
+                if (col > 0) {
+                    stream << ",";
+                }
+
+                stream << model->data(model->index(row, col)).toString();
+            }
+            }
+            stream << "\n";
+        }
+    }
+    else
+    {
+        // Write header
+        for (int col = 0; col < model->columnCount(); ++col) {
+            if (col > 0) {
+                stream << ",";
+            }
+            stream << model->headerData(col, Qt::Horizontal).toString();
+        }
+        stream << "\n";
+
+        // Write data
+        for (int row = 0; row < model->rowCount(); ++row) {
+            for (int col = 0; col < model->columnCount(); ++col) {
+                if (col > 0) {
+                    stream << ",";
+                }
+                stream << model->data(model->index(row, col)).toString();
+            }
+            stream << "\n";
+        }
+    }
+
+
+    file.close();
+}
+
+QString computeMapFromStatistics(QString geneName, QStringList geneAppearanceSpeciesNamesList, QStringList statisticsList)
+{
+    QString finalString = "";
+
+    for (int i = 0; i < statisticsList.size(); i++)
+    {
+        QString tempString = statisticsList[i];
+        QStringList pairs = tempString.split(", ");
+
+        QString speciesName = "";
+        QString rank = "";
+        QString abundanceTop = "";
+        QString abundanceMiddle = "";
+        QString countAbundanceNumerator = "";
+        QString meanSelected = "";
+        QString countSelected = "";
+        QString meanNotSelected = "";
+        QString countNotSelected = "";
+
+        for (const QString& pair : pairs) {
+            QStringList keyValue = pair.split(": ");
+            if (keyValue.size() == 2) {
+                QString key = keyValue[0].trimmed();
+                QString value = keyValue[1].trimmed();
+
+                if (key == "Species") {
+                    speciesName = value;
+                }
+                else if (key == "Rank") {
+                    rank = value;
+                }
+                else if (key == "AbundanceTop") {
+                    abundanceTop = value;
+                }
+                else if (key == "AbundanceMiddle") {
+                    abundanceMiddle = value;
+                }
+                else if (key == "CountAbundanceNumerator") {
+                    countAbundanceNumerator = value;
+                }
+                else if (key == "MeanSelected") {
+                    meanSelected = value;
+                }
+                else if (key == "CountSelected") {
+                    countSelected = value;
+                }
+                else if (key == "MeanNotSelected") {
+                    meanNotSelected = value;
+                }
+                else if (key == "CountNotSelected") {
+                    countNotSelected = value;
+                }
+            }
+        }
+
+        finalString += geneName;
+        if (geneAppearanceSpeciesNamesList.contains(speciesName)) {
+            finalString += ", True";
+        }
+        else {
+            finalString += ", False";
+        }
+        finalString += ", " + speciesName;
+        finalString += ", " + QString::number(meanSelected.toFloat() - meanNotSelected.toFloat());
+        finalString += ", " + rank;
+        finalString += ", " + abundanceTop;
+        finalString += ", " + abundanceMiddle;
+        finalString += ", " + countSelected;
+        finalString += ", " + meanSelected;
+        finalString += ", " + countNotSelected;
+        finalString += ", " + meanNotSelected;
+        if (i < statisticsList.size() - 1) {
+            finalString += "\n";
+        }
+    }
+
+    return finalString;
+}
+
+
+void SettingsAction::exportTableViewToCSVPerGene(QTableView* tableView) {
+    if (!tableView) {
+        qWarning() << "TableView is null.";
+        return;
+    }
+
+    QAbstractItemModel* model = tableView->model();
+    if (!model) {
+        qWarning() << "TableView model is null.";
+        return;
+    }
+
+    QString filePath = QFileDialog::getSaveFileName(nullptr, "Save CSV", "", "CSV Files (*.csv);;All Files (*)");
+    if (filePath.isEmpty()) {
+        qWarning() << "No file selected for saving.";
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "Could not open file for writing: " << filePath;
+        return;
+    }
+
+    QTextStream stream(&file);
+
+    // Find the row index of the selected gene for column 0
+    int geneRowIndex = -1;
+    for (int row = 0; row < model->rowCount(); ++row) {
+        if (model->data(model->index(row, 0)).toString() == _selectedGene.getString()) {
+            geneRowIndex = row;
+            break;
+        }
+    }
+
+
+    qDebug() << "Gene row index: " << geneRowIndex;
+
+    // If the gene row index is found, write the matching row
+
+    if (model->columnCount()==4) {
+        //ID,Species Appearance,Gene Appearance Species Names,Statistics
+        QString ergicString = "Fraction in "+ _topSelectedHierarchyStatus.getString();
+        QStringList headers = { "Gene", "Species Appearance", "Species", "Mean Gene Differential Expression", "Gene Appearance Rank", "Fraction in Neuronal", ergicString ,"Count of Selected", "Mean Gene Expression of Selected", "Count of Non Selected","Mean Gene Expression of Non Selected" };
+        QString headerNames = headers.join(",");
+        stream << headerNames;
+        stream << "\n";
+
+        if (geneRowIndex != -1)
+        {
+            QString geneName = model->data(model->index(geneRowIndex, 0)).toString();
+            QString speciesAppearance = model->data(model->index(geneRowIndex, 1)).toString();
+            QString geneAppearanceSpeciesNames = model->data(model->index(geneRowIndex, 2)).toString();
+            QStringList geneAppearanceSpeciesNamesList = geneAppearanceSpeciesNames.split(";");
+            QString statistics = model->data(model->index(geneRowIndex, 3)).toString();
+            QStringList statisticsList = statistics.split("\n");
+            if (!statisticsList.isEmpty() && statisticsList.last().isEmpty()) {
+                statisticsList.removeLast();
+            }
+            QString finalString=computeMapFromStatistics(geneName,  geneAppearanceSpeciesNamesList, statisticsList);
+            stream << finalString;
+
+      }
+        else
+        {
+            for (int row = 0; row < model->rowCount(); ++row) {
+                QString geneName = model->data(model->index(row, 0)).toString();
+                QString speciesAppearance = model->data(model->index(row, 1)).toString();
+                QString geneAppearanceSpeciesNames = model->data(model->index(row, 2)).toString();
+                QStringList geneAppearanceSpeciesNamesList = geneAppearanceSpeciesNames.split(";");
+                QString statistics = model->data(model->index(row, 3)).toString();
+                QStringList statisticsList = statistics.split("\n");
+                if (!statisticsList.isEmpty() && statisticsList.last().isEmpty()) {
+                    statisticsList.removeLast();
+                }
+                QString finalString = computeMapFromStatistics(geneName, geneAppearanceSpeciesNamesList, statisticsList);
+                stream << finalString;
+                if (row < model->rowCount() - 1) {
+                    stream << "\n";
+                }
+            }
+        }
+   
+    
+    }
+    else
+    {
+        // Write header
+        for (int col = 0; col < model->columnCount(); ++col) {
+            if (col > 0) {
+                stream << ",";
+            }
+            QString headerVal = model->headerData(col, Qt::Horizontal).toString();
+            // Remove all occurrences of "\n" from the headerVal
+            headerVal.replace("\n", "");
+            stream << headerVal;
+        }
+        stream << "\n";
+        
+        
+        
+        for (int row = 0; row < model->rowCount(); ++row) {
+            for (int col = 0; col < model->columnCount(); ++col) {
+                if (col > 0) {
+                    stream << ",";
+                }
+                stream << model->data(model->index(row, col)).toString();
+            }
+            stream << "\n";
+        }
+    }
+  
+    file.close();
+}
+
 void SettingsAction::populatePointDataConcurrently(QString datasetId, const std::vector<float>& pointVector, int numPoints, int numDimensions, std::vector<QString> dimensionNames)
 {
     (void)QtConcurrent::run([this, datasetId, pointVector, numPoints, numDimensions, dimensionNames]() {
@@ -3578,6 +3883,8 @@ void SettingsAction::enableActions()
     _speciesExplorerInMap.setDisabled(false);
     _topHierarchyClusterNamesFrequencyInclusionList.setDisabled(false);
     _speciesExplorerInMapTrigger.setDisabled(false);
+    _saveGeneTable.setDisabled(false);
+    _saveSpeciesTable.setDisabled(false);
     _revertRowSelectionChangesToInitial.setDisabled(false);
     _scatterplotEmbeddingPointsUMAPOption.setDisabled(false);
     _selectedSpeciesVals.setDisabled(false);
@@ -3610,6 +3917,8 @@ void SettingsAction::disableActions()
     _scatterplotReembedColorOption.setDisabled(true);
     _removeRowSelection.setDisabled(true);
     _speciesExplorerInMapTrigger.setDisabled(true);
+    _saveGeneTable.setDisabled(true);
+    _saveSpeciesTable.setDisabled(true);
     _usePreComputedTSNE.setDisabled(true);
     _applyLogTransformation.setDisabled(true);
     _speciesExplorerInMap.setDisabled(true);
@@ -3827,18 +4136,22 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     if (clusterValuesData.isEmpty()) {
         return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
-
+    std::sort(global_local_PointIndices.begin(), global_local_PointIndices.end());
     // Process each cluster and find intersections with global point indices
     std::map<QString, std::pair<int, QColor>> clusterCountMap;
     for (const auto& cluster : clusterValuesData) {
         QString clusterName = cluster.getName();
         QColor clusterColor = cluster.getColor();
-        const auto& clusterIndices = cluster.getIndices();
+        auto clusterIndices = cluster.getIndices();
+
+        // Sort the indices before performing the intersection
+        std::sort(clusterIndices.begin(), clusterIndices.end());
+        
 
         std::vector<std::seed_seq::result_type> intersect;
         std::set_intersection(clusterIndices.begin(), clusterIndices.end(),
-                              global_local_PointIndices.begin(), global_local_PointIndices.end(),
-                              std::back_inserter(intersect));
+            global_local_PointIndices.begin(), global_local_PointIndices.end(),
+            std::back_inserter(intersect));
 
         // If there is an intersection, store the result in the map
         if (!intersect.empty()) {

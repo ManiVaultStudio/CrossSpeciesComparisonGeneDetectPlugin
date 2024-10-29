@@ -268,6 +268,8 @@ public: // Action getters
     OptionAction& getPerformGeneTableTsneKnn() { return _performGeneTableTsneKnn; }
     OptionAction& getPerformGeneTableTsneDistance() { return _performGeneTableTsneDistance; }
     TriggerAction& getPerformGeneTableTsneTrigger() { return _performGeneTableTsneTrigger; }
+    TriggerAction& getSaveGeneTable() { return _saveGeneTable; }
+    TriggerAction& getSaveSpeciesTable() { return _saveSpeciesTable; }
     TriggerAction& getComputeTreesToDisplayFromHierarchy() { return _computeTreesToDisplayFromHierarchy; }
     StringAction& getClusterOrderHierarchy() { return _clusterOrderHierarchy; }
     ToggleAction& getMapForHierarchyItemsChangeMethodStopForProjectLoadBlocker() { return _mapForHierarchyItemsChangeMethodStopForProjectLoadBlocker; }
@@ -352,6 +354,8 @@ public: // Action getters
     //void computeGeneMeanExpressionMapForHierarchyItemsChangeExperimental(QString hierarchyType);
     void computeFrequencyMapForHierarchyItemsChange(QString hierarchyType);
     void computeHierarchyAppearanceVector();
+    void exportTableViewToCSVForGenes(QTableView* tableView);
+    void exportTableViewToCSVPerGene(QTableView* tableView);
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
@@ -464,7 +468,8 @@ protected:
     StringAction              _rightClickedCluster;
     TriggerAction              _clearRightClickedCluster;
     std::map<QString, std::vector<bool>> _topHierarchyClusterMap;
-
+    TriggerAction                 _saveGeneTable;
+    TriggerAction                 _saveSpeciesTable;
     QStringList                   _currentHierarchyItemsMiddleForTable;
     StringAction               _topSelectedHierarchyStatus;
 };
