@@ -4136,7 +4136,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     if (clusterValuesData.isEmpty()) {
         return QString("<table><tr><td><b>Total points: </b></td><td>%1</td></tr></table>").arg(global_local_PointIndices.size());
     }
-    std::sort(global_local_PointIndices.begin(), global_local_PointIndices.end());
+    
     // Process each cluster and find intersections with global point indices
     std::map<QString, std::pair<int, QColor>> clusterCountMap;
     for (const auto& cluster : clusterValuesData) {
@@ -4146,7 +4146,7 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
         // Sort the indices before performing the intersection
         std::sort(clusterIndices.begin(), clusterIndices.end());
-        
+        std::sort(global_local_PointIndices.begin(), global_local_PointIndices.end());
 
         std::vector<std::seed_seq::result_type> intersect;
         std::set_intersection(clusterIndices.begin(), clusterIndices.end(),
