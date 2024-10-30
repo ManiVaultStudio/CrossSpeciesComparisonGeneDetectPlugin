@@ -1596,6 +1596,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             _settingsAction.getSelectionDetailsTable()->hideColumn(2);
         }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 90);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 70);
         _settingsAction.getSelectionDetailsTable()->update();
 
         // Emit layoutChanged signal to notify views of the model change
@@ -1758,6 +1763,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             _settingsAction.getSelectionDetailsTable()->hideColumn(4);
         }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 85);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 85);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 90);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(5, 65);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(6, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(7, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(8, 70);
         _settingsAction.getSelectionDetailsTable()->update();
 
 
