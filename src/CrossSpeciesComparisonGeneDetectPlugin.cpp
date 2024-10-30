@@ -293,8 +293,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.getStatusColorAction().setString(statusString);
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
+            _settingsAction.getSelectedGeneAction().setString("");
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
             _settingsAction.getClearRightClickedCluster().trigger();
+
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -658,6 +660,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     linkerandtsneLayout->addWidget(tsneWidget);
     
     mainOptionsLayout->addLayout(linkerandtsneLayout);
+
+    auto downloadOptionsGroup = new VerticalGroupAction(this, "Save table as CSV");
+    downloadOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("download"));
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveGeneTable());
+    downloadOptionsGroup->addAction(&_settingsAction.getSaveSpeciesTable());
+
+    auto downloadLayout = new QVBoxLayout();
+    auto downloadWidget = downloadOptionsGroup->createCollapsedWidget(&getWidget());
+    downloadWidget->setMaximumHeight(22);
+    downloadLayout->addWidget(downloadWidget);
+
+    mainOptionsLayout->addLayout(downloadLayout);
 
     //mainOptionsLayout->addWidget(tsneOptionsGroup->createCollapsedWidget(&getWidget()), 3);
     //mainOptionsLayout->addWidget(datasetAndLinkerOptionsGroup->createCollapsedWidget(&getWidget()), 2);
@@ -1523,9 +1537,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-
+            QString speciesCopy = species;
+            speciesCopy.replace("_", " ");
             // Species column
-            QStandardItem* speciesItem = new QStandardItem(species);
+            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
+            speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
             speciesItem->setBackground(backgroundColor);
             speciesItem->setForeground(textColor);
             rowItems << speciesItem;
@@ -1580,6 +1596,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             _settingsAction.getSelectionDetailsTable()->hideColumn(2);
         }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 90);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 70);
         _settingsAction.getSelectionDetailsTable()->update();
 
         // Emit layoutChanged signal to notify views of the model change
@@ -1643,7 +1664,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
-            QStandardItem* item = new QStandardItem(species);
+            QStandardItem* item = new QStandardItem(speciesCopy);
+            item->setData(species, Qt::UserRole); // Store the original species value in a user role
             item->setBackground(backgroundColor);
             item->setForeground(textColor);
             rowItems << item;
@@ -1741,13 +1763,22 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             _settingsAction.getSelectionDetailsTable()->hideColumn(4);
         }
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 85);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 85);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 90);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(5, 65);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(6, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(7, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(8, 70);
         _settingsAction.getSelectionDetailsTable()->update();
 
 
 
         emit model->layoutChanged();
 
-        // Add a connect for row selection
+        // Selection handling code
         connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
             static QModelIndex lastSelectedIndex;
 
@@ -1764,12 +1795,12 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
 
             lastSelectedIndex = selectedIndex;
-            QString species = selectedIndex.siblingAtColumn(0).data().toString();
+            // Retrieve the original species value from the user role
+            QString species = selectedIndex.siblingAtColumn(0).data(Qt::UserRole).toString();
             QStringList autoSpecies = { species };
 
             if (!(autoSpecies.size() == 1 && autoSpecies.first().isEmpty())) {
-                if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0)
-                {
+                if (_settingsAction.getSpeciesExplorerInMap().getNumberOfOptions() > 0) {
                     _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(autoSpecies);
                     geneExplorer();
                 }
