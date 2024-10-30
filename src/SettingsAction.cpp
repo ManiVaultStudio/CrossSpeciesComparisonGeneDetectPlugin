@@ -4077,7 +4077,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
     // Iterate through all rows
     for (int row = 0; row < model->rowCount(); ++row) {
         QModelIndex index = model->index(row, 0); // Assuming species name is in column 0
-        QString species = model->data(index).toString();
+        QString species = model->data(index, Qt::UserRole).toString();
 
         // Check if the species is one of the selected species
         if (selectedLeaves->contains(species)) {
