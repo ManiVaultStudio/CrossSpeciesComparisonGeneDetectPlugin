@@ -356,6 +356,7 @@ public: // Action getters
     void computeHierarchyAppearanceVector();
     void exportTableViewToCSVForGenes(QTableView* tableView);
     void exportTableViewToCSVPerGene(QTableView* tableView);
+    void clearTableSelection(QTableView* tableView);
 private:
     
     void updateSelectedSpeciesCounts(QJsonObject& node, const std::map<QString, int>& speciesCountMap);
