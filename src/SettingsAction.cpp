@@ -1041,7 +1041,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         if (orderedClusters == "" || geneName == "")
         {
             _clearRightClickedCluster.trigger();
-            qDebug() << "Strings Empty, orderedClusters, genename" << orderedClusters << geneName;
+            //qDebug() << "Strings Empty, orderedClusters, genename" << orderedClusters << geneName;
             return;
         }
         QStringList clusterNameAndLevel = orderedClusters.split(" @%$,$%@ ");
@@ -1052,7 +1052,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             if (clusterName == "" || clusterLevelTemp == "")
             {
                 _clearRightClickedCluster.trigger();
-                qDebug() << "Strings Empty clustername, clusterLevelTemp" << clusterName << clusterLevelTemp;
+                //qDebug() << "Strings Empty clustername, clusterLevelTemp" << clusterName << clusterLevelTemp;
                 return;
             }
             QString clusterLevel;
@@ -1072,7 +1072,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             {
 
                 _clearRightClickedCluster.trigger();
-                qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
+                //qDebug() << "Cluster Level not 1,2,3" << clusterLevelTemp;
                 return;
 
             }
