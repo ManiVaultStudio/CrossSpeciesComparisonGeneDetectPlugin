@@ -37,28 +37,7 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
-void clearTableSelection(QTableView* tableView) {
-    if (tableView && tableView->selectionModel()) {
-        // Clear the current selection
-        tableView->clearSelection();
 
-        // Temporarily disable the selection mode to remove highlight
-        QAbstractItemView::SelectionMode oldMode = tableView->selectionMode();
-        tableView->setSelectionMode(QAbstractItemView::NoSelection);
-
-        // Clear the current index
-        tableView->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
-
-        // Restore the original selection mode
-        tableView->setSelectionMode(oldMode);
-
-        // Update the view to ensure changes are reflected
-        tableView->update();
-    }
-    else {
-        qDebug() << "TableView or its selection model is null";
-    }
-}
 void updateRowVisibility(const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
 
     for (int i = 0; i < proxyModel->rowCount(); i++) {
@@ -307,7 +286,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
           
             geneExplorer();
             _settingsAction.enableDisableButtonsAutomatically();
-            clearTableSelection(_settingsAction.getSelectionDetailsTable());
+            _settingsAction.clearTableSelection(_settingsAction.getSelectionDetailsTable());
         };
 
     connect(&_settingsAction.getSpeciesExplorerInMapTrigger(), &TriggerAction::triggered, this, updateSpeciesExplorerInMap);
@@ -338,7 +317,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
             }
             //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
-            clearTableSelection(_settingsAction.getSelectionDetailsTable());
+            _settingsAction.clearTableSelection(_settingsAction.getSelectionDetailsTable());
             _settingsAction.getClearRightClickedCluster().trigger();
         };
 
