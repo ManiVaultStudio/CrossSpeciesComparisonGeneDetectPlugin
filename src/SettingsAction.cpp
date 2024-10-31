@@ -4054,6 +4054,29 @@ void SettingsAction::populateClusterData(QString& datasetId, std::map<QString, s
 
 }
 
+void SettingsAction::clearTableSelection(QTableView* tableView) {
+    if (tableView && tableView->selectionModel()) {
+        // Clear the current selection
+        tableView->clearSelection();
+
+        // Temporarily disable the selection mode to remove highlight
+        QAbstractItemView::SelectionMode oldMode = tableView->selectionMode();
+        tableView->setSelectionMode(QAbstractItemView::NoSelection);
+
+        // Clear the current index
+        tableView->selectionModel()->setCurrentIndex(QModelIndex(), QItemSelectionModel::NoUpdate);
+
+        // Restore the original selection mode
+        tableView->setSelectionMode(oldMode);
+
+        // Update the view to ensure changes are reflected
+        tableView->update();
+    }
+    else {
+        qDebug() << "TableView or its selection model is null";
+    }
+}
+
 void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
 {
     //check if _selectionDetailsTable is valid
@@ -4061,7 +4084,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         return;
     }
 
-
+    clearTableSelection(_selectionDetailsTable);
 
     QAbstractItemModel* model = _selectionDetailsTable->model();
 
