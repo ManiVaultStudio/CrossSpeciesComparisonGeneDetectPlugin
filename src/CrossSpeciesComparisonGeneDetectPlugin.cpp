@@ -1619,9 +1619,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
-            QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
-            qreal brightness = backgroundColor.lightnessF();
-            QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
+            //QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
+            //qreal brightness = backgroundColor.lightnessF();
+            //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
@@ -1629,8 +1629,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             // Species column
             QStandardItem* speciesItem = new QStandardItem(speciesCopy);
             speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
-            speciesItem->setBackground(backgroundColor);
-            speciesItem->setForeground(textColor);
+            //speciesItem->setBackground(backgroundColor);
+            //speciesItem->setForeground(textColor);
             rowItems << speciesItem;
 
             // Fraction of Neuronal column
