@@ -1623,16 +1623,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             // Create a pixmap for the bar
             float lengthTop = getNormalizedSize(topAbundance, minValueTopAbundance, maxValueTopAbundance);
-            QPixmap barPixmap(50, 20); // Width 100, Height 20
-            barPixmap.fill(Qt::transparent);
+            QPixmap barPixmapTop(60, 20); // Width 100, Height 20
+            barPixmapTop.fill(Qt::transparent);
 
-            QPainter painter(&barPixmap);
-            painter.setBrush(Qt::gray);
-            painter.drawRect(0, 0, static_cast<int>(lengthTop), 20);
-            painter.end();
+            QPainter painterTop(&barPixmapTop);
+            painterTop.setBrush(Qt::gray);
+            painterTop.drawRect(0, 0, static_cast<int>(lengthTop), 20);
+            painterTop.end();
 
             // Set the pixmap as the decoration
-            item->setData(QVariant(barPixmap), Qt::DecorationRole);
+            item->setData(QVariant(barPixmapTop), Qt::DecorationRole);
 
             rowItems << item;
 
@@ -1651,10 +1651,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             // Set the formatted string for display
             item->setData(QVariant(formattedValueMiddle), Qt::DisplayRole);
-            //QString colormapMiddle = "greyscale";
-            //std::pair<QColor, QColor> colorValuesMiddle = getColorMAp(middleAbundance, minValueMiddleAbundance, maxValueMiddleAbundance, colormapMiddle);
-            //item->setBackground(colorValuesMiddle.first);
-            //item->setForeground(colorValuesMiddle.second);
+
+            // Create a pixmap for the bar
+            float lengthMiddle = getNormalizedSize(middleAbundance, minValueMiddleAbundance, maxValueMiddleAbundance);
+            QPixmap barPixmapMiddle(80, 20); // Width 100, Height 20
+            barPixmapMiddle.fill(Qt::transparent);
+
+            QPainter painterMiddle(&barPixmapMiddle);
+            painterMiddle.setBrush(Qt::gray);
+            painterMiddle.drawRect(0, 0, static_cast<int>(lengthMiddle), 20);
+            painterMiddle.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapMiddle), Qt::DecorationRole);
+
+
             rowItems << item;
 
             // Count Selected column
