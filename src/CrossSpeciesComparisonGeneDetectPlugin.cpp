@@ -1554,12 +1554,18 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         float maxValueTopAbundance = 0.0f;
         float minValueMiddleAbundance = 1000000000.0f;
         float maxValueMiddleAbundance = 0.0f;
+        float minValueSelectedCellsCount = 1000000000.0f;
+        float maxValueSelectedCellsCount = 0.0f;
+        float minValueTotal = 1000000000.0f;
+        float maxValueTotal = 0.0f;
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
         { 
         
         float topAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceTop)) * 100;
         float middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
+        float selectedCellsCount = static_cast<float>(details.selectedCellsCount);
+        float total = static_cast<float>(details.selectedCellsCount) + static_cast<float>(details.nonSelectedCellsCount);
 
         if (topAbundance < minValueTopAbundance)
         {
@@ -1579,7 +1585,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             maxValueMiddleAbundance = middleAbundance;
         }
         
+        if (selectedCellsCount < minValueSelectedCellsCount)
+        {
+            minValueSelectedCellsCount = selectedCellsCount;
         }
+        if (selectedCellsCount > maxValueSelectedCellsCount)
+        {
+            maxValueSelectedCellsCount = selectedCellsCount;
+        }
+
+        if (total < minValueTotal)
+        {
+            minValueTotal = total;
+        }
+        if (total > maxValueTotal)
+        {
+            maxValueTotal = total;
+        }
+
+        }
+
+
 
 
 
@@ -1670,13 +1696,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
             // Count Selected column
             item = new QStandardItem();
-            item->setData(QVariant(details.selectedCellsCount), Qt::DisplayRole);
+            int selectedCellsCount = details.selectedCellsCount;
+            QString  formattedSelectedCellsCount = QString::number(selectedCellsCount);
+            item->setData(QVariant(selectedCellsCount), Qt::UserRole);
+            item->setData(QVariant(formattedSelectedCellsCount), Qt::DisplayRole);
+            // Create a pixmap for the bar
+            float lengthSelectedCellsCount = getNormalizedSize(selectedCellsCount, minValueSelectedCellsCount, maxValueSelectedCellsCount);
+            QPixmap barPixmapSelectedCellsCount(60, 20); // Width 100, Height 20
+            barPixmapSelectedCellsCount.fill(Qt::transparent);
+
+            QPainter painterSelectedCellsCount(&barPixmapSelectedCellsCount);
+            painterSelectedCellsCount.setBrush(Qt::gray);
+            painterSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthSelectedCellsCount), 20);
+            painterSelectedCellsCount.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapSelectedCellsCount), Qt::DecorationRole);
+
             rowItems << item;
 
             // Count All column
             item = new QStandardItem();
             auto total = details.selectedCellsCount + details.nonSelectedCellsCount;
-            item->setData(QVariant(total), Qt::DisplayRole);
+            QString formattedTotal = QString::number(total);
+            item->setData(QVariant(total), Qt::UserRole);
+            item->setData(QVariant(formattedTotal), Qt::DisplayRole);
+            // Create a pixmap for the bar
+            float lengthTotal = getNormalizedSize(total, minValueTotal, maxValueTotal);
+            QPixmap barPixmapTotal(60, 20); // Width 100, Height 20
+            barPixmapTotal.fill(Qt::transparent);
+
+            QPainter painterTotal(&barPixmapTotal);
+            painterTotal.setBrush(Qt::gray);
+            painterTotal.drawRect(0, 0, static_cast<int>(lengthTotal), 20);
+            painterTotal.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapTotal), Qt::DecorationRole);
+
             rowItems << item;
 
             model->appendRow(rowItems);
