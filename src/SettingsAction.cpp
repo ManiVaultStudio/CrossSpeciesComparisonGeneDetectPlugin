@@ -4197,10 +4197,10 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         "</style></head><body>";
 
     // Function to determine if a color is dark
-    auto isDarkColor = [](const QColor& color) {
-        int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
-        return brightness < 128;
-        };
+    //auto isDarkColor = [](const QColor& color) {
+        //int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
+        //return brightness < 128;
+        //};
 
     // Convert the map to a vector of pairs for sorting
     std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
@@ -4218,10 +4218,10 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     for (const auto& entry : clusterVector) {
         QString clusterName = entry.first;
         int count = entry.second.first;
-        QString colorHex = entry.second.second.name();
+        QString colorHex = "#a6a6a6";//entry.second.second.name();
         QColor color(entry.second.second);
 
-        QString textColor = isDarkColor(color) ? "white" : "black";
+        QString textColor = "black";//isDarkColor(color) ? "white" : "black";
         int barWidth = (maxCount > 0) ? static_cast<int>((static_cast<double>(count) / maxCount) * 100) : 0;
         barWidth = std::max(barWidth, 2); // Ensure a minimum width for visibility
 
