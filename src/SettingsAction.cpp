@@ -4104,7 +4104,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
 
         // Check if the species is one of the selected species
         if (selectedLeaves->contains(species)) {
-            for (int col = 1; col < model->columnCount(); ++col) {
+            for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#00A2ED")), Qt::BackgroundRole);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#000000")), Qt::ForegroundRole);
@@ -4113,7 +4113,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         else
         {
             //remove existing color from rows
-            for (int col = 1; col < model->columnCount(); ++col) {
+            for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(systemColor)), Qt::BackgroundRole);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(valuesColor)), Qt::ForegroundRole);
