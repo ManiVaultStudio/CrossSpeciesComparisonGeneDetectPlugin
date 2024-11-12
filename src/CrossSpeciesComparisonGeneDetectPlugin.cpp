@@ -1900,14 +1900,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
             
             if (selectedSpecies.contains(species)) {
-                for (int i = 1; i < rowItems.size(); ++i) {
+                for (int i = 0; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
                     rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
             }
             else
             {
-                for (int i = 1; i < rowItems.size(); ++i) {
+                for (int i = 0; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor(systemColor)));
                     rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
