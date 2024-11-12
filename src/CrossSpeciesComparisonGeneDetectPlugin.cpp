@@ -1815,21 +1815,21 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
-            QColor backgroundColor = QColor(details.color);
+            //QColor backgroundColor = QColor(details.color);
 
             // Calculate the brightness of the background color
-            qreal brightness = backgroundColor.lightnessF();
+            //qreal brightness = backgroundColor.lightnessF();
 
             // Choose text color based on the brightness of the background color
-            QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
+            //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
             QStandardItem* item = new QStandardItem(speciesCopy);
             item->setData(species, Qt::UserRole); // Store the original species value in a user role
-            item->setBackground(backgroundColor);
-            item->setForeground(textColor);
+            //item->setBackground(backgroundColor);
+            //item->setForeground(textColor);
             rowItems << item;
 
             // Find statistics for the species
@@ -1898,7 +1898,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
             }
-
+            
             if (selectedSpecies.contains(species)) {
                 for (int i = 1; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
