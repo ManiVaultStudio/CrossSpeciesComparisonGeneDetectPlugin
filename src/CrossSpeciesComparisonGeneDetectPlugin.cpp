@@ -1687,7 +1687,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
         // Set the model to the table view
         _settingsAction.getSelectionDetailsTable()->setModel(model);
-
+        model->setSortRole(Qt::UserRole);
         // Sort the model by the fourth column (index 3) in descending order
         model->sort(1, Qt::DescendingOrder);
 
@@ -1860,6 +1860,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
         _settingsAction.getSelectionDetailsTable()->setModel(model);
+        model->setSortRole(Qt::UserRole);
         model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);
 
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
