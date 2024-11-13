@@ -1550,14 +1550,15 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction in Neuronal", "Fraction in " + headerStringToAdd , "Count of Selected", "Count of All" });
   
-        float minValueTopAbundance = 1000000000.0f;
-        float maxValueTopAbundance = 0.0f;
-        float minValueMiddleAbundance = 1000000000.0f;
-        float maxValueMiddleAbundance = 0.0f;
-        float minValueSelectedCellsCount = 1000000000.0f;
-        float maxValueSelectedCellsCount = 0.0f;
-        float minValueTotal = 1000000000.0f;
-        float maxValueTotal = 0.0f;
+        float minValueTopAbundance = std::numeric_limits<float>::max();
+        float maxValueTopAbundance = std::numeric_limits<float>::lowest();
+        float minValueMiddleAbundance = std::numeric_limits<float>::max();
+        float maxValueMiddleAbundance = std::numeric_limits<float>::lowest();
+        float minValueSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxValueSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minValueTotal = std::numeric_limits<float>::max();
+        float maxValueTotal = std::numeric_limits<float>::lowest();
+  
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
         { 
@@ -1813,22 +1814,23 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         auto systemColor = colorValues[0];
         auto valuesColor = colorValues[1];
 
-        float minDifference = 1000000000.0f;
-        float maxDifference = 0.0f;
-        float minRank = 1000000000.0f;
-        float maxRank = 0.0f;
-        float minTopAbundance = 1000000000.0f;
-        float maxTopAbundance = 0.0f;
-        float minMiddleAbundance = 1000000000.0f;
-        float maxMiddleAbundance = 0.0f;
-        float minSelectedCellsCount = 1000000000.0f;
-        float maxSelectedCellsCount = 0.0f;
-        float minMeanSelected = 1000000000.0f;
-        float maxMeanSelected = 0.0f;
-        float minNonSelectedCellsCount = 1000000000.0f;
-        float maxNonSelectedCellsCount = 0.0f;
-        float minMeanNonSelected = 1000000000.0f;
-        float maxMeanNonSelected = 0.0f;
+        float minDifference = std::numeric_limits<float>::max();
+        float maxDifference = std::numeric_limits<float>::lowest();
+        float minRank = std::numeric_limits<float>::max();
+        float maxRank = std::numeric_limits<float>::lowest();
+        float minTopAbundance = std::numeric_limits<float>::max();
+        float maxTopAbundance = std::numeric_limits<float>::lowest();
+        float minMiddleAbundance = std::numeric_limits<float>::max();
+        float maxMiddleAbundance = std::numeric_limits<float>::lowest();
+        float minSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minMeanSelected = std::numeric_limits<float>::max();
+        float maxMeanSelected = std::numeric_limits<float>::lowest();
+        float minNonSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxNonSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minMeanNonSelected = std::numeric_limits<float>::max();
+        float maxMeanNonSelected = std::numeric_limits<float>::lowest();
+
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
         {
@@ -1843,14 +1845,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     maxDifference = difference;
                 }
-
-                if (it->second.rank < minRank)
+                float rankVal = static_cast<float>(it->second.rank);
+                if (rankVal < minRank)
                 {
-                    minRank = it->second.rank;
+                    minRank = rankVal;
                 }
-                if (it->second.rank > maxRank)
+                if (rankVal > maxRank)
                 {
-                    maxRank = it->second.rank;
+                    maxRank = rankVal;
                 }
 
                 float topAbundance = 0.0;
@@ -1879,14 +1881,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     maxMiddleAbundance = middleAbundance;
                 }
-
-                if (it->second.countSelected < minSelectedCellsCount)
+                float selectedCellsCount = static_cast<float>(it->second.countSelected);
+                if (selectedCellsCount < minSelectedCellsCount)
                 {
-                    minSelectedCellsCount = it->second.countSelected;
+                    minSelectedCellsCount = selectedCellsCount;
                 }
-                if (it->second.countSelected > maxSelectedCellsCount)
+                if (selectedCellsCount > maxSelectedCellsCount)
                 {
-                    maxSelectedCellsCount = it->second.countSelected;
+                    maxSelectedCellsCount = selectedCellsCount;
                 }
 
                 if (it->second.meanSelected < minMeanSelected)
@@ -1897,14 +1899,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     maxMeanSelected = it->second.meanSelected;
                 }
-
-                if (it->second.countNonSelected < minNonSelectedCellsCount)
+                float nonSelectedCellsCount = static_cast<float>(it->second.countNonSelected);
+                if (nonSelectedCellsCount < minNonSelectedCellsCount)
                 {
-                    minNonSelectedCellsCount = it->second.countNonSelected;
+                    minNonSelectedCellsCount = nonSelectedCellsCount;
                 }
-                if (it->second.countNonSelected > maxNonSelectedCellsCount)
+                if (nonSelectedCellsCount > maxNonSelectedCellsCount)
                 {
-                    maxNonSelectedCellsCount = it->second.countNonSelected;
+                    maxNonSelectedCellsCount = nonSelectedCellsCount;
                 }
 
                 if (it->second.meanNonSelected < minMeanNonSelected)
@@ -1920,7 +1922,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
             
         }
-
+        int numofGenes = _settingsAction.getTopNGenesFilter().getMaximum();
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
@@ -1964,11 +1966,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 item = new QStandardItem();
                 int rank = it->second.rank;
+ 
                 QString formattedRank = QString::number(rank);
                 item->setData(QVariant(rank), Qt::UserRole);
                 item->setData(QVariant(formattedRank), Qt::DisplayRole);
                 // Create a pixmap for the bar
-                float lengthRank = getNormalizedSize(rank, minRank, maxRank);
+                int changerank = numofGenes - rank;
+                float percentRank = (static_cast<float>(changerank) / static_cast<float>(numofGenes)) * 100.0f;
+                float lengthRank = getNormalizedSize(percentRank, minRank, maxRank);
                 QPixmap barPixmapRank(75, 20); // Width 100, Height 20
                 barPixmapRank.fill(Qt::transparent);
                 QPainter painterRank(&barPixmapRank);
