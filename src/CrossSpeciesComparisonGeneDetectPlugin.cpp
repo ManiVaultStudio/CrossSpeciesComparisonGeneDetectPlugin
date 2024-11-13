@@ -1830,7 +1830,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         float maxNonSelectedCellsCount = std::numeric_limits<float>::lowest();
         float minMeanNonSelected = std::numeric_limits<float>::max();
         float maxMeanNonSelected = std::numeric_limits<float>::lowest();
-
+        int numofGenes = _settingsAction.getTopNGenesFilter().getMaximum();
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
         {
@@ -1845,7 +1845,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 {
                     maxDifference = difference;
                 }
-                float rankVal = static_cast<float>(it->second.rank);
+                int temprank = numofGenes - it->second.rank;
+                float rankVal = static_cast<float>(temprank);
                 if (rankVal < minRank)
                 {
                     minRank = rankVal;
@@ -1922,7 +1923,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             }
             
         }
-        int numofGenes = _settingsAction.getTopNGenesFilter().getMaximum();
+        
 
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
