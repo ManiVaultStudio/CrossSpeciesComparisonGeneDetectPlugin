@@ -4104,7 +4104,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
 
         // Check if the species is one of the selected species
         if (selectedLeaves->contains(species)) {
-            for (int col = 1; col < model->columnCount(); ++col) {
+            for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#00A2ED")), Qt::BackgroundRole);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#000000")), Qt::ForegroundRole);
@@ -4113,7 +4113,7 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         else
         {
             //remove existing color from rows
-            for (int col = 1; col < model->columnCount(); ++col) {
+            for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(systemColor)), Qt::BackgroundRole);
                 _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(valuesColor)), Qt::ForegroundRole);
@@ -4189,19 +4189,18 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
 
     // Generate HTML output
     QString html = "<html><head><style>"
-                   "body { display: flex; flex-direction: column; align-items: flex-start; }"
-                   ".bar-container { display: flex; align-items: center; margin: 2px 0; }"
-                   ".bar { height: 20px; margin-right: 5px; }"
-                   ".label { font-size: 12px; }"
-                   ".chart { width: 100%; }"
-                   ".bar { height: 20px; margin: 5px 0; }"
-                   "</style></head><body>";
+        "body { display: flex; flex-direction: column; align-items: flex-start; }"
+        ".bar-container { display: flex; align-items: center; margin: 2px 0; }"
+        ".bar { height: 20px; margin-right: 5px; }"
+        ".label { font-size: 12px; }"
+        ".chart { width: 100%; }"
+        "</style></head><body>";
 
     // Function to determine if a color is dark
-    auto isDarkColor = [](const QColor& color) {
-        int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
-        return brightness < 128;
-    };
+    //auto isDarkColor = [](const QColor& color) {
+        //int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
+        //return brightness < 128;
+        //};
 
     // Convert the map to a vector of pairs for sorting
     std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
@@ -4209,21 +4208,22 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     // Sort the vector by count in descending order
     std::sort(clusterVector.begin(), clusterVector.end(), [](const auto& a, const auto& b) {
         return a.second.first > b.second.first;
-    });
+        });
 
     // Find the maximum count for scaling the bars
-    int maxCount = clusterVector.front().second.first;
+    int maxCount = clusterVector.empty() ? 1 : clusterVector.front().second.first; // Default to 1 if no data.
 
     // Populate the divs with cluster data
     html += "<div class='chart'>";
     for (const auto& entry : clusterVector) {
         QString clusterName = entry.first;
         int count = entry.second.first;
-        QString colorHex = entry.second.second.name();
+        QString colorHex = "#a6a6a6";//entry.second.second.name();
         QColor color(entry.second.second);
 
-        QString textColor = isDarkColor(color) ? "white" : "black";
-        int barWidth = static_cast<int>((static_cast<double>(count) / maxCount) * 100);
+        QString textColor = "black";//isDarkColor(color) ? "white" : "black";
+        int barWidth = (maxCount > 0) ? static_cast<int>((static_cast<double>(count) / maxCount) * 100) : 0;
+        barWidth = std::max(barWidth, 2); // Ensure a minimum width for visibility
 
         html += "<div class='bar-container'>";
         html += "<div class='bar' style='width:" + QString::number(barWidth) + "%; background-color:" + colorHex + "; color:" + textColor + ";'></div>";
@@ -4233,6 +4233,8 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     html += "</div>";
 
     html += "</body></html>";
+
+
     return html;
 }
 

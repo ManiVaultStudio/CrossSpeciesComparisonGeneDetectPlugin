@@ -36,6 +36,32 @@ void applyLogTransformation(std::vector<float>& values) {
 #endif
 
 }
+float getNormalizedSizeRank(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Avoid division by zero
+    if (max == min) {
+        return 0.0f; // If max equals min, return 0 to avoid a division by zero error
+    }
+
+    float normalizedValue = (value - min) / (max - min);
+    return normalizedValue * 100.0f; // Return size as a percentage
+}
+float getNormalizedSizePosNeg(float value, float min, float max) {
+    // Calculate the maximum absolute value of min and max
+    float maxAbs = std::max(std::abs(min), std::abs(max));
+
+    if (value >= 0) {
+        // Normalize positive values with respect to the maximum absolute value
+        return (value / maxAbs) * 50.0f;
+    }
+    else {
+        // Normalize negative values with respect to the maximum absolute value
+        return (value / -maxAbs) * 50.0f;
+    }
+}
+
 
 
 void updateRowVisibility(const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
@@ -60,6 +86,135 @@ void makeAllRowsVisible(QTableView* geneTableView, QSortFilterProxyModel* proxyM
     }
 }
 
+float getNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    float normalizedValue = (value - min) / (max - min);
+    return normalizedValue * 100.0f; // Return size as a percentage
+}
+
+float getPowNormalizedSize(float value, float min, float max, float alpha) {
+    // Scale down the range to avoid precision issues
+    const float scale = 1e6f; // Adjust the scale as needed
+    float scaledMin = min / scale;
+    float scaledMax = max / scale;
+    float scaledValue = value / scale;
+
+    if (scaledValue < scaledMin) scaledValue = scaledMin;
+    if (scaledValue > scaledMax) scaledValue = scaledMax;
+
+    float normalizedValue = std::pow((scaledValue - scaledMin) / (scaledMax - scaledMin), alpha);
+    return normalizedValue * 100.0f; // Return size as a percentage
+}
+
+
+float getLogNormalizedSize(float value, float min, float max) {
+    // Avoid precision issues and ensure the range does not include zero (since log(0) is undefined)
+    const float scale = 1e6f;
+    float scaledMin = min / scale;
+    float scaledMax = max / scale;
+    float scaledValue = value / scale;
+
+    // Clamp scaledValue within the scaledMin and scaledMax range
+    if (scaledValue < scaledMin) scaledValue = scaledMin;
+    if (scaledValue > scaledMax) scaledValue = scaledMax;
+
+    // Apply logarithmic normalization
+    float logMin = std::log(scaledMin);
+    float logMax = std::log(scaledMax);
+    float logValue = std::log(scaledValue);
+
+    float normalizedValue = (logValue - logMin) / (logMax - logMin);
+    return normalizedValue * 100.0f; // Return as percentage
+}
+float getRelativeNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Calculate the midpoint to reduce the impact of large ranges
+    float rangeMid = min + (max - min) / 2.0f;
+    float relMin = min - rangeMid;
+    float relMax = max - rangeMid;
+    float relValue = value - rangeMid;
+
+    float normalizedValue = (relValue - relMin) / (relMax - relMin);
+    return normalizedValue * 100.0f;
+}
+float getSegmentedNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Define segment ranges manually (e.g., in ranges of millions)
+    float segmentSize = (max - min) / 10.0f;  // Divide range into 10 segments for example
+    float normalizedValue = 0.0f;
+
+    // Normalize within each segment range
+    for (float i = min; i < max; i += segmentSize) {
+        if (value >= i && value < i + segmentSize) {
+            normalizedValue = (value - i) / segmentSize;
+            break;
+        }
+    }
+    return normalizedValue * 100.0f;
+}
+float getShiftedNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Shift values by subtracting min to reduce range
+    float shiftedValue = value - min;
+    float shiftedMax = max - min;
+
+    // Normalize the shifted value
+    float normalizedValue = shiftedValue / shiftedMax;
+    return normalizedValue * 100.0f;
+}
+float getFixedPointNormalizedSize(float value, float min, float max) {
+    int scaleFactor = 1e6;  // Scale to an integer level that fits in `int`
+    int intValue = static_cast<int>(value * scaleFactor);
+    int intMin = static_cast<int>(min * scaleFactor);
+    int intMax = static_cast<int>(max * scaleFactor);
+
+    // Prevent overflow by clamping
+    if (intValue < intMin) intValue = intMin;
+    if (intValue > intMax) intValue = intMax;
+
+    // Calculate normalized value
+    float normalizedValue = (float)(intValue - intMin) / (intMax - intMin);
+    return normalizedValue * 100.0f;
+}
+std::pair<QColor, QColor> getColorMAp(float value, float min, float max, const QString& colorMap) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    float normalizedValue = (value - min) / (max - min);
+    QColor color;
+    QColor textColor;
+
+    if (colorMap == "greyscale") {
+        int grayValue = static_cast<int>((1 - normalizedValue) * 255);
+        color = QColor(grayValue, grayValue, grayValue);
+        textColor = (grayValue > 127) ? QColor(0, 0, 0) : QColor(255, 255, 255);
+    } else if (colorMap == "bupu") {
+        int blueValue = static_cast<int>((1 - normalizedValue) * 255);
+        int purpleValue = static_cast<int>(normalizedValue * 255);
+        color = QColor(blueValue, 0, purpleValue);
+        textColor = (blueValue + purpleValue > 255) ? QColor(0, 0, 0) : QColor(255, 255, 255);
+    } else if (colorMap == "gnpu") {
+        int greenValue = static_cast<int>((1 - normalizedValue) * 255);
+        int purpleValue = static_cast<int>(normalizedValue * 255);
+        color = QColor(0, greenValue, purpleValue);
+        textColor = (greenValue + purpleValue > 255) ? QColor(0, 0, 0) : QColor(255, 255, 255);
+    } else {
+        // Default to greyscale if an unknown color map is provided
+        int grayValue = static_cast<int>((1 - normalizedValue) * 255);
+        color = QColor(grayValue, grayValue, grayValue);
+        textColor = (grayValue > 127) ? QColor(0, 0, 0) : QColor(255, 255, 255);
+    }
+
+    return std::make_pair(color, textColor);
+}
 
 std::map<QString, SpeciesDetailsStats> convertToStatisticsMap(const QString& formattedStatistics) {
     std::map<QString, SpeciesDetailsStats> statisticsMap;
@@ -1509,11 +1664,80 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
         }
 
         model->setHorizontalHeaderLabels({ "Species", "Fraction in Neuronal", "Fraction in " + headerStringToAdd , "Count of Selected", "Count of All" });
+  
+        float minValueTopAbundance = std::numeric_limits<float>::max();
+        float maxValueTopAbundance = std::numeric_limits<float>::lowest();
+        float minValueMiddleAbundance = std::numeric_limits<float>::max();
+        float maxValueMiddleAbundance = std::numeric_limits<float>::lowest();
+        float minValueSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxValueSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minValueTotal = std::numeric_limits<float>::max();
+        float maxValueTotal = std::numeric_limits<float>::lowest();
+  
+
+        for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
+        { 
+        
+        float topAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceTop)) * 100;
+        float middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
+        float selectedCellsCount = static_cast<float>(details.selectedCellsCount);
+        float total = static_cast<float>(details.selectedCellsCount) + static_cast<float>(details.nonSelectedCellsCount);
+
+        if (topAbundance < minValueTopAbundance)
+        {
+            minValueTopAbundance = topAbundance;
+        }
+        if (topAbundance > maxValueTopAbundance)
+        {
+            maxValueTopAbundance = topAbundance;
+        }
+
+        if (middleAbundance < minValueMiddleAbundance)
+        {
+            minValueMiddleAbundance = middleAbundance;
+        }
+        if (middleAbundance > maxValueMiddleAbundance)
+        {
+            maxValueMiddleAbundance = middleAbundance;
+        }
+        
+        if (selectedCellsCount < minValueSelectedCellsCount)
+        {
+            minValueSelectedCellsCount = selectedCellsCount;
+        }
+        if (selectedCellsCount > maxValueSelectedCellsCount)
+        {
+            maxValueSelectedCellsCount = selectedCellsCount;
+        }
+
+        if (total < minValueTotal)
+        {
+            minValueTotal = total;
+        }
+        if (total > maxValueTotal)
+        {
+            maxValueTotal = total;
+        }
+
+        }
+
+
+
+
+
+
+
+        //float value = 0.0f;
+
+        //QColor color = getGrayscaleColor(value, minValue, maxValue);
+        //qDebug() << "Grayscale color:" << color;
+
+
 
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
-            QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
-            qreal brightness = backgroundColor.lightnessF();
-            QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
+            //QColor backgroundColor = QColor(details.color); // Ensure color is converted to QColor
+            //qreal brightness = backgroundColor.lightnessF();
+            //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
@@ -1521,20 +1745,40 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             // Species column
             QStandardItem* speciesItem = new QStandardItem(speciesCopy);
             speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
-            speciesItem->setBackground(backgroundColor);
-            speciesItem->setForeground(textColor);
+            //speciesItem->setBackground(backgroundColor);
+            //speciesItem->setForeground(textColor);
             rowItems << speciesItem;
 
             // Fraction of Neuronal column
             QStandardItem* item = new QStandardItem();
             float topAbundance = 0.0;
-            if (details.abundanceTop != 0)
-            {
+            if (details.abundanceTop != 0) {
                 topAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceTop)) * 100;
             }
             QString formattedValueTop = QString::number(topAbundance, 'f', 2);
-            item->setData(QVariant(formattedValueTop), Qt::EditRole);
+
+            // Set the numeric value for sorting
+            item->setData(QVariant(topAbundance), Qt::UserRole);
+
+            // Set the formatted string for display (tooltip)
+            item->setData(QVariant(formattedValueTop), Qt::DisplayRole);
+
+            // Create a pixmap for the bar
+            float lengthTop = getNormalizedSize(topAbundance, minValueTopAbundance, maxValueTopAbundance);
+            QPixmap barPixmapTop(60, 20); // Width 100, Height 20
+            barPixmapTop.fill(Qt::transparent);
+
+            QPainter painterTop(&barPixmapTop);
+            painterTop.setPen(Qt::NoPen);
+            painterTop.setBrush(Qt::gray);
+            painterTop.drawRect(0, 0, static_cast<int>(lengthTop), 20);
+            painterTop.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapTop), Qt::DecorationRole);
+
             rowItems << item;
+
 
             // Fraction of Middle column
             item = new QStandardItem();
@@ -1544,46 +1788,105 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
                 middleAbundance = (static_cast<float>(details.countAbundanceNumerator) / static_cast<float>(details.abundanceMiddle)) * 100;
             }
             QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
-            item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
+
+            // Set the numeric value for sorting
+            item->setData(QVariant(middleAbundance), Qt::UserRole);
+
+            // Set the formatted string for display
+            item->setData(QVariant(formattedValueMiddle), Qt::DisplayRole);
+
+            // Create a pixmap for the bar
+            float lengthMiddle = getNormalizedSize(middleAbundance, minValueMiddleAbundance, maxValueMiddleAbundance);
+            QPixmap barPixmapMiddle(80, 20); // Width 100, Height 20
+            barPixmapMiddle.fill(Qt::transparent);
+
+            QPainter painterMiddle(&barPixmapMiddle);
+            painterMiddle.setPen(Qt::NoPen);
+            painterMiddle.setBrush(Qt::gray);
+            painterMiddle.drawRect(0, 0, static_cast<int>(lengthMiddle), 20);
+            painterMiddle.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapMiddle), Qt::DecorationRole);
+
+
             rowItems << item;
 
             // Count Selected column
             item = new QStandardItem();
-            item->setData(QVariant(details.selectedCellsCount), Qt::EditRole);
+            int selectedCellsCount = details.selectedCellsCount;
+            QString  formattedSelectedCellsCount = QString::number(selectedCellsCount);
+            item->setData(QVariant(selectedCellsCount), Qt::UserRole);
+            item->setData(QVariant(formattedSelectedCellsCount), Qt::DisplayRole);
+            // Create a pixmap for the bar
+            float lengthSelectedCellsCount = getNormalizedSize(selectedCellsCount, minValueSelectedCellsCount, maxValueSelectedCellsCount);
+            QPixmap barPixmapSelectedCellsCount(60, 20); // Width 100, Height 20
+            barPixmapSelectedCellsCount.fill(Qt::transparent);
+
+            QPainter painterSelectedCellsCount(&barPixmapSelectedCellsCount);
+            painterSelectedCellsCount.setPen(Qt::NoPen);
+            painterSelectedCellsCount.setBrush(Qt::gray);
+            painterSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthSelectedCellsCount), 20);
+            painterSelectedCellsCount.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapSelectedCellsCount), Qt::DecorationRole);
+
             rowItems << item;
 
             // Count All column
             item = new QStandardItem();
             auto total = details.selectedCellsCount + details.nonSelectedCellsCount;
-            item->setData(QVariant(total), Qt::EditRole);
+            QString formattedTotal = QString::number(total);
+            item->setData(QVariant(total), Qt::UserRole);
+            item->setData(QVariant(formattedTotal), Qt::DisplayRole);
+            // Create a pixmap for the bar
+            float lengthTotal = getNormalizedSize(total, minValueTotal, maxValueTotal);
+            QPixmap barPixmapTotal(60, 20); // Width 100, Height 20
+            barPixmapTotal.fill(Qt::transparent);
+
+            QPainter painterTotal(&barPixmapTotal);
+            painterTotal.setPen(Qt::NoPen);
+            painterTotal.setBrush(Qt::gray);
+            painterTotal.drawRect(0, 0, static_cast<int>(lengthTotal), 20);
+            painterTotal.end();
+
+            // Set the pixmap as the decoration
+            item->setData(QVariant(barPixmapTotal), Qt::DecorationRole);
+
             rowItems << item;
 
             model->appendRow(rowItems);
         }
 
+        // Enable sorting on the table view
+        _settingsAction.getSelectionDetailsTable()->setSortingEnabled(true);
+
         // Set the model to the table view
         _settingsAction.getSelectionDetailsTable()->setModel(model);
-
-        // Sort the model by the fourth column (Count Selected) in descending order
-        model->sort(3, Qt::DescendingOrder);
+        model->setSortRole(Qt::UserRole);
+        // Sort the model by the fourth column (index 3) in descending order
+        model->sort(1, Qt::DescendingOrder);
 
         // Configure the table view
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::NoSelection);
         _settingsAction.getSelectionDetailsTable()->verticalHeader()->hide();
+
         if (singleColumn)
         {
             _settingsAction.getSelectionDetailsTable()->hideColumn(2);
         }
+
+        // Resize columns
         _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
-        //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 70);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 90);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 70);
+
+        // Update the view (layoutChanged signal is typically not required here)
         _settingsAction.getSelectionDetailsTable()->update();
 
-        // Emit layoutChanged signal to notify views of the model change
-        emit model->layoutChanged();
     }
 
     adjustTableWidths("small");
@@ -1630,23 +1933,134 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         auto systemColor = colorValues[0];
         auto valuesColor = colorValues[1];
 
+        float minDifference = std::numeric_limits<float>::max();
+        float maxDifference = std::numeric_limits<float>::lowest();
+        float minRank = std::numeric_limits<float>::max();
+        float maxRank = std::numeric_limits<float>::lowest();
+        float minTopAbundance = std::numeric_limits<float>::max();
+        float maxTopAbundance = std::numeric_limits<float>::lowest();
+        float minMiddleAbundance = std::numeric_limits<float>::max();
+        float maxMiddleAbundance = std::numeric_limits<float>::lowest();
+        float minSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minMeanSelected = std::numeric_limits<float>::max();
+        float maxMeanSelected = std::numeric_limits<float>::lowest();
+        float minNonSelectedCellsCount = std::numeric_limits<float>::max();
+        float maxNonSelectedCellsCount = std::numeric_limits<float>::lowest();
+        float minMeanNonSelected = std::numeric_limits<float>::max();
+        float maxMeanNonSelected = std::numeric_limits<float>::lowest();
+        int numofGenes = _settingsAction.getTopNGenesFilter().getMaximum();
+
+        for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap())
+        {
+            auto it = statisticsValues.find(species);
+            if (it != statisticsValues.end()) {
+                float difference = (it->second.meanSelected - it->second.meanNonSelected);
+                if (difference < minDifference)
+                {
+                    minDifference = difference;
+                }
+                if (difference > maxDifference)
+                {
+                    maxDifference = difference;
+                }
+                int temprank = numofGenes - it->second.rank;
+                float rankVal = static_cast<float>(temprank);
+                if (rankVal < minRank)
+                {
+                    minRank = rankVal;
+                }
+                if (rankVal > maxRank)
+                {
+                    maxRank = rankVal;
+                }
+
+                float topAbundance = 0.0;
+                if (it->second.abundanceTop != 0) {
+                    topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
+                }
+                if (topAbundance < minTopAbundance)
+                {
+                    minTopAbundance = topAbundance;
+                }
+                if (topAbundance > maxTopAbundance)
+                {
+                    maxTopAbundance = topAbundance;
+                }
+
+                float middleAbundance = 0.0;
+                if (it->second.abundanceMiddle != 0)
+                {
+                    middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
+                }
+                if (middleAbundance < minMiddleAbundance)
+                {
+                    minMiddleAbundance = middleAbundance;
+                }
+                if (middleAbundance > maxMiddleAbundance)
+                {
+                    maxMiddleAbundance = middleAbundance;
+                }
+                float selectedCellsCount = static_cast<float>(it->second.countSelected);
+                if (selectedCellsCount < minSelectedCellsCount)
+                {
+                    minSelectedCellsCount = selectedCellsCount;
+                }
+                if (selectedCellsCount > maxSelectedCellsCount)
+                {
+                    maxSelectedCellsCount = selectedCellsCount;
+                }
+
+                if (it->second.meanSelected < minMeanSelected)
+                {
+                    minMeanSelected = it->second.meanSelected;
+                }
+                if (it->second.meanSelected > maxMeanSelected)
+                {
+                    maxMeanSelected = it->second.meanSelected;
+                }
+                float nonSelectedCellsCount = static_cast<float>(it->second.countNonSelected);
+                if (nonSelectedCellsCount < minNonSelectedCellsCount)
+                {
+                    minNonSelectedCellsCount = nonSelectedCellsCount;
+                }
+                if (nonSelectedCellsCount > maxNonSelectedCellsCount)
+                {
+                    maxNonSelectedCellsCount = nonSelectedCellsCount;
+                }
+
+                if (it->second.meanNonSelected < minMeanNonSelected)
+                {
+                    minMeanNonSelected = it->second.meanNonSelected;
+                }
+                if (it->second.meanNonSelected > maxMeanNonSelected)
+                {
+                    maxMeanNonSelected = it->second.meanNonSelected;
+                }
+
+
+            }
+            
+        }
+        
+
         // Populate the model with sorted data and statistics
         for (const auto& [species, details] : _settingsAction.getSelectedSpeciesCellCountMap()) {
-            QColor backgroundColor = QColor(details.color);
+            //QColor backgroundColor = QColor(details.color);
 
             // Calculate the brightness of the background color
-            qreal brightness = backgroundColor.lightnessF();
+            //qreal brightness = backgroundColor.lightnessF();
 
             // Choose text color based on the brightness of the background color
-            QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
+            //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
             QStandardItem* item = new QStandardItem(speciesCopy);
             item->setData(species, Qt::UserRole); // Store the original species value in a user role
-            item->setBackground(backgroundColor);
-            item->setForeground(textColor);
+            //item->setBackground(backgroundColor);
+            //item->setForeground(textColor);
             rowItems << item;
 
             // Find statistics for the species
@@ -1656,11 +2070,73 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 item = new QStandardItem();
                 float difference = (it->second.meanSelected - it->second.meanNonSelected);
-                item->setData(QVariant(QString::number(difference, 'f', 2)), Qt::EditRole);
+                QString formattedValue = QString::number(difference, 'f', 2);
+                item->setData(QVariant(difference), Qt::UserRole);
+                item->setData(QVariant(formattedValue), Qt::DisplayRole);
+
+                // Create a pixmap for the bar
+                float length = getNormalizedSizePosNeg(difference, minDifference, maxDifference);
+                QPixmap barPixmap(75, 20); // Width 75, Height 20
+                barPixmap.fill(Qt::transparent);
+                QPainter painter(&barPixmap);
+                painter.setPen(Qt::NoPen);
+                painter.setBrush(Qt::gray);
+
+                // Draw the bar from the middle
+                int middle = barPixmap.width() / 2;
+                if (difference >= 0) {
+                    painter.drawRect(middle, 0, static_cast<int>(length), 20);
+                }
+                else {
+                    painter.drawRect(middle - static_cast<int>(length), 0, static_cast<int>(length), 20);
+                }
+
+                painter.end();
+                item->setData(QVariant(barPixmap), Qt::DecorationRole);
                 rowItems << item;
 
+
+
+                // Main logic for creating a rank item with a bar
                 item = new QStandardItem();
-                item->setData(QVariant(it->second.rank), Qt::EditRole);
+                int rank = it->second.rank;
+
+                QString formattedRank = QString::number(rank);
+                item->setData(QVariant(rank), Qt::UserRole);
+                item->setData(QVariant(formattedRank), Qt::DisplayRole);
+
+                // Logarithmic calculations for the ranks
+                float logOfNumofGenes = std::log(numofGenes) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logOfRank = std::log(rank) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+
+                // Adjust the logarithmic values for the rank difference
+                float logofChangeRank = logOfNumofGenes - logOfRank;
+
+                // Ensure the min and max logarithmic values are calculated properly
+                float logofMinRank = std::log(1) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logofMaxRank = std::log(maxRank) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+
+                // Normalize the rank length for the bar
+                float lengthRank = getNormalizedSizeRank(logofChangeRank, logofMinRank, logofMaxRank);
+
+                // Ensure the length is within a reasonable range (0 to 100)
+                lengthRank = qBound(0.0f, lengthRank, 100.0f); // Ensure the lengthRank is within bounds
+
+                // Create the pixmap for the rank bar
+                QPixmap barPixmapRank(75, 20); // Width 100, Height 20
+                barPixmapRank.fill(Qt::transparent); // Start with a transparent background
+
+                // Create a painter to draw on the pixmap
+                QPainter painterRank(&barPixmapRank);
+                painterRank.setPen(Qt::NoPen); // No outline
+                painterRank.setBrush(Qt::gray); // Bar color
+                painterRank.drawRect(0, 0, static_cast<int>(lengthRank), 20); // Draw the bar
+
+                painterRank.end(); // End painting
+
+                // Set the bar pixmap as the decoration for the item
+                item->setData(QVariant(barPixmapRank), Qt::DecorationRole);
+
                 rowItems << item;
 
                 item = new QStandardItem();
@@ -1669,8 +2145,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
                 }
                 QString formattedValueTop = QString::number(topAbundance, 'f', 2);
-                item->setData(QVariant(formattedValueTop), Qt::EditRole);
+                item->setData(QVariant(topAbundance), Qt::UserRole);
+                item->setData(QVariant(formattedValueTop), Qt::DisplayRole);
+                float lengthTop = getNormalizedSize(topAbundance, minTopAbundance, maxTopAbundance);
+                QPixmap barPixmapTop(60, 20); // Width 100, Height 20
+                barPixmapTop.fill(Qt::transparent);
+                QPainter painterTop(&barPixmapTop);
+                painterTop.setPen(Qt::NoPen);
+                painterTop.setBrush(Qt::gray);
+                painterTop.drawRect(0, 0, static_cast<int>(lengthTop), 20);
+                painterTop.end();
+                item->setData(QVariant(barPixmapTop), Qt::DecorationRole);
                 rowItems << item;
+
 
                 float middleAbundance = 0.0;
                 if (it->second.abundanceMiddle != 0)
@@ -1679,26 +2166,90 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 }
                 item = new QStandardItem();
                 QString formattedValueMiddle = QString::number(middleAbundance, 'f', 2);
-                item->setData(QVariant(formattedValueMiddle), Qt::EditRole);
+                item->setData(QVariant(middleAbundance), Qt::UserRole);
+                item->setData(QVariant(formattedValueMiddle), Qt::DisplayRole);
+                float lengthMiddle = getNormalizedSize(middleAbundance, minMiddleAbundance, maxMiddleAbundance);
+                QPixmap barPixmapMiddle(80, 20); // Width 100, Height 20
+                barPixmapMiddle.fill(Qt::transparent);
+                QPainter painterMiddle(&barPixmapMiddle);
+                painterMiddle.setPen(Qt::NoPen);
+                painterMiddle.setBrush(Qt::gray);
+                painterMiddle.drawRect(0, 0, static_cast<int>(lengthMiddle), 20);
+                painterMiddle.end();
+                item->setData(QVariant(barPixmapMiddle), Qt::DecorationRole);
                 rowItems << item;
 
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.countSelected), Qt::EditRole);
-                rowItems << item;
+
+
 
                 item = new QStandardItem();
-                QString formattedMeanSelected = QString::number(it->second.meanSelected, 'f', 2);
-                item->setData(QVariant(formattedMeanSelected), Qt::EditRole);
+                int selectedCellsCount = it->second.countSelected;
+                QString formattedSelectedCellsCount = QString::number(selectedCellsCount);
+                item->setData(QVariant(selectedCellsCount), Qt::UserRole);
+                item->setData(QVariant(formattedSelectedCellsCount), Qt::DisplayRole);
+                float lengthSelectedCellsCount = getNormalizedSize(selectedCellsCount, minSelectedCellsCount, maxSelectedCellsCount);
+                QPixmap barPixmapSelectedCellsCount(55, 20); // Width 100, Height 20
+                barPixmapSelectedCellsCount.fill(Qt::transparent);
+                QPainter painterSelectedCellsCount(&barPixmapSelectedCellsCount);
+                painterSelectedCellsCount.setPen(Qt::NoPen);
+                painterSelectedCellsCount.setBrush(Qt::gray);
+                painterSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthSelectedCellsCount), 20);
+                painterSelectedCellsCount.end();
+                item->setData(QVariant(barPixmapSelectedCellsCount), Qt::DecorationRole);
                 rowItems << item;
 
-                item = new QStandardItem();
-                item->setData(QVariant(it->second.countNonSelected), Qt::EditRole);
-                rowItems << item;
+                
 
                 item = new QStandardItem();
+                float meanSelected = it->second.meanSelected;
+                QString formattedMeanSelected = QString::number(meanSelected, 'f', 2);
+                item->setData(QVariant(meanSelected), Qt::UserRole);
+                item->setData(QVariant(formattedMeanSelected), Qt::DisplayRole);
+                float lengthMeanSelected = getNormalizedSize(meanSelected, minMeanSelected, maxMeanSelected);
+                QPixmap barPixmapMeanSelected(60, 20); // Width 100, Height 20
+                barPixmapMeanSelected.fill(Qt::transparent);
+                QPainter painterMeanSelected(&barPixmapMeanSelected);
+                painterMeanSelected.setPen(Qt::NoPen);
+                painterMeanSelected.setBrush(Qt::gray);
+                painterMeanSelected.drawRect(0, 0, static_cast<int>(lengthMeanSelected), 20);
+                painterMeanSelected.end();
+                item->setData(QVariant(barPixmapMeanSelected), Qt::DecorationRole);
+                rowItems << item;
+
+
+                item = new QStandardItem();
+                int nonSelectedCellsCount = it->second.countNonSelected;
+                QString formattedNonSelectedCellsCount = QString::number(nonSelectedCellsCount);
+                item->setData(QVariant(nonSelectedCellsCount), Qt::UserRole);
+                item->setData(QVariant(formattedNonSelectedCellsCount), Qt::DisplayRole);
+                float lengthNonSelectedCellsCount = getNormalizedSize(nonSelectedCellsCount, minNonSelectedCellsCount, maxNonSelectedCellsCount);
+                QPixmap barPixmapNonSelectedCellsCount(60, 20); // Width 100, Height 20
+                barPixmapNonSelectedCellsCount.fill(Qt::transparent);
+                QPainter painterNonSelectedCellsCount(&barPixmapNonSelectedCellsCount);
+                painterNonSelectedCellsCount.setPen(Qt::NoPen);
+                painterNonSelectedCellsCount.setBrush(Qt::gray);
+                painterNonSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthNonSelectedCellsCount), 20);
+                painterNonSelectedCellsCount.end();
+                item->setData(QVariant(barPixmapNonSelectedCellsCount), Qt::DecorationRole);
+                rowItems << item;
+                
+
+                item = new QStandardItem();
+                float meanNonSelected = it->second.meanNonSelected;
                 QString formattedMeanNonSelected = QString::number(it->second.meanNonSelected, 'f', 2);
-                item->setData(QVariant(formattedMeanNonSelected), Qt::EditRole);
+                item->setData(QVariant(meanNonSelected), Qt::UserRole);
+                item->setData(QVariant(formattedMeanNonSelected), Qt::DisplayRole);
+                float lengthMeanNonSelected = getNormalizedSize(meanNonSelected, minMeanNonSelected, maxMeanNonSelected);
+                QPixmap barPixmapMeanNonSelected(60, 20); // Width 100, Height 20
+                barPixmapMeanNonSelected.fill(Qt::transparent);
+                QPainter painterMeanNonSelected(&barPixmapMeanNonSelected);
+                painterMeanNonSelected.setPen(Qt::NoPen);
+                painterMeanNonSelected.setBrush(Qt::gray);
+                painterMeanNonSelected.drawRect(0, 0, static_cast<int>(lengthMeanNonSelected), 20);
+                painterMeanNonSelected.end();
+                item->setData(QVariant(barPixmapMeanNonSelected), Qt::DecorationRole);
                 rowItems << item;
+
             }
             else {
                 qDebug() << "Species: " + species + " not found in map auto it = statisticsValues.find(species);";
@@ -1715,16 +2266,16 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 rowItems << new QStandardItem("N/A");
                 rowItems << new QStandardItem("N/A");
             }
-
+            
             if (selectedSpecies.contains(species)) {
-                for (int i = 1; i < rowItems.size(); ++i) {
+                for (int i = 0; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
                     rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
             }
             else
             {
-                for (int i = 1; i < rowItems.size(); ++i) {
+                for (int i = 0; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor(systemColor)));
                     rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
                 }
@@ -1734,6 +2285,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             model->appendRow(rowItems);
         }
         _settingsAction.getSelectionDetailsTable()->setModel(model);
+        model->setSortRole(Qt::UserRole);
         model->sort(2, _settingsAction.getTypeofTopNGenes().getCurrentText() == "Positive" || _settingsAction.getTypeofTopNGenes().getCurrentText() == "Absolute" ? Qt::AscendingOrder : Qt::DescendingOrder);
 
         _settingsAction.getSelectionDetailsTable()->setSelectionMode(QAbstractItemView::SingleSelection);
