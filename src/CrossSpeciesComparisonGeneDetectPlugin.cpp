@@ -67,6 +67,19 @@ float getNormalizedSize(float value, float min, float max) {
     float normalizedValue = (value - min) / (max - min);
     return normalizedValue * 100.0f; // Return size as a percentage
 }
+float getLogNormalizedSize(float value, float min, float max) {
+    // Scale down the range to avoid precision issues
+    const float scale = 1e6f; // Adjust the scale as needed
+    float scaledMin = min / scale;
+    float scaledMax = max / scale;
+    float scaledValue = value / scale;
+
+    if (scaledValue < scaledMin) scaledValue = scaledMin;
+    if (scaledValue > scaledMax) scaledValue = scaledMax;
+
+    float normalizedValue = (scaledValue - scaledMin) / (scaledMax - scaledMin);
+    return normalizedValue * 100.0f; // Return size as a percentage
+}
 
 
 std::pair<QColor, QColor> getColorMAp(float value, float min, float max, const QString& colorMap) {
@@ -1974,7 +1987,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 // Create a pixmap for the bar
                 int changerank = numofGenes - rank;
 
-                float lengthRank = getNormalizedSize(changerank, minRank, maxRank);
+                float lengthRank = getLogNormalizedSize(changerank, minRank, maxRank);
                 QPixmap barPixmapRank(75, 20); // Width 100, Height 20
                 barPixmapRank.fill(Qt::transparent);
                 QPainter painterRank(&barPixmapRank);
