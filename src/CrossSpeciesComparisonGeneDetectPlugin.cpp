@@ -36,7 +36,18 @@ void applyLogTransformation(std::vector<float>& values) {
 #endif
 
 }
+float getNormalizedSizeRank(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
 
+    // Avoid division by zero
+    if (max == min) {
+        return 0.0f; // If max equals min, return 0 to avoid a division by zero error
+    }
+
+    float normalizedValue = (value - min) / (max - min);
+    return normalizedValue * 100.0f; // Return size as a percentage
+}
 float getNormalizedSizePosNeg(float value, float min, float max) {
     // Calculate the maximum absolute value of min and max
     float maxAbs = std::max(std::abs(min), std::abs(max));
@@ -2086,31 +2097,46 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
 
 
+                // Main logic for creating a rank item with a bar
                 item = new QStandardItem();
                 int rank = it->second.rank;
- 
+
                 QString formattedRank = QString::number(rank);
                 item->setData(QVariant(rank), Qt::UserRole);
                 item->setData(QVariant(formattedRank), Qt::DisplayRole);
-                // Create a pixmap for the bar
-                int changerank = numofGenes - rank;
+
+                // Logarithmic calculations for the ranks
                 float logOfNumofGenes = std::log(numofGenes) / std::log(_settingsAction.getTopNGenesFilter().getValue());
-                float logOfRank = std::log(numofGenes) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logOfRank = std::log(rank) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+
+                // Adjust the logarithmic values for the rank difference
                 float logofChangeRank = logOfNumofGenes - logOfRank;
+
+                // Ensure the min and max logarithmic values are calculated properly
                 float logofMinRank = std::log(1) / std::log(_settingsAction.getTopNGenesFilter().getValue());
                 float logofMaxRank = std::log(maxRank) / std::log(_settingsAction.getTopNGenesFilter().getValue());
-                float lengthRank = getNormalizedSize(logofChangeRank, logofMinRank, logofMaxRank);
 
-                //float lengthRank = getPowNormalizedSize(changerank, minRank, maxRank, _settingsAction.getTopNGenesFilter().getValue());
-                //float lengthRank = getLogNormalizedSize(changerank, 1, maxRank);
+                // Normalize the rank length for the bar
+                float lengthRank = getNormalizedSizeRank(logofChangeRank, logofMinRank, logofMaxRank);
+
+                // Ensure the length is within a reasonable range (0 to 100)
+                lengthRank = qBound(0.0f, lengthRank, 100.0f); // Ensure the lengthRank is within bounds
+
+                // Create the pixmap for the rank bar
                 QPixmap barPixmapRank(75, 20); // Width 100, Height 20
-                barPixmapRank.fill(Qt::transparent);
+                barPixmapRank.fill(Qt::transparent); // Start with a transparent background
+
+                // Create a painter to draw on the pixmap
                 QPainter painterRank(&barPixmapRank);
-                painterRank.setPen(Qt::NoPen);
-                painterRank.setBrush(Qt::gray);
-                painterRank.drawRect(0, 0, static_cast<int>(lengthRank), 20);
-                painterRank.end();
+                painterRank.setPen(Qt::NoPen); // No outline
+                painterRank.setBrush(Qt::gray); // Bar color
+                painterRank.drawRect(0, 0, static_cast<int>(lengthRank), 20); // Draw the bar
+
+                painterRank.end(); // End painting
+
+                // Set the bar pixmap as the decoration for the item
                 item->setData(QVariant(barPixmapRank), Qt::DecorationRole);
+
                 rowItems << item;
 
                 item = new QStandardItem();
