@@ -1972,8 +1972,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(formattedRank), Qt::DisplayRole);
                 // Create a pixmap for the bar
                 int changerank = numofGenes - rank;
-                float percentRank = (static_cast<float>(changerank) / static_cast<float>(numofGenes)) * 100.0f;
-                float lengthRank = getNormalizedSize(percentRank, minRank, maxRank);
+
+                float lengthRank = getNormalizedSize(changerank, minRank, maxRank);
                 QPixmap barPixmapRank(75, 20); // Width 100, Height 20
                 barPixmapRank.fill(Qt::transparent);
                 QPainter painterRank(&barPixmapRank);
