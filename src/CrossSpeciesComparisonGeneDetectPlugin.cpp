@@ -2091,6 +2091,10 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                     painter.drawRect(middle - static_cast<int>(length), 0, static_cast<int>(length), 20);
                 }
 
+                // Draw the axis line in the middle to indicate 0
+                painter.setPen(Qt::black);
+                painter.drawLine(middle, -5, middle, 30);
+
                 painter.end();
                 item->setData(QVariant(barPixmap), Qt::DecorationRole);
                 rowItems << item;
