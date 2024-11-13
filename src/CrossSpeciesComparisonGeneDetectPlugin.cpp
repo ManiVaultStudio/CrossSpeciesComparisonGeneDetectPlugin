@@ -2076,7 +2076,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 // Create a pixmap for the bar
                 float length = getNormalizedSizePosNeg(difference, minDifference, maxDifference);
-                QPixmap barPixmap(75, 20); // Width 75, Height 20
+                QPixmap barPixmap(75, 25); // Width 75, Height 25 to allow space for the axis line
                 barPixmap.fill(Qt::transparent);
                 QPainter painter(&barPixmap);
                 painter.setPen(Qt::NoPen);
@@ -2084,12 +2084,20 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
                 // Draw the bar from the middle
                 int middle = barPixmap.width() / 2;
+                int barHeight = 20; // Height of the bar
+                int barY = (barPixmap.height() - barHeight) / 2; // Center the bar vertically
                 if (difference >= 0) {
-                    painter.drawRect(middle, 0, static_cast<int>(length), 20);
+                    painter.drawRect(middle, barY, static_cast<int>(length), barHeight);
                 }
                 else {
-                    painter.drawRect(middle - static_cast<int>(length), 0, static_cast<int>(length), 20);
+                    painter.drawRect(middle - static_cast<int>(length), barY, static_cast<int>(length), barHeight);
                 }
+
+                // Draw the axis line in the middle to indicate 0
+                painter.setPen(Qt::black);
+                int axisHeight = barHeight + 4; // Extend the axis line height
+                int axisYStart = (barPixmap.height() - axisHeight) / 2; // Center the axis line vertically
+                painter.drawLine(middle, axisYStart, middle, axisYStart + axisHeight);
 
                 painter.end();
                 item->setData(QVariant(barPixmap), Qt::DecorationRole);
