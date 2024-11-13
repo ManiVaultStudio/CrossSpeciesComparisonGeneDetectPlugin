@@ -37,6 +37,21 @@ void applyLogTransformation(std::vector<float>& values) {
 
 }
 
+float getNormalizedSizePosNeg(float value, float min, float max) {
+    // Calculate the maximum absolute value of min and max
+    float maxAbs = std::max(std::abs(min), std::abs(max));
+
+    if (value >= 0) {
+        // Normalize positive values with respect to the maximum absolute value
+        return (value / maxAbs) * 50.0f;
+    }
+    else {
+        // Normalize negative values with respect to the maximum absolute value
+        return (value / -maxAbs) * 50.0f;
+    }
+}
+
+
 
 void updateRowVisibility(const QSet<QString>& uniqueReturnGeneList, QTableView* geneTableView, QSortFilterProxyModel* proxyModel) {
 
@@ -67,7 +82,8 @@ float getNormalizedSize(float value, float min, float max) {
     float normalizedValue = (value - min) / (max - min);
     return normalizedValue * 100.0f; // Return size as a percentage
 }
-float getLogNormalizedSize(float value, float min, float max) {
+
+float getPowNormalizedSize(float value, float min, float max, float alpha) {
     // Scale down the range to avoid precision issues
     const float scale = 1e6f; // Adjust the scale as needed
     float scaledMin = min / scale;
@@ -77,11 +93,86 @@ float getLogNormalizedSize(float value, float min, float max) {
     if (scaledValue < scaledMin) scaledValue = scaledMin;
     if (scaledValue > scaledMax) scaledValue = scaledMax;
 
-    float normalizedValue = (scaledValue - scaledMin) / (scaledMax - scaledMin);
+    float normalizedValue = std::pow((scaledValue - scaledMin) / (scaledMax - scaledMin), alpha);
     return normalizedValue * 100.0f; // Return size as a percentage
 }
 
 
+float getLogNormalizedSize(float value, float min, float max) {
+    // Avoid precision issues and ensure the range does not include zero (since log(0) is undefined)
+    const float scale = 1e6f;
+    float scaledMin = min / scale;
+    float scaledMax = max / scale;
+    float scaledValue = value / scale;
+
+    // Clamp scaledValue within the scaledMin and scaledMax range
+    if (scaledValue < scaledMin) scaledValue = scaledMin;
+    if (scaledValue > scaledMax) scaledValue = scaledMax;
+
+    // Apply logarithmic normalization
+    float logMin = std::log(scaledMin);
+    float logMax = std::log(scaledMax);
+    float logValue = std::log(scaledValue);
+
+    float normalizedValue = (logValue - logMin) / (logMax - logMin);
+    return normalizedValue * 100.0f; // Return as percentage
+}
+float getRelativeNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Calculate the midpoint to reduce the impact of large ranges
+    float rangeMid = min + (max - min) / 2.0f;
+    float relMin = min - rangeMid;
+    float relMax = max - rangeMid;
+    float relValue = value - rangeMid;
+
+    float normalizedValue = (relValue - relMin) / (relMax - relMin);
+    return normalizedValue * 100.0f;
+}
+float getSegmentedNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Define segment ranges manually (e.g., in ranges of millions)
+    float segmentSize = (max - min) / 10.0f;  // Divide range into 10 segments for example
+    float normalizedValue = 0.0f;
+
+    // Normalize within each segment range
+    for (float i = min; i < max; i += segmentSize) {
+        if (value >= i && value < i + segmentSize) {
+            normalizedValue = (value - i) / segmentSize;
+            break;
+        }
+    }
+    return normalizedValue * 100.0f;
+}
+float getShiftedNormalizedSize(float value, float min, float max) {
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    // Shift values by subtracting min to reduce range
+    float shiftedValue = value - min;
+    float shiftedMax = max - min;
+
+    // Normalize the shifted value
+    float normalizedValue = shiftedValue / shiftedMax;
+    return normalizedValue * 100.0f;
+}
+float getFixedPointNormalizedSize(float value, float min, float max) {
+    int scaleFactor = 1e6;  // Scale to an integer level that fits in `int`
+    int intValue = static_cast<int>(value * scaleFactor);
+    int intMin = static_cast<int>(min * scaleFactor);
+    int intMax = static_cast<int>(max * scaleFactor);
+
+    // Prevent overflow by clamping
+    if (intValue < intMin) intValue = intMin;
+    if (intValue > intMax) intValue = intMax;
+
+    // Calculate normalized value
+    float normalizedValue = (float)(intValue - intMin) / (intMax - intMin);
+    return normalizedValue * 100.0f;
+}
 std::pair<QColor, QColor> getColorMAp(float value, float min, float max, const QString& colorMap) {
     if (value < min) value = min;
     if (value > max) value = max;
@@ -1667,6 +1758,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             barPixmapTop.fill(Qt::transparent);
 
             QPainter painterTop(&barPixmapTop);
+            painterTop.setPen(Qt::NoPen);
             painterTop.setBrush(Qt::gray);
             painterTop.drawRect(0, 0, static_cast<int>(lengthTop), 20);
             painterTop.end();
@@ -1698,6 +1790,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             barPixmapMiddle.fill(Qt::transparent);
 
             QPainter painterMiddle(&barPixmapMiddle);
+            painterMiddle.setPen(Qt::NoPen);
             painterMiddle.setBrush(Qt::gray);
             painterMiddle.drawRect(0, 0, static_cast<int>(lengthMiddle), 20);
             painterMiddle.end();
@@ -1720,6 +1813,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             barPixmapSelectedCellsCount.fill(Qt::transparent);
 
             QPainter painterSelectedCellsCount(&barPixmapSelectedCellsCount);
+            painterSelectedCellsCount.setPen(Qt::NoPen);
             painterSelectedCellsCount.setBrush(Qt::gray);
             painterSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthSelectedCellsCount), 20);
             painterSelectedCellsCount.end();
@@ -1741,6 +1835,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             barPixmapTotal.fill(Qt::transparent);
 
             QPainter painterTotal(&barPixmapTotal);
+            painterTotal.setPen(Qt::NoPen);
             painterTotal.setBrush(Qt::gray);
             painterTotal.drawRect(0, 0, static_cast<int>(lengthTotal), 20);
             painterTotal.end();
@@ -1967,16 +2062,29 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QString formattedValue = QString::number(difference, 'f', 2);
                 item->setData(QVariant(difference), Qt::UserRole);
                 item->setData(QVariant(formattedValue), Qt::DisplayRole);
+
                 // Create a pixmap for the bar
-                float length = getNormalizedSize(difference, minDifference, maxDifference);
-                QPixmap barPixmap(75, 20); // Width 100, Height 20
+                float length = getNormalizedSizePosNeg(difference, minDifference, maxDifference);
+                QPixmap barPixmap(75, 20); // Width 75, Height 20
                 barPixmap.fill(Qt::transparent);
                 QPainter painter(&barPixmap);
+                painter.setPen(Qt::NoPen);
                 painter.setBrush(Qt::gray);
-                painter.drawRect(0, 0, static_cast<int>(length), 20);
+
+                // Draw the bar from the middle
+                int middle = barPixmap.width() / 2;
+                if (difference >= 0) {
+                    painter.drawRect(middle, 0, static_cast<int>(length), 20);
+                }
+                else {
+                    painter.drawRect(middle - static_cast<int>(length), 0, static_cast<int>(length), 20);
+                }
+
                 painter.end();
                 item->setData(QVariant(barPixmap), Qt::DecorationRole);
                 rowItems << item;
+
+
 
                 item = new QStandardItem();
                 int rank = it->second.rank;
@@ -1986,11 +2094,19 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(formattedRank), Qt::DisplayRole);
                 // Create a pixmap for the bar
                 int changerank = numofGenes - rank;
+                float logOfNumofGenes = std::log(numofGenes) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logOfRank = std::log(numofGenes) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logofChangeRank = logOfNumofGenes - logOfRank;
+                float logofMinRank = std::log(1) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float logofMaxRank = std::log(maxRank) / std::log(_settingsAction.getTopNGenesFilter().getValue());
+                float lengthRank = getNormalizedSize(logofChangeRank, logofMinRank, logofMaxRank);
 
-                float lengthRank = getLogNormalizedSize(changerank, minRank, maxRank);
+                //float lengthRank = getPowNormalizedSize(changerank, minRank, maxRank, _settingsAction.getTopNGenesFilter().getValue());
+                //float lengthRank = getLogNormalizedSize(changerank, 1, maxRank);
                 QPixmap barPixmapRank(75, 20); // Width 100, Height 20
                 barPixmapRank.fill(Qt::transparent);
                 QPainter painterRank(&barPixmapRank);
+                painterRank.setPen(Qt::NoPen);
                 painterRank.setBrush(Qt::gray);
                 painterRank.drawRect(0, 0, static_cast<int>(lengthRank), 20);
                 painterRank.end();
@@ -2009,6 +2125,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapTop(60, 20); // Width 100, Height 20
                 barPixmapTop.fill(Qt::transparent);
                 QPainter painterTop(&barPixmapTop);
+                painterTop.setPen(Qt::NoPen);
                 painterTop.setBrush(Qt::gray);
                 painterTop.drawRect(0, 0, static_cast<int>(lengthTop), 20);
                 painterTop.end();
@@ -2029,6 +2146,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapMiddle(80, 20); // Width 100, Height 20
                 barPixmapMiddle.fill(Qt::transparent);
                 QPainter painterMiddle(&barPixmapMiddle);
+                painterMiddle.setPen(Qt::NoPen);
                 painterMiddle.setBrush(Qt::gray);
                 painterMiddle.drawRect(0, 0, static_cast<int>(lengthMiddle), 20);
                 painterMiddle.end();
@@ -2047,6 +2165,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapSelectedCellsCount(55, 20); // Width 100, Height 20
                 barPixmapSelectedCellsCount.fill(Qt::transparent);
                 QPainter painterSelectedCellsCount(&barPixmapSelectedCellsCount);
+                painterSelectedCellsCount.setPen(Qt::NoPen);
                 painterSelectedCellsCount.setBrush(Qt::gray);
                 painterSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthSelectedCellsCount), 20);
                 painterSelectedCellsCount.end();
@@ -2064,6 +2183,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapMeanSelected(60, 20); // Width 100, Height 20
                 barPixmapMeanSelected.fill(Qt::transparent);
                 QPainter painterMeanSelected(&barPixmapMeanSelected);
+                painterMeanSelected.setPen(Qt::NoPen);
                 painterMeanSelected.setBrush(Qt::gray);
                 painterMeanSelected.drawRect(0, 0, static_cast<int>(lengthMeanSelected), 20);
                 painterMeanSelected.end();
@@ -2080,6 +2200,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapNonSelectedCellsCount(60, 20); // Width 100, Height 20
                 barPixmapNonSelectedCellsCount.fill(Qt::transparent);
                 QPainter painterNonSelectedCellsCount(&barPixmapNonSelectedCellsCount);
+                painterNonSelectedCellsCount.setPen(Qt::NoPen);
                 painterNonSelectedCellsCount.setBrush(Qt::gray);
                 painterNonSelectedCellsCount.drawRect(0, 0, static_cast<int>(lengthNonSelectedCellsCount), 20);
                 painterNonSelectedCellsCount.end();
@@ -2096,6 +2217,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 QPixmap barPixmapMeanNonSelected(60, 20); // Width 100, Height 20
                 barPixmapMeanNonSelected.fill(Qt::transparent);
                 QPainter painterMeanNonSelected(&barPixmapMeanNonSelected);
+                painterMeanNonSelected.setPen(Qt::NoPen);
                 painterMeanNonSelected.setBrush(Qt::gray);
                 painterMeanNonSelected.drawRect(0, 0, static_cast<int>(lengthMeanNonSelected), 20);
                 painterMeanNonSelected.end();
