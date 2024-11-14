@@ -1742,11 +1742,31 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             QList<QStandardItem*> rowItems;
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
-            // Species column
             QStandardItem* speciesItem = new QStandardItem(speciesCopy);
-            speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
-            //speciesItem->setBackground(backgroundColor);
-            //speciesItem->setForeground(textColor);
+
+            // Construct the path to the SVG icon
+            QString iconPath = "lib/SpeciesIcons/" + species + ".svg";
+
+            // Check if the SVG file exists
+            if (QFile::exists(iconPath)) {
+                // Load the SVG icon
+                QIcon svgIcon = QIcon(iconPath);
+
+                // Set the SVG icon as the decoration role
+                speciesItem->setData(svgIcon, Qt::DecorationRole);
+
+                // Set the SVG icon as the tool tip role
+                speciesItem->setData(svgIcon, Qt::ToolTipRole);
+            }
+            else
+            {
+                qDebug() << species +" icon not found!";
+            }
+
+            // Set the species as the user role
+            speciesItem->setData(species, Qt::UserRole);
+
+            // Add the species item to the row items
             rowItems << speciesItem;
 
             // Fraction of Neuronal column
