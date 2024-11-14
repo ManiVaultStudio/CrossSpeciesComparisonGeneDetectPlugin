@@ -14,8 +14,10 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
+
 //#include<QTooltip>
 #include <QRegularExpression> 
+
 #ifdef _WIN32
 #include <execution>
 #endif
@@ -1740,13 +1742,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-            QString speciesCopy = species;
-            speciesCopy.replace("_", " ");
-            // Species column
-            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
-            speciesItem->setData(species, Qt::UserRole); // Store the original species value in a user role
-            //speciesItem->setBackground(backgroundColor);
-            //speciesItem->setForeground(textColor);
+
+            // Replace underscores in species name for display purposes
+            QString speciesDisplayName = species;
+            speciesDisplayName.replace("_", " ");
+            QStandardItem* speciesItem = new QStandardItem(speciesDisplayName);
+
+            // Check if the path ":/speciesicons" exists
+            QDir speciesIconsDir(":/speciesicons");
+            if (speciesIconsDir.exists()) {
+                //qDebug() << "The path :/speciesicons exists.";
+            } else {
+                qDebug() << "The path :/speciesicons does not exist.";
+            }
+
+            QString iconPath = ":/speciesicons/SpeciesIcons/" + species + ".svg";
+
+            // Check if the SVG file exists
+            if (QFile::exists(iconPath)) {
+                // Load the SVG icon
+                QIcon svgIcon(iconPath);
+
+                // Set the SVG icon as the decoration role (for display in item views)
+                speciesItem->setData(svgIcon, Qt::DecorationRole);
+
+                // Set tooltip to show the display name with the SVG icon
+                QString tooltipHtml = QString("<img src='%1' width='16' height='16'/> %2").arg(iconPath, speciesDisplayName);
+                speciesItem->setData(tooltipHtml, Qt::ToolTipRole);
+            } else {
+                qDebug() << "Path " << iconPath << " not found";
+
+                // Set tooltip to show the display name without the SVG icon
+                speciesItem->setData(speciesDisplayName, Qt::ToolTipRole);
+            }
+
+            // Store the original species name in UserRole for retrieval or further processing
+            speciesItem->setData(species, Qt::UserRole);
+
+            // Add the species item to the row items list
             rowItems << speciesItem;
 
             // Fraction of Neuronal column
@@ -2058,10 +2091,43 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             QString speciesCopy = species;
             speciesCopy.replace("_", " ");
             QStandardItem* item = new QStandardItem(speciesCopy);
-            item->setData(species, Qt::UserRole); // Store the original species value in a user role
-            //item->setBackground(backgroundColor);
-            //item->setForeground(textColor);
+
+            // Check if the path ":/speciesicons" exists
+            QDir speciesIconsDir(":/speciesicons");
+            if (speciesIconsDir.exists()) {
+                //qDebug() << "The path :/speciesicons exists.";
+            }
+            else {
+                qDebug() << "The path :/speciesicons does not exist.";
+            }
+
+            QString iconPath = ":/speciesicons/SpeciesIcons/" + species + ".svg";
+
+            // Check if the SVG file exists
+            if (QFile::exists(iconPath)) {
+                // Load the SVG icon
+                QIcon svgIcon(iconPath);
+
+                // Set the SVG icon as the decoration role (for display in item views)
+                item->setData(svgIcon, Qt::DecorationRole);
+
+                // Set tooltip to show the display name with the SVG icon
+                QString tooltipHtml = QString("<img src='%1' width='16' height='16'/> %2").arg(iconPath, speciesCopy);
+                item->setData(tooltipHtml, Qt::ToolTipRole);
+            }
+            else {
+                qDebug() << "Path " << iconPath << " not found";
+
+                // Set tooltip to show the display name without the SVG icon
+                item->setData(speciesCopy, Qt::ToolTipRole);
+            }
+
+            // Store the original species name in UserRole for retrieval or further processing
+            item->setData(species, Qt::UserRole);
+
+            // Add the species item to the row items list
             rowItems << item;
+
 
             // Find statistics for the species
             auto it = statisticsValues.find(species);
