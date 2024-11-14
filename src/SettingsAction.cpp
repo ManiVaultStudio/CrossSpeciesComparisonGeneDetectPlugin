@@ -4218,16 +4218,36 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
     for (const auto& entry : clusterVector) {
         QString clusterName = entry.first;
         int count = entry.second.first;
-        QString colorHex = "#a6a6a6";//entry.second.second.name();
+        QString colorHex = "#a6a6a6"; // entry.second.second.name();
         QColor color(entry.second.second);
 
-        QString textColor = "black";//isDarkColor(color) ? "white" : "black";
+        QString textColor = "black"; // isDarkColor(color) ? "white" : "black";
         int barWidth = (maxCount > 0) ? static_cast<int>((static_cast<double>(count) / maxCount) * 100) : 0;
         barWidth = std::max(barWidth, 2); // Ensure a minimum width for visibility
 
+        // Define the path to the SVG icon
+        QString iconPath = ":/speciesicons/SpeciesIcons/" + clusterName + ".svg";
+
+        // Check if the SVG file exists
+        QString iconHtml;
+        if (QFile::exists(iconPath)) {
+            // Convert the icon path to a data URL
+            QFile file(iconPath);
+            if (file.open(QIODevice::ReadOnly)) {
+                QByteArray iconData = file.readAll().toBase64();
+                iconHtml = QString("<img src='data:image/svg+xml;base64,%1' width='16' height='16'/> ").arg(QString(iconData));
+            } else {
+                qDebug() << "Failed to open icon file: " << iconPath;
+                iconHtml = ""; // No icon if the file cannot be opened
+            }
+        } else {
+            qDebug() << "Path " << iconPath << " not found";
+            iconHtml = ""; // No icon if the file does not exist
+        }
+
         html += "<div class='bar-container'>";
         html += "<div class='bar' style='width:" + QString::number(barWidth) + "%; background-color:" + colorHex + "; color:" + textColor + ";'></div>";
-        html += "<div class='label'>" + clusterName + ": " + QString::number(count) + "</div>";
+        html += "<div class='label'>" + iconHtml + clusterName + ": " + QString::number(count) + "</div>";
         html += "</div>";
     }
     html += "</div>";
