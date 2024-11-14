@@ -5,7 +5,7 @@ option(MV_UNITY_BUILD "Combine target source files into batches for faster compi
 # -----------------------------------------------------------------------------
 # CrossSpeciesComparisonGeneDetect Plugin
 # -----------------------------------------------------------------------------
-PROJECT("CrossSpeciesComparisonGeneDetectPlugin")
+project(CrossSpeciesComparisonGeneDetectPlugin)
 
 # -----------------------------------------------------------------------------
 # CMake Options
@@ -19,7 +19,7 @@ if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-endif(MSVC)
+endif()
 
 # -----------------------------------------------------------------------------
 # Set install directory
@@ -47,35 +47,43 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets Concurrent REQUIRED)
 set(PLUGIN_SOURCES
     src/CrossSpeciesComparisonGeneDetectPlugin.h
     src/CrossSpeciesComparisonGeneDetectPlugin.cpp
-	src/SettingsAction.h
+    src/SettingsAction.h
     src/SettingsAction.cpp
     src/CrossSpeciesComparisonGeneDetectPlugin.json
 )
 set(LIBS
     src/lib/Clustering/fastcluster.cpp
-	src/lib/Clustering/fastcluster.h
-	src/lib/Clustering/fastcluster_dm.h
-	src/lib/Clustering/fastcluster_R_dm.h
-	src/lib/JSONnlohmann/json.hpp
-	src/lib/JSONnlohmann/json_fwd.hpp
-	src/lib/Distance/annoylib.h
-	src/lib/Distance/kissrandom.h
-	src/lib/Distance/mman.h
-	src/lib/NewickComparator/newick_comparator.h
+    src/lib/Clustering/fastcluster.h
+    src/lib/Clustering/fastcluster_dm.h
+    src/lib/Clustering/fastcluster_R_dm.h
+    src/lib/JSONnlohmann/json.hpp
+    src/lib/JSONnlohmann/json_fwd.hpp
+    src/lib/Distance/annoylib.h
+    src/lib/Distance/kissrandom.h
+    src/lib/Distance/mman.h
+    src/lib/NewickComparator/newick_comparator.h
 )
 
 set(PLUGIN_MOC_HEADERS
     src/CrossSpeciesComparisonGeneDetectPlugin.h
 )
+set(AUX
+    res/CrossSpeciesComparisonGeneDetect_chart.qrc
+)
 
-source_group( Plugin FILES ${PLUGIN_SOURCES})
-source_group( LibFiles FILES ${LIBS})
+qt6_add_resources(RESOURCE_FILES res/CrossSpeciesComparisonGeneDetect_chart.qrc)
+
+source_group(Plugin FILES ${PLUGIN_SOURCES})
+source_group(LibFiles FILES ${LIBS})
+source_group(ResourceFiles FILES ${RESOURCE_FILES})
+source_group(ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_gene_detect_resources.cpp)
+source_group(Aux FILES ${AUX})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS} ${AUX} ${RESOURCE_FILES})
 
 # -----------------------------------------------------------------------------
 # Target include directories
@@ -115,8 +123,7 @@ set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${C
 set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
 set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
 set(CLUSTERDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ClusterData${MV_LINK_SUFFIX}") 
-set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}") 
-
+set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE "${MV_LINK_LIBRARY}")
 target_link_libraries(${PROJECT_NAME} PRIVATE "${POINTDATA_LINK_LIBRARY}")
@@ -126,7 +133,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE "${CROSSSPECIESCOMPARISONTREEDATA_
 # -----------------------------------------------------------------------------
 # Target installation
 # -----------------------------------------------------------------------------
-# Install the shared plugin libary to the "Plugins" folder in the ManiVault install directory
+# Install the shared plugin library to the "Plugins" folder in the ManiVault install directory
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so

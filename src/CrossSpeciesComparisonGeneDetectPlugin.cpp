@@ -14,8 +14,10 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
+
 //#include<QTooltip>
 #include <QRegularExpression> 
+
 #ifdef _WIN32
 #include <execution>
 #endif
@@ -1740,33 +1742,40 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             //QColor textColor = (brightness > 0.4) ? Qt::black : Qt::white;
 
             QList<QStandardItem*> rowItems;
-            QString speciesCopy = species;
-            speciesCopy.replace("_", " ");
-            QStandardItem* speciesItem = new QStandardItem(speciesCopy);
 
-            // Construct the path to the SVG icon
-            QString iconPath = "lib/SpeciesIcons/" + species + ".svg";
+            // Replace underscores in species name for display purposes
+            QString speciesDisplayName = species;
+            speciesDisplayName.replace("_", " ");
+            QStandardItem* speciesItem = new QStandardItem(speciesDisplayName);
+
+            // Check if the path ":/speciesicons" exists
+            QDir speciesIconsDir(":/speciesicons");
+            if (speciesIconsDir.exists()) {
+                qDebug() << "The path :/speciesicons exists.";
+            } else {
+                qDebug() << "The path :/speciesicons does not exist.";
+            }
+
+            QString iconPath = ":/speciesicons/SpeciesIcons/" + species + ".svg";
 
             // Check if the SVG file exists
             if (QFile::exists(iconPath)) {
                 // Load the SVG icon
-                QIcon svgIcon = QIcon(iconPath);
+                QIcon svgIcon(iconPath);
 
-                // Set the SVG icon as the decoration role
+                // Set the SVG icon as the decoration role (for display in item views)
                 speciesItem->setData(svgIcon, Qt::DecorationRole);
-
-                // Set the SVG icon as the tool tip role
-                speciesItem->setData(svgIcon, Qt::ToolTipRole);
-            }
-            else
-            {
-                qDebug() << species +" icon not found!";
+            } else {
+                qDebug() << "Path " << iconPath << " not found";
             }
 
-            // Set the species as the user role
+            // Set tooltip to show the display name without underscores
+            speciesItem->setData(speciesDisplayName, Qt::ToolTipRole);
+
+            // Store the original species name in UserRole for retrieval or further processing
             speciesItem->setData(species, Qt::UserRole);
 
-            // Add the species item to the row items
+            // Add the species item to the row items list
             rowItems << speciesItem;
 
             // Fraction of Neuronal column
