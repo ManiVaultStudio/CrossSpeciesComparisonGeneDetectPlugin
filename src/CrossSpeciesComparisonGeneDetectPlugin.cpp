@@ -2280,7 +2280,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(meanSelected), Qt::UserRole);
                 item->setData(QVariant(formattedMeanSelected), Qt::DisplayRole);
                 float lengthMeanSelected = getNormalizedSize(meanSelected, minMeanSelected, maxMeanSelected);
-                QPixmap barPixmapMeanSelected(60, 20); // Width 100, Height 20
+                QPixmap barPixmapMeanSelected(70, 20); // Width 100, Height 20
                 barPixmapMeanSelected.fill(Qt::transparent);
                 QPainter painterMeanSelected(&barPixmapMeanSelected);
                 painterMeanSelected.setPen(Qt::NoPen);
@@ -2314,7 +2314,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
                 item->setData(QVariant(meanNonSelected), Qt::UserRole);
                 item->setData(QVariant(formattedMeanNonSelected), Qt::DisplayRole);
                 float lengthMeanNonSelected = getNormalizedSize(meanNonSelected, minMeanNonSelected, maxMeanNonSelected);
-                QPixmap barPixmapMeanNonSelected(60, 20); // Width 100, Height 20
+                QPixmap barPixmapMeanNonSelected(75, 20); // Width 100, Height 20
                 barPixmapMeanNonSelected.fill(Qt::transparent);
                 QPainter painterMeanNonSelected(&barPixmapMeanNonSelected);
                 painterMeanNonSelected.setPen(Qt::NoPen);
@@ -2374,9 +2374,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(4, 90);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(5, 65);
-        _settingsAction.getSelectionDetailsTable()->setColumnWidth(6, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(6, 80);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(7, 70);
-        _settingsAction.getSelectionDetailsTable()->setColumnWidth(8, 70);
+        _settingsAction.getSelectionDetailsTable()->setColumnWidth(8, 85);
         _settingsAction.getSelectionDetailsTable()->update();
 
 
