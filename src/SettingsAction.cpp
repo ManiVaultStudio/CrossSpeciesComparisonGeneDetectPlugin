@@ -4196,23 +4196,26 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         ".chart { width: 100%; }"
         "</style></head><body>";
 
-    // Function to determine if a color is dark
-    //auto isDarkColor = [](const QColor& color) {
-        //int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
-        //return brightness < 128;
-        //};
-
     // Convert the map to a vector of pairs for sorting
     std::vector<std::pair<QString, std::pair<int, QColor>>> clusterVector(clusterCountMap.begin(), clusterCountMap.end());
 
     // Sort the vector by count in descending order
     std::sort(clusterVector.begin(), clusterVector.end(), [](const auto& a, const auto& b) {
         return a.second.first > b.second.first;
-        });
+    });
 
     // Find the maximum count for scaling the bars
     int maxCount = clusterVector.empty() ? 1 : clusterVector.front().second.first; // Default to 1 if no data.
 
+    // Calculate the maximum width required for text and icon
+    int maxTextIconWidth = 0;
+    for (const auto& entry : clusterVector) {
+        QString clusterName = entry.first;
+        int textWidth = QFontMetrics(QFont()).horizontalAdvance(clusterName + ": " + QString::number(entry.second.first));
+        int iconWidth = 16; // Assuming icon width is 16px
+        maxTextIconWidth = std::max(maxTextIconWidth, textWidth + iconWidth);
+    }
+    maxTextIconWidth = maxTextIconWidth + 2;
     // Populate the divs with cluster data
     html += "<div class='chart'>";
     for (const auto& entry : clusterVector) {
@@ -4221,35 +4224,31 @@ QString SettingsAction::generateTooltip(const ViewPluginSamplerAction::SampleCon
         QString colorHex = "#a6a6a6"; // entry.second.second.name();
         QColor color(entry.second.second);
 
-        QString textColor = "black"; // isDarkColor(color) ? "white" : "black";
+        QString textColor = "black";
         int barWidth = (maxCount > 0) ? static_cast<int>((static_cast<double>(count) / maxCount) * 100) : 0;
-        barWidth = std::max(barWidth, 2); // Ensure a minimum width for visibility
+        barWidth = std::max(barWidth, 5); // Minimum width for visibility
 
-        // Define the path to the SVG icon
         QString iconPath = ":/speciesicons/SpeciesIcons/" + clusterName + ".svg";
-
-        // Check if the SVG file exists
         QString iconHtml;
         if (QFile::exists(iconPath)) {
-            // Convert the icon path to a data URL
             QFile file(iconPath);
             if (file.open(QIODevice::ReadOnly)) {
                 QByteArray iconData = file.readAll().toBase64();
                 iconHtml = QString("<img src='data:image/svg+xml;base64,%1' width='16' height='16'/> ").arg(QString(iconData));
             } else {
-                qDebug() << "Failed to open icon file: " << iconPath;
-                iconHtml = ""; // No icon if the file cannot be opened
+                iconHtml = "<div style='width:16px; height:16px;'></div>"; // Placeholder
             }
         } else {
-            qDebug() << "Path " << iconPath << " not found";
-            iconHtml = ""; // No icon if the file does not exist
+            iconHtml = "<div style='width:16px; height:16px;'></div>"; // Placeholder
         }
 
         html += "<div class='bar-container'>";
         html += "<div class='bar' style='width:" + QString::number(barWidth) + "%; background-color:" + colorHex + "; color:" + textColor + ";'></div>";
-        html += "<div class='label'>" + iconHtml + clusterName + ": " + QString::number(count) + "</div>";
+        html += "<div class='label' style='width:" + QString::number(maxTextIconWidth) + "px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>"
+            + iconHtml + clusterName + ": " + QString::number(count) + "</div>";
         html += "</div>";
     }
+
     html += "</div>";
 
     html += "</body></html>";
