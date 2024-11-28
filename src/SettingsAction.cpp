@@ -628,8 +628,12 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
             QApplication::processEvents();
             updateButtonTriggered();
             enableActions();
-            QApplication::processEvents();
 
+            QApplication::processEvents();
+            auto pointsDataset = _mainPointsDataset.getCurrentDataset();
+            pointsDataset->setSelectionIndices(_selectedIndicesFromStorage);
+            _statusColorAction.setString("C");
+            
         };
     connect(&_startComputationTriggerAction, &TriggerAction::triggered, this, updateGeneFilteringTrigger);
     const auto updateCreateRowMultiSelectTreeTrigger = [this]() -> void {
