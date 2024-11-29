@@ -497,15 +497,61 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //if (_settingsAction.getErroredOutFlag())
             //{
                 //_settingsAction.getStatusColorAction().setString("E");
-                
+
             //}
             //else
             //{
-                _settingsAction.getRemoveRowSelection().trigger();
-                _settingsAction.setPauseStatusUpdates(false);
-                //_settingsAction.getStatusColorAction().setString("C");
-            //}
+            _settingsAction.getRemoveRowSelection().trigger();
+            _settingsAction.setPauseStatusUpdates(false);
+            //_settingsAction.getStatusColorAction().setString("C");
+        //}
+        
             
+
+            if (_settingsAction.getGeneTableView())
+            {
+                QString treeData = "";// = _settingsAction.getGeneTableView()->model()->index(0, 2).data().toString();
+                QTableView* geneTableView = _settingsAction.getGeneTableView();
+                QAbstractItemModel* model = geneTableView->model();
+                if(model != nullptr)
+            {
+                int statisticsColumn = -1;
+                for (int col = 0; col < _settingsAction.getGeneTableView()->model()->columnCount(); ++col) {
+                    if (_settingsAction.getGeneTableView()->model()->headerData(col, Qt::Horizontal).toString() == "Statistics") {
+                        statisticsColumn = col;
+                        break;
+                    }
+                }
+
+                if (statisticsColumn != -1) {
+                    QModelIndex index = _settingsAction.getGeneTableView()->model()->index(0, statisticsColumn);
+                    QVariant value = _settingsAction.getGeneTableView()->model()->data(index);
+                    // Use the value as needed
+                    std::map<QString, SpeciesDetailsStats> statisticsValues = convertToStatisticsMap(value.toString());
+
+
+
+                    auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();
+                    if (referenceTreeDataset.isValid()) {
+                        auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
+                        if (referenceTree.isValid()) {
+                            QJsonObject speciesDataJson = referenceTree->getTreeData();
+                            updateTreeData(speciesDataJson, statisticsValues);
+                            referenceTree->setTreeData(speciesDataJson);
+                            events().notifyDatasetDataChanged(referenceTree);
+                        }
+                    }
+
+                }
+                else {
+                    // Handle the case where the "Statistics" column is not found
+                    //std::cerr << "Statistics column not found in the model." << std::endl;
+                }
+
+            }
+
+            }
+        
         };
 
     connect(&_settingsAction.getListModelAction(), &VariantAction::variantChanged, this, updateTableModel);
@@ -2427,8 +2473,6 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarRemo
 {
     _settingsAction.getSelectionDetailsTable()->setModel(new QStandardItemModel());
 }
-
-
 void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node, const std::map<QString, SpeciesDetailsStats>& speciesExpressionMap) {
     // Check if the "name" key exists in the current node
     if (node.contains("name")) {
@@ -2442,6 +2486,99 @@ void CrossSpeciesComparisonGeneDetectPlugin::updateSpeciesData(QJsonObject& node
             int rank = it->second.rank;
             node["rank"] = rank;
             node["gene"] = _settingsAction.getSelectedGeneAction().getString();
+            QString clusterNames = "N/A";
+            if (_settingsAction.getTsneDatasetClusterColors().isValid())
+            {
+                //auto clusterDataset = mv::data().getDataset<Clusters>(_tsneDatasetClusterColors.getDatasetId());
+
+                auto clusterValues = _settingsAction.getTsneDatasetClusterColors()->getClusters();
+
+                if (!clusterValues.empty())
+                {
+                    clusterNames = "";
+                    if (clusterValues.size() > 1)
+                    {
+                        clusterNames = "selected cells";
+                    }
+                    else
+                    {
+                        clusterNames = clusterValues.at(0).getName();
+                    }
+
+                }
+            }
+            node["clusterName"] = clusterNames;
+
+
+            QStringList middleSet = _settingsAction.getCurrentHierarchyItemsMiddleForTable();
+
+            bool singleColumn;
+            QString headerStringToAdd = "";
+
+            if (middleSet.size() > 1)
+            {
+                headerStringToAdd = "Neuronal";
+                singleColumn = true;
+            }
+            else if (middleSet.size() == 1)
+            {
+
+
+                headerStringToAdd = *middleSet.begin();
+                singleColumn = false;
+            }
+            else
+            {
+                headerStringToAdd = "Neuronal";
+            }
+
+
+            node["middleAbundanceClusterName"] = headerStringToAdd;
+
+            float topAbundance = 0.0;
+            if (it->second.abundanceTop != 0)
+            {
+                topAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceTop)) * 100;
+            }
+
+            float middleAbundance = 0.0;
+            if (it->second.abundanceMiddle != 0)
+            {
+                middleAbundance = (static_cast<float>(it->second.countAbundanceNumerator) / static_cast<float>(it->second.abundanceMiddle)) * 100;
+            }
+
+            node["abundanceTop"] = std::round(topAbundance * 100.0) / 100.0;
+            node["abundanceMiddle"] = std::round(middleAbundance * 100.0) / 100.0;
+        }
+        if (it != speciesExpressionMap.end()) {
+            node["cellCounts"] = it->second.countSelected;
+
+        }
+    }
+
+    // If the node has "children", recursively update them as well
+    if (node.contains("children")) {
+        QJsonArray children = node["children"].toArray();
+        for (int i = 0; i < children.size(); ++i) {
+            QJsonObject child = children[i].toObject();
+            updateSpeciesData(child, speciesExpressionMap); // Recursive call
+            children[i] = child; // Update the modified object back into the array
+        }
+        node["children"] = children; // Update the modified array back into the parent JSON object
+    }
+}
+
+void CrossSpeciesComparisonGeneDetectPlugin::updateTreeData(QJsonObject& node, const std::map<QString, SpeciesDetailsStats>& speciesExpressionMap) {
+    // Check if the "name" key exists in the current node
+    if (node.contains("name")) {
+        QString nodeName = node["name"].toString();
+        auto it = speciesExpressionMap.find(nodeName);
+
+        if (it != speciesExpressionMap.end()) {
+            node["mean"] = 0.0;
+            node["differential"] = 0.0; 
+            node["rank"] = 0.0;
+            node["gene"] = "";
             QString clusterNames = "N/A";
             if (_settingsAction.getTsneDatasetClusterColors().isValid())
             {

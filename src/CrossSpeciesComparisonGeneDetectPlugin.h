@@ -41,6 +41,7 @@ public:
     void init() override;
     void modifyListData();
     void updateSpeciesData(QJsonObject& node, const std::map<QString, SpeciesDetailsStats>& speciesExpressionMap);
+    void updateTreeData(QJsonObject& node, const std::map<QString, SpeciesDetailsStats>& speciesExpressionMap);
     void adjustTableWidths(const QString& value);
     void selectedCellCountStatusBarAdd();
     void selectedCellCountStatusBarRemove();
