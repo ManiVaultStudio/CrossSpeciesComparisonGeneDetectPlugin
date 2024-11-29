@@ -432,7 +432,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             _settingsAction.getSelectedGeneAction().setString("");
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
             _settingsAction.getClearRightClickedCluster().trigger();
-
+            updatePhylogeneticTree();
         };
 
     connect(&_settingsAction.getRemoveRowSelection(), &TriggerAction::triggered, this, removeRowSelectionTable);
@@ -476,7 +476,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
             _settingsAction.clearTableSelection(_settingsAction.getSelectionDetailsTable());
             _settingsAction.getClearRightClickedCluster().trigger();
-            updatePhylogeneticTree();
+           
         };
 
     connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
