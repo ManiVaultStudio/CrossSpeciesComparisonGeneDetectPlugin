@@ -476,6 +476,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //_settingsAction.getRevertRowSelectionChangesToInitial().setDisabled(true);
             _settingsAction.clearTableSelection(_settingsAction.getSelectionDetailsTable());
             _settingsAction.getClearRightClickedCluster().trigger();
+            updatePhylogeneticTree();
         };
 
     connect(&_settingsAction.getRevertRowSelectionChangesToInitial(), &TriggerAction::triggered, this, updateRevertRowSelectionChangesToInitial);
@@ -506,51 +507,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             //_settingsAction.getStatusColorAction().setString("C");
         //}
         
+            updatePhylogeneticTree();
+
             
-
-            if (_settingsAction.getGeneTableView())
-            {
-                QString treeData = "";// = _settingsAction.getGeneTableView()->model()->index(0, 2).data().toString();
-                QTableView* geneTableView = _settingsAction.getGeneTableView();
-                QAbstractItemModel* model = geneTableView->model();
-                if(model != nullptr)
-            {
-                int statisticsColumn = -1;
-                for (int col = 0; col < _settingsAction.getGeneTableView()->model()->columnCount(); ++col) {
-                    if (_settingsAction.getGeneTableView()->model()->headerData(col, Qt::Horizontal).toString() == "Statistics") {
-                        statisticsColumn = col;
-                        break;
-                    }
-                }
-
-                if (statisticsColumn != -1) {
-                    QModelIndex index = _settingsAction.getGeneTableView()->model()->index(0, statisticsColumn);
-                    QVariant value = _settingsAction.getGeneTableView()->model()->data(index);
-                    // Use the value as needed
-                    std::map<QString, SpeciesDetailsStats> statisticsValues = convertToStatisticsMap(value.toString());
-
-
-
-                    auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();
-                    if (referenceTreeDataset.isValid()) {
-                        auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
-                        if (referenceTree.isValid()) {
-                            QJsonObject speciesDataJson = referenceTree->getTreeData();
-                            updateTreeData(speciesDataJson, statisticsValues);
-                            referenceTree->setTreeData(speciesDataJson);
-                            events().notifyDatasetDataChanged(referenceTree);
-                        }
-                    }
-
-                }
-                else {
-                    // Handle the case where the "Statistics" column is not found
-                    //std::cerr << "Statistics column not found in the model." << std::endl;
-                }
-
-            }
-
-            }
         
         };
 
@@ -2462,7 +2421,52 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
     adjustTableWidths("large");
 }
 
+void CrossSpeciesComparisonGeneDetectPlugin::updatePhylogeneticTree()
+{
+    if (_settingsAction.getGeneTableView())
+    {
+        QString treeData = "";// = _settingsAction.getGeneTableView()->model()->index(0, 2).data().toString();
+        QTableView* geneTableView = _settingsAction.getGeneTableView();
+        QAbstractItemModel* model = geneTableView->model();
+        if (model != nullptr)
+        {
+            int statisticsColumn = -1;
+            for (int col = 0; col < _settingsAction.getGeneTableView()->model()->columnCount(); ++col) {
+                if (_settingsAction.getGeneTableView()->model()->headerData(col, Qt::Horizontal).toString() == "Statistics") {
+                    statisticsColumn = col;
+                    break;
+                }
+            }
 
+            if (statisticsColumn != -1) {
+                QModelIndex index = _settingsAction.getGeneTableView()->model()->index(0, statisticsColumn);
+                QVariant value = _settingsAction.getGeneTableView()->model()->data(index);
+                // Use the value as needed
+                std::map<QString, SpeciesDetailsStats> statisticsValues = convertToStatisticsMap(value.toString());
+
+
+
+                auto referenceTreeDataset = _settingsAction.getReferenceTreeDatasetAction().getCurrentDataset();
+                if (referenceTreeDataset.isValid()) {
+                    auto referenceTree = mv::data().getDataset<CrossSpeciesComparisonTree>(referenceTreeDataset.getDatasetId());
+                    if (referenceTree.isValid()) {
+                        QJsonObject speciesDataJson = referenceTree->getTreeData();
+                        updateTreeData(speciesDataJson, statisticsValues);
+                        referenceTree->setTreeData(speciesDataJson);
+                        events().notifyDatasetDataChanged(referenceTree);
+                    }
+                }
+
+            }
+            else {
+                // Handle the case where the "Statistics" column is not found
+                //std::cerr << "Statistics column not found in the model." << std::endl;
+            }
+
+        }
+
+    }
+}
 
 void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarRemove()
 {
