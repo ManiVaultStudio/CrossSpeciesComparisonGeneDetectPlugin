@@ -403,6 +403,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                     }
                     _settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset()->setSelectionIndices(_settingsAction.getSelectedIndicesFromStorage());
                     mv::events().notifyDatasetDataSelectionChanged(_settingsAction.getScatterplotEmbeddingPointsUMAPOption().getCurrentDataset());
+
+                    _settingsAction.getStatusColorAction().setString("C");
+
                 }
             }
             else {
