@@ -391,7 +391,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
                                     if (samplerActionAction)
                                     {
-                                        samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                        samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                             QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
                                             return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                             });
@@ -580,7 +580,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getSpeciesNamesDataset().getCurrentDataset().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                     });
@@ -702,7 +702,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsLayout->setContentsMargins(1, 1, 1, 1);
 
     auto extraOptionsGroup = new VerticalGroupAction(this, "Settings");
-    extraOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("cog"));
+    extraOptionsGroup->setIcon(mv::util::StyledIcon("cog"));
     extraOptionsGroup->addAction(&_settingsAction.getListModelAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedGeneAction());
     extraOptionsGroup->addAction(&_settingsAction.getSelectedRowIndexAction());
@@ -714,7 +714,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     extraOptionsGroup->addAction(&_settingsAction.getGeneNamesConnection());
     extraOptionsGroup->addAction(&_settingsAction.getHiddenShowncolumns());
     auto datasetAndLinkerOptionsGroup = new VerticalGroupAction(this, "Dataset and Linker Options");
-    datasetAndLinkerOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("link"));
+    datasetAndLinkerOptionsGroup->setIcon(mv::util::StyledIcon("link"));
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getReferenceTreeDatasetAction());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getMainPointsDataset());
     datasetAndLinkerOptionsGroup->addAction(&_settingsAction.getEmbeddingDataset());
@@ -733,7 +733,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
     auto tsneOptionsGroup = new VerticalGroupAction(this, "Options");
-    tsneOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("tools"));
+    tsneOptionsGroup->setIcon(mv::util::StyledIcon("tools"));
     //tsneOptionsGroup->addAction(&_settingsAction.getUsePreComputedTSNE());
     //tsneOptionsGroup->addAction(&_settingsAction.getTsnePerplexity());
     //tsneOptionsGroup->addAction(&_settingsAction.getClusterCountSortingType());
@@ -753,8 +753,8 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     auto mainOptionsGroupLayout = new QVBoxLayout();
     auto mainOptionsGroup1 = new HorizontalGroupAction(this, "MainGroup1");
     auto mainOptionsGroup2 = new HorizontalGroupAction(this, "MainGroup2");
-    mainOptionsGroup1->setIcon(Application::getIconFont("FontAwesome").getIcon("database"));
-    mainOptionsGroup2->setIcon(Application::getIconFont("FontAwesome").getIcon("play"));
+    mainOptionsGroup1->setIcon(mv::util::StyledIcon("database"));
+    mainOptionsGroup2->setIcon(mv::util::StyledIcon("play"));
 
  
     mainOptionsGroup1->addAction(&_settingsAction.getStartComputationTriggerAction());
@@ -806,7 +806,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     mainOptionsLayout->addLayout(linkerandtsneLayout);
 
     auto downloadOptionsGroup = new VerticalGroupAction(this, "Save table as CSV");
-    downloadOptionsGroup->setIcon(Application::getIconFont("FontAwesome").getIcon("download"));
+    downloadOptionsGroup->setIcon(mv::util::StyledIcon("download"));
     downloadOptionsGroup->addAction(&_settingsAction.getSaveGeneTable());
     downloadOptionsGroup->addAction(&_settingsAction.getSaveSpeciesTable());
 
@@ -1005,7 +1005,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                     });
@@ -1166,7 +1166,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
 
                             if (samplerActionAction)
                             {
-                                samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                     QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                     return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                     });
@@ -1482,7 +1482,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _settingsAction.getFilteredUMAPDatasetClusters().getDatasetId();
                                         return _settingsAction.generateTooltip(toolTipContext, clusterDatasetId,true, "GlobalPointIndices");
                                         });

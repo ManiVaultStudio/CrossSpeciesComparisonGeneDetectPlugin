@@ -325,7 +325,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     */
 
     _searchBox = new CustomLineEdit();
-    QIcon searchIcon = Application::getIconFont("FontAwesome").getIcon("search");
+    QIcon searchIcon = mv::util::StyledIcon("search");
     QAction* searchAction = new QAction(_searchBox);
     searchAction->setIcon(searchIcon);
     _searchBox->addAction(searchAction, QLineEdit::LeadingPosition);
@@ -505,28 +505,28 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     _clusterCountSortingType.initialize({ "Count","Name","Hierarchy View" }, "Count");
     _topNGenesFilter.setDefaultWidgetFlags(IntegralAction::WidgetFlag::SpinBox);
 
-    QIcon updateIcon = Application::getIconFont("FontAwesome").getIcon("play");
+    QIcon updateIcon = mv::util::StyledIcon("play");
     _startComputationTriggerAction.setIcon(updateIcon);
     _startComputationTriggerAction.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
-    QIcon exploreIcon = Application::getIconFont("FontAwesome").getIcon("wpexplorer");
+    QIcon exploreIcon = mv::util::StyledIcon("wpexplorer");
     _speciesExplorerInMapTrigger.setIcon(exploreIcon);
     _speciesExplorerInMapTrigger.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
-    QIcon removeIcon = Application::getIconFont("FontAwesome").getIcon("backspace");
+    QIcon removeIcon = mv::util::StyledIcon("backspace");
     _removeRowSelection.setIcon(removeIcon);
     _removeRowSelection.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
 
-    QIcon saveGeneTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    QIcon saveGeneTableIcon = mv::util::StyledIcon("save");
     _saveGeneTable.setIcon(saveGeneTableIcon);
     _saveGeneTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
-    QIcon saveSpeciesTableIcon = Application::getIconFont("FontAwesome").getIcon("save");
+    QIcon saveSpeciesTableIcon = mv::util::StyledIcon("save");
     _saveSpeciesTable.setIcon(saveSpeciesTableIcon);
     _saveSpeciesTable.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
-    QIcon revertIcon = Application::getIconFont("FontAwesome").getIcon("undo");
+    QIcon revertIcon = mv::util::StyledIcon("undo");
     _revertRowSelectionChangesToInitial.setIcon(revertIcon);
     _revertRowSelectionChangesToInitial.setDefaultWidgetFlags(TriggerAction::WidgetFlag::IconText);
 
@@ -888,7 +888,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                         return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                         });
@@ -1788,7 +1788,7 @@ void SettingsAction::updateButtonTriggered()
 
                                                     if (samplerActionAction)
                                                     {
-                                                        samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                                        samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                                             QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                                             return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                                             });
@@ -3306,7 +3306,7 @@ void SettingsAction::findTopNGenesPerCluster() {
 
                                 if (samplerActionAction)
                                 {
-                                    samplerActionAction->setViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
+                                    samplerActionAction->setHtmlViewGeneratorFunction([this](const ViewPluginSamplerAction::SampleContext& toolTipContext) -> QString {
                                         QString clusterDatasetId = _speciesNamesDataset.getCurrentDataset().getDatasetId();
                                         return generateTooltip(toolTipContext, clusterDatasetId, true, "GlobalPointIndices");
                                         });
@@ -4419,7 +4419,7 @@ inline SettingsAction::OptionSelectionAction::OptionSelectionAction(SettingsActi
     _settingsAction(SettingsAction)
 {
     setText("Options");
-    setIcon(Application::getIconFont("FontAwesome").getIcon("wrench"));
+    setIcon(mv::util::StyledIcon("wrench"));
     //addAction(&_settingsAction.getTableModelAction());
     //addAction(&_settingsAction.getSelectedGeneAction());
     //addAction(&_settingsAction.getSelectedRowIndexAction());
