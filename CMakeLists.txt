@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.22)
 
 option(MV_UNITY_BUILD "Combine target source files into batches for faster compilation" OFF)
 
@@ -95,8 +95,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${MV_CSCTD_INSTALL_DIR}/$<CO
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
-# Request C++17
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    FOLDER ViewPlugins
+)
+
 
 # Enable unity build
 if(MV_UNITY_BUILD)

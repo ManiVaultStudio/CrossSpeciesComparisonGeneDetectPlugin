@@ -76,7 +76,7 @@ class CustomLineEdit : public QLineEdit {
 
 public:
     explicit CustomLineEdit(QWidget* parent = nullptr) : QLineEdit(parent) {
-        QIcon defocusIcon = Application::getIconFont("FontAwesome").getIcon("times-circle");
+        QIcon defocusIcon = mv::util::StyledIcon("times-circle");
         _action = addAction(defocusIcon, QLineEdit::TrailingPosition);
         _action->setVisible(false); // Initially hide the action icon
 
