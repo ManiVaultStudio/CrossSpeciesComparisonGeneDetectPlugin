@@ -270,7 +270,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
     shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "N Type", "Type of differential expression calculation" });
     shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "DeSelect", "Remove current gene selection scatterplot to view whole dataset scatterplot" });
     shortcuts.add({ QKeySequence(Qt::MouseButton::LeftButton), "Search", "Search all genes in the dataset" });
-    getLearningCenterAction().setPluginTitle("Gene Identification View");
+    //getLearningCenterAction().setPluginTitle("Gene Identification View");
 
 
 
@@ -1970,9 +1970,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
 
         model->setHorizontalHeaderLabels({ "Species", "Mean Gene Differential Expression", "Gene Appearance Rank", "Fraction in Neuronal", "Fraction in " + headerStringToAdd, "Count of Selected", "Mean Gene Expression of Selected", "Count of Non Selected", "Mean Gene Expression of Non Selected" });
 
-        auto colorValues = _settingsAction.getSystemModeColor();
-        auto systemColor = colorValues[0];
-        auto valuesColor = colorValues[1];
+        //auto colorValues = _settingsAction.getSystemModeColor();
+        //auto systemColor = colorValues[0];
+        //auto valuesColor = colorValues[1];
 
         float minDifference = std::numeric_limits<float>::max();
         float maxDifference = std::numeric_limits<float>::lowest();
@@ -2352,14 +2352,14 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
             if (selectedSpecies.contains(species)) {
                 for (int i = 0; i < rowItems.size(); ++i) {
                     rowItems[i]->setBackground(QBrush(QColor("#00A2ED")));
-                    rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
+                    rowItems[i]->setForeground(QBrush(QColor("#000000")));
                 }
             }
             else
             {
                 for (int i = 0; i < rowItems.size(); ++i) {
-                    rowItems[i]->setBackground(QBrush(QColor(systemColor)));
-                    rowItems[i]->setForeground(QBrush(QColor(valuesColor)));
+                    rowItems[i]->setBackground(QBrush(QColor("#FFFFFF")));
+                    rowItems[i]->setForeground(QBrush(QColor("#000000")));
                 }
             }
             _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(selectedSpecies);

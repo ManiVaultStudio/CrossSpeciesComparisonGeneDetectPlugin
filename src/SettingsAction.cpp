@@ -350,6 +350,15 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
 
     _geneTableView = new QTableView();
     _selectionDetailsTable = new QTableView();
+
+    QPalette palette = _geneTableView->palette();
+    palette.setColor(QPalette::Base, Qt::white); // Background color
+    palette.setColor(QPalette::Text, Qt::black); // Text color
+
+    _geneTableView->setPalette(palette);
+    _selectionDetailsTable->setPalette(palette);
+
+
     _splitter = new QHBoxLayout();
     _geneTableView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _geneTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -4097,9 +4106,9 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
         return;
     }
 
-    auto colorValues = getSystemModeColor();
-    auto systemColor = colorValues[0];
-    auto valuesColor = colorValues[1];
+    //auto colorValues = getSystemModeColor();
+    //auto systemColor = colorValues[0];
+    //auto valuesColor = colorValues[1];
 
     // Iterate through all rows
     for (int row = 0; row < model->rowCount(); ++row) {
@@ -4119,8 +4128,8 @@ void SettingsAction::removeSelectionTableRows(QStringList* selectedLeaves)
             //remove existing color from rows
             for (int col = 0; col < model->columnCount(); ++col) {
                 QModelIndex cellIndex = model->index(row, col);
-                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(systemColor)), Qt::BackgroundRole);
-                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor(valuesColor)), Qt::ForegroundRole);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#FFFFFF")), Qt::BackgroundRole);
+                _selectionDetailsTable->model()->setData(cellIndex, QBrush(QColor("#000000")), Qt::ForegroundRole);
             }
         }
     }
