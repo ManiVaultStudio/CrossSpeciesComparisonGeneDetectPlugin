@@ -858,12 +858,33 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     auto selectedColorType = _scatterplotReembedColorOption.getCurrentText();
                                     if (selectedColorType != "")
                                     {
+                                        auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                        DatasetPickerAction* legendDatasetPickerAction;
+                                        if (legendViewFactory)
+                                        {
+                                            for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                            {
+                                                if (legendPlugin->getGuiName() == "Legend View")
+                                                {
+                                                    //legendPlugin->printChildren();
+                                                    legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                }
+                                            }
+                                        }
+                                        
+                                        
+                                        
+                                        
                                         if (selectedColorType == "Cluster")
                                         {
                                             if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
                                             {
                                                 colorDatasetPickerAction->setCurrentText("");
                                                 colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                                if (legendDatasetPickerAction)
+                                                {
+                                                    legendDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                                }
                                             }
                                         }
                                         else if (selectedColorType == "Species")
@@ -872,6 +893,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                             {
                                                 colorDatasetPickerAction->setCurrentText("");
                                                 colorDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
+                                                if (legendDatasetPickerAction)
+                                                {
+                                                    legendDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
+                                                }
                                             }
                                         }
                                         else if (selectedColorType == "Expression")
@@ -880,6 +905,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                             {
                                                 colorDatasetPickerAction->setCurrentText("");
                                                 colorDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                if (legendDatasetPickerAction)
+                                                {
+                                                    legendDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                }
                                             }
                                         }
 
@@ -1771,6 +1800,25 @@ void SettingsAction::updateButtonTriggered()
                                                                 if (_bottomClusterNamesDataset.getCurrentDataset().isValid())
                                                                 {
                                                                     colorDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+
+                                                                    auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                                                    if (legendViewFactory)
+                                                                    {
+                                                                        for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                                                        {
+                                                                            if (legendPlugin->getGuiName() == "Legend View")
+                                                                            {
+                                                                                //legendPlugin->printChildren();
+                                                                                auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                                                if (legendDatasetPickerAction)
+                                                                                {
+                                                                                    legendDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+
+
                                                                 }
                                                             }
                                                             else if (selectedColorType == "Species")
@@ -3307,8 +3355,24 @@ void SettingsAction::findTopNGenesPerCluster() {
                                     if (_geneSimilarityClusterColoring.isValid())
                                     {
                                         colorDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
-                                    }
+                                        auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                        if (legendViewFactory)
+                                        {
+                                            for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                            {
+                                                if (legendPlugin->getGuiName() == "Legend View")
+                                                {
+                                                    //legendPlugin->printChildren();
+                                                    auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                    if (legendDatasetPickerAction)
+                                                    {
+                                                        legendDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
+                                                    }
+                                                }
+                                            }
+                                        }
 
+                                    }
                                 }
 
                                 samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
