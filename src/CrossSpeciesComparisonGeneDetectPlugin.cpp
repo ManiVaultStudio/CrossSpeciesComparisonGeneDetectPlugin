@@ -14,7 +14,7 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
-
+#include<actions/ColorMap1DAction.h>
 //#include<QTooltip>
 #include <QRegularExpression> 
 
@@ -398,6 +398,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                                     {
                                                         legendDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
                                                     }
+                                                    auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                    if (chartTitle)
+                                                    {
+                                                        chartTitle->setString("Cell types");
+                                                    }
                                                 }
                                             }
                                         }
@@ -579,6 +584,34 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                     if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                        
+                        /////////
+                        
+                        auto colormapScatterplot = dynamic_cast<ColorMap1DAction*>(plugin->findChildByPath("Settings/Coloring/1D Color map"));;
+                        if (colormapScatterplot)
+                        {
+                            auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                            if (legendViewFactory)
+                            {
+                                for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                {
+                                    if (legendPlugin->getGuiName() == "Legend View")
+                                    {
+                                        auto colormapLegend = dynamic_cast<ColorMap1DAction*>(plugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Color map"));;
+                                        if (colormapLegend)
+                                        {
+                                            colormapScatterplot->publish("EvoViewer:ScatterplotColorMap");
+                                            colormapScatterplot->setConnectionPermissionsToAll();
+                                            colormapLegend->setConnectionPermissionsToAll();
+                                            //TODO:colormapLegend->connectToPublicAction();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        
+                        ///////
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
@@ -602,6 +635,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                             if (legendDatasetPickerAction)
                                             {
                                                 legendDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
+                                            }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Cell types");
                                             }
                                         }
                                     }
@@ -1030,6 +1068,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                                             {
                                                 legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
                                             }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Gene expression");
+                                            }
                                         }
                                     }
                                 }
@@ -1206,6 +1249,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
                                             if (legendDatasetPickerAction)
                                             {
                                                 legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                            }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Gene expression");
                                             }
                                         }
                                     }
@@ -1537,6 +1585,11 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                                                 if (legendDatasetPickerAction)
                                                 {
                                                     legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                                }
+                                                auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                if (chartTitle)
+                                                {
+                                                    chartTitle->setString("Gene expression");
                                                 }
                                             }
                                         }

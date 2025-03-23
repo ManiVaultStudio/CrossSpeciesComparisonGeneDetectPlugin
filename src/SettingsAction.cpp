@@ -860,6 +860,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                     {
                                         auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
                                         DatasetPickerAction* legendDatasetPickerAction;
+                                        StringAction* chartTitle;
                                         if (legendViewFactory)
                                         {
                                             for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
@@ -868,10 +869,13 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 {
                                                     //legendPlugin->printChildren();
                                                     legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                    chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                
                                                 }
                                             }
                                         }
                                         
+                                         
                                         
                                         
                                         
@@ -885,6 +889,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 {
                                                     legendDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
                                                 }
+                                                if (chartTitle)
+                                                {
+                                                    chartTitle->setString("Cell types");
+                                                }
                                             }
                                         }
                                         else if (selectedColorType == "Species")
@@ -897,6 +905,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 {
                                                     legendDatasetPickerAction->setCurrentDataset(_speciesNamesDataset.getCurrentDataset());
                                                 }
+                                                if (chartTitle)
+                                                {
+                                                    chartTitle->setString("Species");
+                                                }
                                             }
                                         }
                                         else if (selectedColorType == "Expression")
@@ -908,6 +920,10 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 if (legendDatasetPickerAction)
                                                 {
                                                     legendDatasetPickerAction->setCurrentDataset(_tsneDatasetExpressionColors);
+                                                }
+                                                if (chartTitle)
+                                                {
+                                                    chartTitle->setString("Gene expression");
                                                 }
                                             }
                                         }
@@ -1813,6 +1829,11 @@ void SettingsAction::updateButtonTriggered()
                                                                                 if (legendDatasetPickerAction)
                                                                                 {
                                                                                     legendDatasetPickerAction->setCurrentDataset(_bottomClusterNamesDataset.getCurrentDataset());
+                                                                                }
+                                                                                auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                                                if (chartTitle)
+                                                                                {
+                                                                                    chartTitle->setString("Cell types");
                                                                                 }
                                                                             }
                                                                         }
@@ -3367,6 +3388,11 @@ void SettingsAction::findTopNGenesPerCluster() {
                                                     if (legendDatasetPickerAction)
                                                     {
                                                         legendDatasetPickerAction->setCurrentDataset(_geneSimilarityClusterColoring);
+                                                    }
+                                                    auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                    if (chartTitle)
+                                                    {
+                                                        chartTitle->setString("Cell types");
                                                     }
                                                 }
                                             }
