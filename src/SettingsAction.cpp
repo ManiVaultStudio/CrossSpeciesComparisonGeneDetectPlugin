@@ -861,6 +861,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                         auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
                                         DatasetPickerAction* legendDatasetPickerAction;
                                         StringAction* chartTitle;
+                                        ColorAction* selectionColor;
+                                        StringAction* selectionStringDelimiter;
+                                        StringAction* selectionClustersString;
                                         if (legendViewFactory)
                                         {
                                             for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
@@ -871,6 +874,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                     legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
                                                     chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
                                                 
+                                                    selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
+                                                    selectionStringDelimiter = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Delimiter"));
+                                                    selectionClustersString = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster Selection string"));
                                                 }
                                             }
                                         }
@@ -893,6 +899,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 {
                                                     chartTitle->setString("Cell types");
                                                 }
+                                                
+                                                if (selectionColor)
+                                                {
+                                                    selectionColor->setColor(QColor(53, 126, 199));
+                                                }
+                                                
+                                                if (selectionStringDelimiter)
+                                                {
+                                                    selectionStringDelimiter->setString(",");
+                                                }
+                                                
+                                                if (selectionClustersString)
+                                                {
+                                                    selectionClustersString->setString(""); //TODO
+                                                }
                                             }
                                         }
                                         else if (selectedColorType == "Species")
@@ -908,6 +929,21 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
                                                 if (chartTitle)
                                                 {
                                                     chartTitle->setString("Species");
+                                                }
+                                               
+                                                if (selectionColor)
+                                                {
+                                                    selectionColor->setColor(QColor(53, 126, 199));
+                                                }
+                                               
+                                                if (selectionStringDelimiter)
+                                                {
+                                                    selectionStringDelimiter->setString(",");
+                                                }
+                                                
+                                                if (selectionClustersString)
+                                                {
+                                                    selectionClustersString->setString(""); //TODO
                                                 }
                                             }
                                         }
@@ -1834,6 +1870,21 @@ void SettingsAction::updateButtonTriggered()
                                                                                 if (chartTitle)
                                                                                 {
                                                                                     chartTitle->setString("Cell types");
+                                                                                }
+                                                                                auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
+                                                                                if (selectionColor)
+                                                                                {
+                                                                                    selectionColor->setColor(QColor(53, 126, 199));
+                                                                                }
+                                                                                auto selectionStringDelimiter = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Delimiter"));
+                                                                                if (selectionStringDelimiter)
+                                                                                {
+                                                                                    selectionStringDelimiter->setString(",");
+                                                                                }
+                                                                                auto selectionClustersString = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster Selection string"));
+                                                                                if (selectionClustersString)
+                                                                                {
+                                                                                    selectionClustersString->setString(""); //TODO
                                                                                 }
                                                                             }
                                                                         }
@@ -3393,6 +3444,21 @@ void SettingsAction::findTopNGenesPerCluster() {
                                                     if (chartTitle)
                                                     {
                                                         chartTitle->setString("Cell types");
+                                                    }
+                                                    auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
+                                                    if (selectionColor)
+                                                    {
+                                                        selectionColor->setColor(QColor(53, 126, 199));
+                                                    }
+                                                    auto selectionStringDelimiter = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Delimiter"));
+                                                    if (selectionStringDelimiter)
+                                                    {
+                                                        selectionStringDelimiter->setString(",");
+                                                    }
+                                                    auto selectionClustersString = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster Selection string"));
+                                                    if (selectionClustersString)
+                                                    {
+                                                        selectionClustersString->setString(""); //TODO
                                                     }
                                                 }
                                             }
