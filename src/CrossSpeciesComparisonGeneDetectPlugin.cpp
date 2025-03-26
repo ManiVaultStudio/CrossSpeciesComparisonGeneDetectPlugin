@@ -403,6 +403,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                                     {
                                                         chartTitle->setString("Cell types");
                                                     }
+                                                    /*
                                                     auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
                                                     if (selectionColor)
                                                     {
@@ -418,6 +419,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                                     {
                                                         selectionClustersString->setString(""); //TODO
                                                     }
+                                                    */
                                                 }
                                             }
                                         }
@@ -615,10 +617,13 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                         auto colormapLegend = dynamic_cast<ColorMap1DAction*>(plugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Color map"));;
                                         if (colormapLegend)
                                         {
-                                            colormapScatterplot->publish("EvoViewer:ScatterplotColorMap");
-                                            colormapScatterplot->setConnectionPermissionsToAll();
-                                            colormapLegend->setConnectionPermissionsToAll();
-                                            //TODO:colormapLegend->connectToPublicAction();
+                                            //TODO
+                                            //colormapScatterplot->publish("EvoViewer:ScatterplotColorMap");
+                                            //colormapScatterplot->setConnectionPermissionsToAll();
+                                            //colormapLegend->setConnectionPermissionsToAll();
+                                           // mv::actions().connectPrivateActions(colormapScatterplot, colormapLegend,"EvoViewer:ScatterplotColorMap");
+                                            
+                                           //colormapLegend->connectToPublicActionByName("EvoViewer:ScatterplotColorMap");
                                         }
                                     }
                                 }
@@ -656,6 +661,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                             {
                                                 chartTitle->setString("Cell types");
                                             }
+                                            /*
                                             auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
                                             if (selectionColor)
                                             {
@@ -671,6 +677,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                             {
                                                 selectionClustersString->setString(""); //TODO
                                             }
+                                            */
                                         }
                                     }
                                 }
