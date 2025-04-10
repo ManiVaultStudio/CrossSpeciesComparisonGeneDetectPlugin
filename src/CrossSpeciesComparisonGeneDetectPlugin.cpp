@@ -14,7 +14,7 @@
 #include <unordered_set>
 #include <cmath>
 #include <algorithm>
-
+#include<actions/ColorMap1DAction.h>
 //#include<QTooltip>
 #include <QRegularExpression> 
 
@@ -385,6 +385,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                                     {
                                         colorDatasetPickerAction->setCurrentText("");
                                         colorDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
+                                        auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                        if (legendViewFactory)
+                                        {
+                                            for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                            {
+                                                if (legendPlugin->getGuiName() == "Legend View")
+                                                {
+                                                    //legendPlugin->printChildren();
+                                                    auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                    if (legendDatasetPickerAction)
+                                                    {
+                                                        legendDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
+                                                    }
+                                                    auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                    if (chartTitle)
+                                                    {
+                                                        chartTitle->setString("Cell types");
+                                                    }
+                                                    /*
+                                                    auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
+                                                    if (selectionColor)
+                                                    {
+                                                        selectionColor->setColor(QColor(53, 126, 199));
+                                                    }
+                                                    auto selectionStringDelimiter = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Delimiter"));
+                                                    if (selectionStringDelimiter)
+                                                    {
+                                                        selectionStringDelimiter->setString(",");
+                                                    }
+                                                    auto selectionClustersString = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster Selection string"));
+                                                    if (selectionClustersString)
+                                                    {
+                                                        selectionClustersString->setString(""); //TODO
+                                                    }
+                                                    */
+                                                }
+                                            }
+                                        }
 
                                     }
                                     samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
@@ -563,6 +601,37 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             if (scatterplotViewFactory) {
                 for (auto plugin : mv::plugins().getPluginsByFactory(scatterplotViewFactory)) {
                     if (plugin->getGuiName() == "Scatterplot Embedding View") {
+                        
+                        /////////
+                        
+                        auto colormapScatterplot = dynamic_cast<ColorMap1DAction*>(plugin->findChildByPath("Settings/Coloring/1D Color map"));;
+                        if (colormapScatterplot)
+                        {
+                            auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                            if (legendViewFactory)
+                            {
+                                for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                {
+                                    if (legendPlugin->getGuiName() == "Legend View")
+                                    {
+                                        auto colormapLegend = dynamic_cast<ColorMap1DAction*>(plugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Color map"));;
+                                        if (colormapLegend)
+                                        {
+                                            //TODO
+                                            //colormapScatterplot->publish("EvoViewer:ScatterplotColorMap");
+                                            //colormapScatterplot->setConnectionPermissionsToAll();
+                                            //colormapLegend->setConnectionPermissionsToAll();
+                                           // mv::actions().connectPrivateActions(colormapScatterplot, colormapLegend,"EvoViewer:ScatterplotColorMap");
+                                            
+                                           //colormapLegend->connectToPublicActionByName("EvoViewer:ScatterplotColorMap");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        
+                        ///////
                         pointDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(plugin->findChildByPath("Settings/Datasets/Position"));
                         if (pointDatasetPickerAction) {
                             pointDatasetPickerAction->setCurrentText("");
@@ -574,6 +643,44 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
                             {
                                 colorDatasetPickerAction->setCurrentText("");
                                 colorDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
+                                auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                if (legendViewFactory)
+                                {
+                                    for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                    {
+                                        if (legendPlugin->getGuiName() == "Legend View")
+                                        {
+                                            //legendPlugin->printChildren();
+                                            auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                            if (legendDatasetPickerAction)
+                                            {
+                                                legendDatasetPickerAction->setCurrentDataset(_settingsAction.getBottomClusterNamesDataset().getCurrentDataset());
+                                            }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Cell types");
+                                            }
+                                            /*
+                                            auto selectionColor = dynamic_cast<ColorAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Selection color"));
+                                            if (selectionColor)
+                                            {
+                                                selectionColor->setColor(QColor(53, 126, 199));
+                                            }
+                                            auto selectionStringDelimiter = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Delimiter"));
+                                            if (selectionStringDelimiter)
+                                            {
+                                                selectionStringDelimiter->setString(",");
+                                            }
+                                            auto selectionClustersString = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster Selection string"));
+                                            if (selectionClustersString)
+                                            {
+                                                selectionClustersString->setString(""); //TODO
+                                            }
+                                            */
+                                        }
+                                    }
+                                }
 
                             }
                             samplerActionAction = plugin->findChildByPath<mv::gui::ViewPluginSamplerAction>("Sampler");
@@ -985,6 +1092,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer()
                             {
                                 colorDatasetPickerAction->setCurrentText("");
                                 colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                if (legendViewFactory)
+                                {
+                                    for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                    {
+                                        if (legendPlugin->getGuiName() == "Legend View")
+                                        {
+                                            //legendPlugin->printChildren();
+                                            auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                            if (legendDatasetPickerAction)
+                                            {
+                                                legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                            }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Gene expression");
+                                            }
+                                        }
+                                    }
+                                }
 
                             }
 
@@ -1146,6 +1274,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::geneExplorer(QString selectedSpecie
                             {
                                 colorDatasetPickerAction->setCurrentText("");
                                 colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                if (legendViewFactory)
+                                {
+                                    for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                    {
+                                        if (legendPlugin->getGuiName() == "Legend View")
+                                        {
+                                            //legendPlugin->printChildren();
+                                            auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                            if (legendDatasetPickerAction)
+                                            {
+                                                legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                            }
+                                            auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                            if (chartTitle)
+                                            {
+                                                chartTitle->setString("Gene expression");
+                                            }
+                                        }
+                                    }
+                                }
 
                             }
 
@@ -1461,7 +1610,27 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
                                 {
                                     colorDatasetPickerAction->setCurrentText("");
                                     colorDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
-
+                                    auto legendViewFactory = mv::plugins().getPluginFactory("ChartLegend View");
+                                    if (legendViewFactory)
+                                    {
+                                        for (auto legendPlugin : mv::plugins().getPluginsByFactory(legendViewFactory))
+                                        {
+                                            if (legendPlugin->getGuiName() == "Legend View")
+                                            {
+                                                //legendPlugin->printChildren();
+                                                auto legendDatasetPickerAction = dynamic_cast<DatasetPickerAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Cluster dataset"));
+                                                if (legendDatasetPickerAction)
+                                                {
+                                                    legendDatasetPickerAction->setCurrentDataset(_settingsAction.getFilteredUMAPDatasetColors());
+                                                }
+                                                auto chartTitle = dynamic_cast<StringAction*>(legendPlugin->findChildByPath("ChartLegendViewPlugin Chart/Color Options/Chart Title"));
+                                                if (chartTitle)
+                                                {
+                                                    chartTitle->setString("Gene expression");
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 auto focusSelectionAction = dynamic_cast<ToggleAction*>(plugin->findChildByPath("Settings/Plot/Point/Focus selection"));
