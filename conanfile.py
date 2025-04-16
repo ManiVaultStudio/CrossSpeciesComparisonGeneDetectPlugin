@@ -2,32 +2,22 @@ from conans import ConanFile
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
 from conans.tools import save, load
 import os
-import shutil
 import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
-import re
 
-def compatibility(os, compiler, compiler_version):
-    # On macos fallback to zlib apple-clang 13
-    if os == "Macos" and compiler == "apple-clang" and bool(re.match("14.*", compiler_version)):  
-        print("Compatibility match")
-        return ["zlib/1.3:compiler.version=13"]
-    return None
+class ChartLegendViewPluginConan(ConanFile):
+    """Class to package CrossSpeciesComparisonGeneDetectPlugin plugin using conan
 
-class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
-    """Class to package CrossSpeciesComparisonGeneDetectPlugin using conan
-
-    Packages both RELEASE and DEBUG.
+    Packages both RELEASE and RELWITHDEBINFO.
     Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
-    version info based on the branch naming convention
+    versioninfo based on the branch naming convention
     as described in https://github.com/ManiVaultStudio/core/wiki/Branch-naming-rules
     """
 
     name = "CrossSpeciesComparisonGeneDetectPlugin"
-    description = """Plugins for reading and writing binary data
-                  in the high-dimensional plugin system (HDPS)."""
-    topics = ("hdps", "plugin", "binary data", "loading", "writing")
+    description = ("A plugin for data heat-maps in ManiVault.")
+    topics = ("hdps", "ManiVault", "plugin", "CrossSpeciesComparisonGeneDetectPlugin", "data visualization")
     url = "https://github.com/ManiVaultStudio/CrossSpeciesComparisonGeneDetectPlugin"
     author = "B. van Lew b.van_lew@lumc.nl"  # conan recipe author
     license = "MIT"
@@ -40,11 +30,14 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
 
-    requires = ("CrossSpeciesComparisonTreeData/comparison_viewer_1.1@lkeb/stable")
-        
-    # Qt requirement is inherited from hdps-core
+    requires = ("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
-    scm = {"type": "git", "subfolder": "hdps/CrossSpeciesComparisonGeneDetectPlugin", "url": "auto", "revision": "auto"}
+    scm = {
+        "type": "git",
+        "subfolder": "hdps/CrossSpeciesComparisonGeneDetectPlugin",
+        "url": "auto",
+        "revision": "auto",
+    }
 
     def __get_git_path(self):
         path = load(
@@ -89,37 +82,28 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
             generator = "Xcode"
         if self.settings.os == "Linux":
             generator = "Ninja Multi-Config"
-        # Use the Qt provided .cmake files
-        qtpath = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
-        qt_root = str(list(qtpath.glob("**/Qt6Config.cmake"))[0].parents[3].as_posix())
 
         tc = CMakeToolchain(self, generator=generator)
-        if self.settings.os == "Windows" and self.options.shared:
-            tc.variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
-        if self.settings.os == "Linux" or self.settings.os == "Macos":
-            tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
-        tc.variables["CMAKE_PREFIX_PATH"] = qt_root
-        
-        # Set the installation directory for ManiVault based on the MV_INSTALL_DIR environment variable
-        # or if none is specified, set it to the build/install dir.
-        if not os.environ.get("MV_INSTALL_DIR", None):
-            os.environ["MV_INSTALL_DIR"] = os.path.join(self.build_folder, "install")
-        print("MV_INSTALL_DIR: ", os.environ["MV_INSTALL_DIR"])
-        self.install_dir = pathlib.Path(os.environ["MV_INSTALL_DIR"]).as_posix()
-        # Give the installation directory to CMake
-        self.install_dir = pathlib.Path(os.environ["MV_INSTALL_DIR"]).as_posix()
-        
+
+        tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
+
+        # Use the Qt provided .cmake files
+        qt_path = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
+        qt_cfg = list(qt_path.glob("**/Qt6Config.cmake"))[0]
+        qt_dir = qt_cfg.parents[0].as_posix()
+
+        tc.variables["Qt6_DIR"] = qt_dir
+
+        # Use the ManiVault .cmake file to find ManiVault with find_package
+        mv_core_root = self.deps_cpp_info["hdps-core"].rootpath
+        manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
+        print("ManiVault_DIR: ", manivault_dir)
+        tc.variables["ManiVault_DIR"] = manivault_dir
         MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
         print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
         tc.variables["MV_INSTALL_DIR"] = self.install_dir
         tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
-        
-        tc.variables["MV_INSTALL_DIR"] = self.install_dir
 
-        # Find ManiVault with find_package
-        self.manivault_dir = self.install_dir + '/cmake/mv/'
-        tc.variables["ManiVault_DIR"] = self.manivault_dir
-        
         tc.generate()
 
     def _configure_cmake(self):
@@ -129,23 +113,16 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         return cmake
 
     def build(self):
-        print("Build OS is : ", self.settings.os)
-
-        # The CrossSpeciesComparisonGeneDetectPlugin plugins expect the HDPS package to be in this install dir
-        hdps_pkg_root = self.deps_cpp_info["hdps-core"].rootpath
-        print("Install dir type: ", self.install_dir)
-        shutil.copytree(hdps_pkg_root, self.install_dir)
+        print("Build OS is: ", self.settings.os)
 
         cmake = self._configure_cmake()
-        cmake.build(build_type="Debug")
-        cmake.install(build_type="Debug")
-
-        # cmake_release = self._configure_cmake()
+        cmake.build(build_type="RelWithDebInfo")
         cmake.build(build_type="Release")
-        cmake.install(build_type="Release")
 
     def package(self):
-        package_dir = os.path.join(self.build_folder, "install")
+        package_dir = pathlib.Path(self.build_folder, "package")
+        relWithDebInfo_dir = package_dir / "RelWithDebInfo"
+        release_dir = package_dir / "Release"
         print("Packaging install dir: ", package_dir)
         subprocess.run(
             [
@@ -153,9 +130,9 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
                 "--install",
                 self.build_folder,
                 "--config",
-                "Debug",
+                "RelWithDebInfo",
                 "--prefix",
-                os.path.join(package_dir, "Debug"),
+                relWithDebInfo_dir,
             ]
         )
         subprocess.run(
@@ -166,19 +143,15 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
                 "--config",
                 "Release",
                 "--prefix",
-                os.path.join(package_dir, "Release"),
+                release_dir,
             ]
         )
         self.copy(pattern="*", src=package_dir)
-        # Add the debug support files to the package
-        # (*.pdb) if building the Visual Studio version
-        if self.settings.compiler == "Visual Studio":
-            self.copy("*.pdb", dst="Debug/Plugins", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.debug.libdirs = ["Debug/lib"]
-        self.cpp_info.debug.bindirs = ["Debug/Plugins", "Debug"]
-        self.cpp_info.debug.includedirs = ["Debug/include", "Debug"]
+        self.cpp_info.relwithdebinfo.libdirs = ["RelWithDebInfo/lib"]
+        self.cpp_info.relwithdebinfo.bindirs = ["RelWithDebInfo/Plugins", "RelWithDebInfo"]
+        self.cpp_info.relwithdebinfo.includedirs = ["RelWithDebInfo/include", "RelWithDebInfo"]
         self.cpp_info.release.libdirs = ["Release/lib"]
         self.cpp_info.release.bindirs = ["Release/Plugins", "Release"]
         self.cpp_info.release.includedirs = ["Release/include", "Release"]
