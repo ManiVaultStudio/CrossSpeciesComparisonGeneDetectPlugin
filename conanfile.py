@@ -94,9 +94,9 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
 
         tc.variables["Qt6_DIR"] = qt_dir
 		
-		MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
-		print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
-		tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
+        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+        print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
+        tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
 
         # Use the ManiVault .cmake file to find ManiVault with find_package
         mv_core_root = self.deps_cpp_info["hdps-core"].rootpath
