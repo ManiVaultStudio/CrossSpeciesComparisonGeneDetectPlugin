@@ -30,7 +30,7 @@ class ChartLegendViewPluginConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
 
-    requires = ("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
+    requires = ("CrossSpeciesComparisonTreeData/comparison_viewer_1.1@lkeb/stable") #comparison_viewer_1.1 should be cytosploreviewer
 
     scm = {
         "type": "git",
