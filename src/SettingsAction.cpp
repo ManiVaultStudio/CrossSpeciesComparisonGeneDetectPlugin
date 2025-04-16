@@ -1410,7 +1410,9 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     debounceTimer->setInterval(500); // 500 milliseconds wait time
 
     const auto debouncelambda = [this]() -> void { // Capture debounceTimer by 
+        _statusColorAction.setString("M");
         disableActions();
+
         findTopNGenesPerCluster();
         enableActions();
         };
@@ -1425,7 +1427,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
     connect(&_topNGenesFilter, &IntegralAction::valueChanged, this, updateTopGenesSlider);
 
 
-    _statusColorAction.setString("M");
+    
 }
 /*
 void SettingsAction::triggerTrippleHierarchyFrequencyChange()
