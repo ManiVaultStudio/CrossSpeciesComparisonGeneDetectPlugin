@@ -63,7 +63,6 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
-        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     # Remove runtime and use always default (MD/MDd)
     def configure(self):
