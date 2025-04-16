@@ -29,6 +29,7 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets Concurrent REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData CONFIG QUIET)
 
 if(NOT DEFINED MV_CSCTD_INSTALL_DIR) 
+    message(STATUS "MV_CSCTD_INSTALL_DIR not defined. Using MV_INSTALL_DIR as default.")
     set(MV_CSCTD_INSTALL_DIR ${MV_INSTALL_DIR} CACHE PATH "Directory where TreeData is installed")
 endif()
 
