@@ -58,6 +58,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         # Assign a version from the branch name
         branch_info = PluginBranchInfo(self.recipe_folder)
         self.version = branch_info.version
+        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     def requirements(self):
         branch_info = PluginBranchInfo(self.__get_git_path())
