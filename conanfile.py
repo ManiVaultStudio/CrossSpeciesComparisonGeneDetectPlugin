@@ -30,7 +30,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
 	
-	requires = ("CrossSpeciesComparisonTreeData/comparison_viewer_1.1@lkeb/stable")
+	requires = ("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     scm = {
         "type": "git",
