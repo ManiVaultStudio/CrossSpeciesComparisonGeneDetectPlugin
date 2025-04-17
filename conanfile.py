@@ -38,17 +38,18 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     }
 
     def __get_git_path(self):
-        hardcoded_path = "D:/dev/ManiVault/CrossSpeciesComparisonTreeData"
-        #print(f"Using hardcoded git path: {hardcoded_path}")
-        return hardcoded_path
+        path = load(
+            pathlib.Path(pathlib.Path(__file__).parent.resolve(), "__gitpath.txt")
+        )
+        print(f"git info from {path}")
+        return path
 
     def export(self):
         print("In export")
         # save the original source path to the directory used to build the package
-        source_path = os.path.relpath(pathlib.Path(__file__).parent.resolve(), self.export_folder)
         save(
             pathlib.Path(self.export_folder, "__gitpath.txt"),
-            source_path.replace("\\", "/"),
+            str(pathlib.Path(__file__).parent.resolve()),
         )
 
     def set_version(self):
@@ -60,7 +61,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
-        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
+		self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     # Remove runtime and use always default (MD/MDd)
     def configure(self):
@@ -98,7 +99,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         print("ManiVault_DIR: ", manivault_dir)
         tc.variables["ManiVault_DIR"] = manivault_dir
 		
-        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+		MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
         print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
         tc.variables["MV_INSTALL_DIR"] = self.install_dir
         tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
