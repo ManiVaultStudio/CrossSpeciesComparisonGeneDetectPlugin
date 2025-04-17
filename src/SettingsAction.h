@@ -316,6 +316,7 @@ public: // Action getters
     std::vector<QString>& getCustomOrderClustersFromHierarchy() { return _customOrderClustersFromHierarchy; }
     std::unordered_map<QString, std::vector<QString>>& getClusterPositionMap() { return _clusterPositionMap; }
     std::unordered_map<QString,std::unordered_map<QString, std::unordered_map<QString, QString>>>& getPrecomputedTreesFromTheHierarchy() { return _precomputedTreesFromTheHierarchy; }
+    bool& getProjectOpened() { return _projectOpened; }
 
     std::map<QString, std::map<QString, Stats>>& getClusterNameToGeneNameToExpressionValue() { return _clusterNameToGeneNameToExpressionValue; }
     std::unordered_map<QString, std::unordered_map<QString, int>>& getClusterSpeciesFrequencyMap() { return _clusterSpeciesFrequencyMap; }
@@ -473,4 +474,5 @@ protected:
     TriggerAction                 _saveSpeciesTable;
     QStringList                   _currentHierarchyItemsMiddleForTable;
     StringAction               _topSelectedHierarchyStatus;
+    bool                      _projectOpened=false;
 };

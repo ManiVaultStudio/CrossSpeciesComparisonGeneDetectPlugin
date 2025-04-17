@@ -1414,6 +1414,11 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         disableActions();
 
         findTopNGenesPerCluster();
+        if (_projectOpened)
+        {
+            _statusColorAction.setString("C");
+        }
+      
         enableActions();
         };
 
