@@ -38,15 +38,9 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     }
 
     def __get_git_path(self):
-        gitpath_file = pathlib.Path(self.recipe_folder) / "__gitpath.txt"
-        if not gitpath_file.exists():
-            raise FileNotFoundError(f"Git path file not found: {gitpath_file}")
-
-        rel_path = load(str(gitpath_file)).strip()
-        full_path = pathlib.Path(self.recipe_folder).joinpath(rel_path).resolve()
-
-        print(f"git info from {full_path}")
-        return str(full_path)
+        hardcoded_path = "D:/dev/ManiVault/CrossSpeciesComparisonTreeData"
+        #print(f"Using hardcoded git path: {hardcoded_path}")
+        return hardcoded_path
 
     def export(self):
         print("In export")
