@@ -51,7 +51,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         self.requires("qt/6.8.2@lkeb/stable")
         
         # TreeData plugin dependency - using version range for flexibility
-        self.requires("CrossSpeciesComparisonTreeData/[>=1.0]@lkeb/stable")
+        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.22]")
