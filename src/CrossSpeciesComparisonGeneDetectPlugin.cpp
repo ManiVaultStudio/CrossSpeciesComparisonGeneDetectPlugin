@@ -1,7 +1,7 @@
 #include "CrossSpeciesComparisonGeneDetectPlugin.h"
 
 #include <event/Event.h>
-#include <CrossSpeciesComparisonTreeData.h>
+#include <CrossSpeciesComparisonTreeData/CrossSpeciesComparisonTreeData.h>
 #include <DatasetsMimeData.h>
 #include <QHeaderView> 
 #include <QDebug>
