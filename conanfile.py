@@ -38,11 +38,16 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     }
 
     def __get_git_path(self):
-        path = load(
-            pathlib.Path(pathlib.Path(__file__).parent.resolve(), "__gitpath.txt")
-        )
-        print(f"git info from {path}")
-        return path
+        gitpath_file = pathlib.Path(self.recipe_folder) / "__gitpath.txt"
+        if not gitpath_file.exists():
+            raise FileNotFoundError(f"Git path file not found: {gitpath_file}")
+
+        path = load(str(gitpath_file)).strip()
+
+        # Normalize the path to avoid mixed separators
+        normalized_path = pathlib.Path(path).resolve()
+        print(f"git info from {normalized_path}")
+        return str(normalized_path)
 
     def export(self):
         print("In export")
