@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.22)
 option(MV_UNITY_BUILD "Combine target source files into batches for faster compilation" OFF)
 
 # -----------------------------------------------------------------------------
-# SimianViewerPairExpCompPlugin Plugin
+# CrossSpeciesComparisonGeneDetectPlugin Plugin
 # -----------------------------------------------------------------------------
-project(SimianViewerPairExpCompPlugin)
+project(CrossSpeciesComparisonGeneDetectPlugin)
 
 # -----------------------------------------------------------------------------
 # CMake Options
