@@ -700,7 +700,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
 
 
 
-            
+            _settingsAction.getProjectOpened() = true;
 
         };
 
