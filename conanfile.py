@@ -1,6 +1,7 @@
-from conans import ConanFile
-from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
-from conans.tools import save, load
+from conan import ConanFile
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain
+from conan.tools.files import load, save
+from conan.tools.scm import Git
 import os
 import pathlib
 import subprocess
@@ -8,110 +9,113 @@ from rules_support import PluginBranchInfo
 
 class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     name = "CrossSpeciesComparisonGeneDetectPlugin"
-    description = "A plugin for data heat-maps in ManiVault."
-    topics = ("hdps", "ManiVault", "plugin", "CrossSpeciesComparisonGeneDetectPlugin", "data visualization")
+    description = "A plugin for cross-species gene comparison in ManiVault"
+    topics = ("hdps", "manivault", "plugin", "bioinformatics")
     url = "https://github.com/ManiVaultStudio/CrossSpeciesComparisonGeneDetectPlugin"
-    author = "B. van Lew b.van_lew@lumc.nl"
+    author = "B. van Lew <b.van_lew@lumc.nl>"
     license = "MIT"
 
-    short_paths = True
-    generators = "CMakeDeps"
+    # Build configuration
+    settings = "os", "compiler", "build_type", "arch"
+    options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
+    }
+    default_options = {
+        "shared": True,
+        "fPIC": True,
+    }
 
-    settings = {"os": None, "build_type": None, "compiler": None, "arch": None}
-    options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": True, "fPIC": True}
-
+    # SCM configuration for in-source development
     scm = {
         "type": "git",
-        "subfolder": "hdps/CrossSpeciesComparisonGeneDetectPlugin",
+        "subfolder": ".",
         "url": "auto",
         "revision": "auto",
     }
 
-    def __get_git_path(self):
-        path = load(pathlib.Path(pathlib.Path(__file__).parent.resolve(), "__gitpath.txt"))
-        print(f"git info from {path}")
-        return path
-
-    def export(self):
-        print("In export")
-        save(
-            pathlib.Path(self.export_folder, "__gitpath.txt"),
-            str(pathlib.Path(__file__).parent.resolve()),
-        )
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
 
     def set_version(self):
         branch_info = PluginBranchInfo(self.recipe_folder)
         self.version = branch_info.version
 
     def requirements(self):
-        branch_info = PluginBranchInfo(self.__get_git_path())
-        print(f"Core requirement {branch_info.core_requirement}")
+        # Core dependency
+        branch_info = PluginBranchInfo(self.recipe_folder)
         self.requires(branch_info.core_requirement)
-        # Add TreeData dependency here instead of at class level
-        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
+        
+        # Qt dependency
+        self.requires("qt/6.8.2@lkeb/stable")
+        
+        # TreeData plugin dependency - using version range for flexibility
+        self.requires("CrossSpeciesComparisonTreeData/[>=1.0]@lkeb/stable")
 
-    def configure(self):
+    def build_requirements(self):
+        self.tool_requires("cmake/[>=3.22]")
         if self.settings.os == "Windows":
-            del self.options.fPIC
+            self.tool_requires("ninja/[>=1.11.1]")
+
+    def layout(self):
+        self.folders.source = "."
+        self.folders.build = os.path.join("build", str(self.settings.build_type))
+        self.folders.generators = os.path.join(self.folders.build, "generators")
 
     def generate(self):
-        generator = None
-        if self.settings.os == "Macos":
-            generator = "Xcode"
-        if self.settings.os == "Linux":
-            generator = "Ninja Multi-Config"
-
-        tc = CMakeToolchain(self, generator=generator)
+        # Generate CMake toolchain
+        tc = CMakeToolchain(self)
+        
+        # Set CMake variables
+        tc.variables["CMAKE_CXX_STANDARD"] = "20"
         tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
-
-        # Qt6 configuration
-        qt_path = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
-        qt_cfg = list(qt_path.glob("**/Qt6Config.cmake"))[0]
-        tc.variables["Qt6_DIR"] = qt_cfg.parents[0].as_posix()
-
-        # TreeData plugin configuration
-        csctd_root = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath)
-        tc.variables["MV_CSCTD_INSTALL_DIR"] = csctd_root.as_posix()
-        print(f"Set MV_CSCTD_INSTALL_DIR to: {csctd_root.as_posix()}")
-
+        
+        # Handle TreeData plugin path
+        tree_data_path = pathlib.Path(self.dependencies["CrossSpeciesComparisonTreeData"].package_folder)
+        tc.variables["MV_CSCTD_INSTALL_DIR"] = tree_data_path.as_posix()
+        
+        # Qt configuration
+        qt_path = pathlib.Path(self.dependencies["qt"].package_folder)
+        qt_cmake_path = next(qt_path.glob("**/Qt6Config.cmake")).parent
+        tc.variables["Qt6_DIR"] = qt_cmake_path.as_posix()
+        
         # ManiVault configuration
-        mv_core_root = self.deps_cpp_info["hdps-core"].rootpath
-        manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
-        tc.variables["ManiVault_DIR"] = manivault_dir
-
+        mv_path = pathlib.Path(self.dependencies["hdps-core"].package_folder)
+        tc.variables["ManiVault_DIR"] = mv_path.joinpath("cmake", "mv").as_posix()
+        
         tc.generate()
-
-        # Generate deps
+        
+        # Generate dependencies
         deps = CMakeDeps(self)
         deps.generate()
 
-    def _configure_cmake(self):
-        cmake = CMake(self)
-        cmake.configure(build_script_folder="hdps/CrossSpeciesComparisonGeneDetectPlugin")
-        cmake.verbose = True
-        return cmake
-
     def build(self):
-        cmake = self._configure_cmake()
-        cmake.build(build_type="RelWithDebInfo")
-        cmake.build(build_type="Release")
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
 
     def package(self):
         cmake = CMake(self)
-        cmake.install(build_type="RelWithDebInfo")
-        cmake.install(build_type="Release")
+        cmake.install()
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "CrossSpeciesComparisonGeneDetectPlugin")
+        self.cpp_info.set_property("cmake_target_name", "ManiVault::CrossSpeciesComparisonGeneDetectPlugin")
         
-        # For RelWithDebInfo configuration
-        self.cpp_info.components["_relwithdebinfo"].libdirs = ["RelWithDebInfo/Plugins"]
-        self.cpp_info.components["_relwithdebinfo"].bindirs = ["RelWithDebInfo/Plugins"]
-        self.cpp_info.components["_relwithdebinfo"].includedirs = ["RelWithDebInfo/include"]
+        # Plugin binaries
+        if self.settings.os == "Windows":
+            self.cpp_info.bindirs = ["Plugins"]
+            self.cpp_info.libdirs = ["Plugins"]
+        else:
+            self.cpp_info.libdirs = ["lib"]
         
-        # For Release configuration
-        self.cpp_info.components["_release"].libdirs = ["Release/Plugins"]
-        self.cpp_info.components["_release"].bindirs = ["Release/Plugins"]
-        self.cpp_info.components["_release"].includedirs = ["Release/include"]
+        # Include directories
+        self.cpp_info.includedirs = ["include"]
+        
+        # Runtime dependencies
+        self.cpp_info.requires = [
+            "hdps-core::hdps-core",
+            "qt::qt",
+            "CrossSpeciesComparisonTreeData::CrossSpeciesComparisonTreeData"
+        ]
