@@ -4,7 +4,7 @@
 #include <QFileDialog>
 #include <QPageLayout>
 #include <QWebEngineView>
-#include <CrossSpeciesComparisonTreeData.h>
+#include <CrossSpeciesComparisonTreeData/CrossSpeciesComparisonTreeData.h>
 #include <numeric>   // for std::reduce
 //#include "lib/Distance/annoylib.h"
 //#include "lib/Distance/kissrandom.h"
