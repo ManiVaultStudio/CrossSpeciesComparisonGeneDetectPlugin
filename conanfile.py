@@ -32,6 +32,8 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     settings = {"os": None, "build_type": None, "compiler": None, "arch": None}
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
+	
+	
 
     scm = {
         "type": "git",
@@ -64,7 +66,6 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
-        # Add CrossSpeciesComparisonTreeData requirement
         self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     # Remove runtime and use always default (MD/MDd)
@@ -101,7 +102,6 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         print("ManiVault_DIR: ", manivault_dir)
         tc.variables["ManiVault_DIR"] = manivault_dir
 
-        # Add CrossSpeciesComparisonTreeData variables
         MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
         print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
         tc.variables["MV_INSTALL_DIR"] = self.install_dir
