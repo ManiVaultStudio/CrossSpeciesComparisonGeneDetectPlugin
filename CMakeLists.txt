@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.22)
 option(MV_UNITY_BUILD "Combine target source files into batches for faster compilation" OFF)
 
 # -----------------------------------------------------------------------------
-# Project Setup
+# CrossSpeciesComparisonGeneDetect Plugin
 # -----------------------------------------------------------------------------
-project(CrossSpeciesComparisonGeneDetectPlugin LANGUAGES CXX)
+project(CrossSpeciesComparisonGeneDetectPlugin)
 
 # -----------------------------------------------------------------------------
 # CMake Options
@@ -15,37 +15,35 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 if(MSVC)
-    add_compile_options(
-        /DWIN32
-        /EHsc
-        /MP
-        /permissive-
-        /Zc:__cplusplus
-    )
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+endif()
+
+# -----------------------------------------------------------------------------
+# Set install directory
+# -----------------------------------------------------------------------------
+# Check if the directory to the ManiVault installation has been provided
+if(NOT DEFINED MV_INSTALL_DIR)
+    set(MV_INSTALL_DIR "" CACHE PATH "Directory where ManiVault is installed")
+    message(FATAL_ERROR "Please set MV_INSTALL_DIR to the directory where ManiVault is installed")
+endif()
+file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
+
+if(NOT DEFINED MV_CSCTD_INSTALL_DIR) 
+    set(MV_CSCTD_INSTALL_DIR ${MV_INSTALL_DIR} CACHE PATH "Directory where TreeData is installed")
 endif()
 
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets Concurrent REQUIRED)
-find_package(ManiVault COMPONENTS Core PointData ClusterData CONFIG REQUIRED)
-
-# Find CrossSpeciesComparisonTreeData plugin
-if(NOT DEFINED MV_CSCTD_INSTALL_DIR)
-    set(MV_CSCTD_INSTALL_DIR ${MV_INSTALL_DIR} CACHE PATH "Directory where TreeData is installed")
-    message(STATUS "MV_CSCTD_INSTALL_DIR not defined. Using MV_INSTALL_DIR as default: ${MV_CSCTD_INSTALL_DIR}")
-endif()
-
-# Set paths for TreeData plugin
-set(CSCTD_INCLUDE_DIR "${MV_CSCTD_INSTALL_DIR}/$<CONFIG>/include/CrossSpeciesComparisonTreeData")
-set(CSCTD_LIB_DIR "${MV_CSCTD_INSTALL_DIR}/$<CONFIG>/Plugins")
-set(CSCTD_LIB_NAME "CrossSpeciesComparisonTreeData")
 
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
+# Define the plugin sources
 set(PLUGIN_SOURCES
     src/CrossSpeciesComparisonGeneDetectPlugin.h
     src/CrossSpeciesComparisonGeneDetectPlugin.cpp
@@ -53,7 +51,6 @@ set(PLUGIN_SOURCES
     src/SettingsAction.cpp
     src/CrossSpeciesComparisonGeneDetectPlugin.json
 )
-
 set(LIBS
     src/lib/Clustering/fastcluster.cpp
     src/lib/Clustering/fastcluster.h
@@ -70,80 +67,95 @@ set(LIBS
 set(PLUGIN_MOC_HEADERS
     src/CrossSpeciesComparisonGeneDetectPlugin.h
 )
+set(AUX
+    res/CrossSpeciesComparisonGeneDetect_chart.qrc
+)
 
 qt6_add_resources(RESOURCE_FILES res/CrossSpeciesComparisonGeneDetect_chart.qrc)
 
-# Organize files in IDE
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${PLUGIN_SOURCES} ${LIBS} ${RESOURCE_FILES})
+source_group(Plugin FILES ${PLUGIN_SOURCES})
+source_group(LibFiles FILES ${LIBS})
+source_group(ResourceFiles FILES ${RESOURCE_FILES})
+source_group(ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_gene_detect_resources.cpp)
+source_group(Aux FILES ${AUX})
 
 # -----------------------------------------------------------------------------
-# Target Definition
+# CMake Target
 # -----------------------------------------------------------------------------
-add_library(${PROJECT_NAME} SHARED 
-    ${PLUGIN_SOURCES} 
-    ${LIBS} 
-    ${RESOURCE_FILES}
-)
+# Create dynamic library for the plugin
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${LIBS} ${AUX} ${RESOURCE_FILES})
 
 # -----------------------------------------------------------------------------
-# Target Properties
+# Target include directories
+# -----------------------------------------------------------------------------
+# Include ManiVault headers, including system data plugins
+target_include_directories(${PROJECT_NAME} PRIVATE "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${PROJECT_NAME} PRIVATE "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/include/")
+
+# -----------------------------------------------------------------------------
+# Target properties
 # -----------------------------------------------------------------------------
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "ViewPlugins")
 
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    FOLDER ViewPlugins
+)
+
+
+# Enable unity build
 if(MV_UNITY_BUILD)
     set_target_properties(${PROJECT_NAME} PROPERTIES UNITY_BUILD ON)
 endif()
 
 # -----------------------------------------------------------------------------
-# Include Directories
+# Target library linking
 # -----------------------------------------------------------------------------
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Common
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Data
-    ${ManiVault_INCLUDE_DIR}
-    ${CSCTD_INCLUDE_DIR}
-)
+# Link to Qt libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::WebEngineWidgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Concurrent)
+
+# Link to ManiVault and data plugins
+# The link path in this repo assumes that the ManiVault core was built locally
+# in contrast to having been installed with an installer. In the latter case you'll have
+# to adapt the MV_LINK_PATH and PLUGIN_LINK_PATH to your install folder
+set(MV_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/lib")
+set(PLUGIN_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+set(CSCTDPLUGIN_LINK_PATH "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
+
+set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
+set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
+set(CLUSTERDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ClusterData${MV_LINK_SUFFIX}") 
+set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}")
+
+target_link_libraries(${PROJECT_NAME} PRIVATE "${MV_LINK_LIBRARY}")
+target_link_libraries(${PROJECT_NAME} PRIVATE "${POINTDATA_LINK_LIBRARY}")
+target_link_libraries(${PROJECT_NAME} PRIVATE "${CLUSTERDATA_LINK_LIBRARY}")
+target_link_libraries(${PROJECT_NAME} PRIVATE "${CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY}")
 
 # -----------------------------------------------------------------------------
-# Link Libraries
+# Target installation
 # -----------------------------------------------------------------------------
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Widgets
-    Qt6::WebEngineWidgets
-    Qt6::Concurrent
-    ManiVault::Core
-    ManiVault::PointData
-    ManiVault::ClusterData
-)
-
-# Link against CrossSpeciesComparisonTreeData
-target_link_directories(${PROJECT_NAME} PRIVATE ${CSCTD_LIB_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CSCTD_LIB_NAME})
-
-# -----------------------------------------------------------------------------
-# Installation
-# -----------------------------------------------------------------------------
+# Install the shared plugin library to the "Plugins" folder in the ManiVault install directory
 install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION Plugins COMPONENT PLUGINS
-    LIBRARY DESTINATION Plugins COMPONENT PLUGINS
-    ARCHIVE DESTINATION lib COMPONENT PLUGINS
+    RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
+    LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
+    COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
-        --config $<CONFIG>
-        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIG>
+        --config $<CONFIGURATION>
+        --prefix ${MV_INSTALL_DIR}/$<CONFIGURATION>
 )
 
 # -----------------------------------------------------------------------------
-# MSVC Debug Configuration
+# Miscellaneous
 # -----------------------------------------------------------------------------
+# Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY 
-        VS_DEBUGGER_WORKING_DIRECTORY "${ManiVault_INSTALL_DIR}/$<CONFIG>")
-    set_property(TARGET ${PROJECT_NAME} PROPERTY 
-        VS_DEBUGGER_COMMAND "${ManiVault_INSTALL_DIR}/$<CONFIG>/ManiVault Studio.exe")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug/ManiVault\ Studio.exe,${MV_INSTALL_DIR}/release/ManiVault\ Studio.exe>)
 endif()
