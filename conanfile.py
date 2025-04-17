@@ -42,19 +42,19 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         if not gitpath_file.exists():
             raise FileNotFoundError(f"Git path file not found: {gitpath_file}")
 
-        path = load(str(gitpath_file)).strip()
+        rel_path = load(str(gitpath_file)).strip()
+        full_path = pathlib.Path(self.recipe_folder).joinpath(rel_path).resolve()
 
-        # Normalize the path to avoid mixed separators
-        normalized_path = pathlib.Path(path).resolve()
-        print(f"git info from {normalized_path}")
-        return str(normalized_path)
+        print(f"git info from {full_path}")
+        return str(full_path)
 
     def export(self):
         print("In export")
         # save the original source path to the directory used to build the package
+        source_path = os.path.relpath(pathlib.Path(__file__).parent.resolve(), self.export_folder)
         save(
             pathlib.Path(self.export_folder, "__gitpath.txt"),
-            str(pathlib.Path(__file__).parent.resolve()),
+            source_path.replace("\\", "/"),
         )
 
     def set_version(self):
