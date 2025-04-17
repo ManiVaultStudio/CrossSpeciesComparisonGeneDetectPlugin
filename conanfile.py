@@ -6,8 +6,9 @@ import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
 
+
 class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
-    """Class to package CrossSpeciesComparisonGeneDetectPlugin plugin using conan
+    """Class to package using conan
 
     Packages both RELEASE and RELWITHDEBINFO.
     Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
@@ -16,11 +17,11 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     """
 
     name = "CrossSpeciesComparisonGeneDetectPlugin"
-    description = ("A plugin for data heat-maps in ManiVault.")
-    topics = ("hdps", "ManiVault", "plugin", "CrossSpeciesComparisonGeneDetectPlugin", "data visualization")
+    description = """Viewer of cell CrossSpeciesComparisonTreeData data as described in a .swc file."""
+    topics = ("manivault", "plugin", "view", "CrossSpeciesComparisonGeneDetectPlugin")
     url = "https://github.com/ManiVaultStudio/CrossSpeciesComparisonGeneDetectPlugin"
-    author = "B. van Lew b.van_lew@lumc.nl"  # conan recipe author
-    license = "MIT"
+    author = "julianthijssen@gmail.com"  # conan recipe author
+    license = "LGPL 3.0"
 
     short_paths = True
     generators = "CMakeDeps"
@@ -29,6 +30,11 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     settings = {"os": None, "build_type": None, "compiler": None, "arch": None}
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
+
+    # Data plugin dependencies
+    requires = ("CrossSpeciesComparisonTreeData/1.1@lkeb/stable")
+
+    # Qt requirement is inherited from hdps-core
 
     scm = {
         "type": "git",
@@ -56,14 +62,13 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         # Assign a version from the branch name
         branch_info = PluginBranchInfo(self.recipe_folder)
         self.version = branch_info.version
+        # print(f"Got version: {self.version}")
 
     def requirements(self):
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
-        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
-    # Remove runtime and use always default (MD/MDd)
     def configure(self):
         pass
 
@@ -98,11 +103,13 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
         print("ManiVault_DIR: ", manivault_dir)
         tc.variables["ManiVault_DIR"] = manivault_dir
-		
-        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
-        print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
-        tc.variables["MV_INSTALL_DIR"] = self.install_dir
-        tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
+        
+        # Give the installation directory to CMake
+        MV_CMD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+        tc.variables["MV_CMD_INSTALL_DIR"] = MV_CMD_PATH
+
+        # Set some build options
+        tc.variables["MV_UNITY_BUILD"] = "ON"
 
         tc.generate()
 
