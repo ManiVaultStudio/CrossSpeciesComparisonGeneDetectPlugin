@@ -105,8 +105,8 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         tc.variables["ManiVault_DIR"] = manivault_dir
         
         # Give the installation directory to CMake
-        MV_CMD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
-        tc.variables["MV_CMD_INSTALL_DIR"] = MV_CMD_PATH
+        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+        tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
 
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
