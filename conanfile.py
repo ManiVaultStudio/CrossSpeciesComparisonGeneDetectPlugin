@@ -6,9 +6,8 @@ import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
 
-
 class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
-    """Class to package CrossSpeciesComparisonGeneDetectPlugin using conan
+    """Class to package CrossSpeciesComparisonGeneDetectPlugin plugin using conan
 
     Packages both RELEASE and RELWITHDEBINFO.
     Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
@@ -17,10 +16,8 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     """
 
     name = "CrossSpeciesComparisonGeneDetectPlugin"
-    description = (
-        "CrossSpeciesComparisonGeneDetectPlugin."
-    )
-    topics = ("hdps", "plugin", "CrossSpeciesComparisonGeneDetectPlugin", "various")
+    description = ("A plugin for data heat-maps in ManiVault.")
+    topics = ("hdps", "ManiVault", "plugin", "CrossSpeciesComparisonGeneDetectPlugin", "data visualization")
     url = "https://github.com/ManiVaultStudio/CrossSpeciesComparisonGeneDetectPlugin"
     author = "B. van Lew b.van_lew@lumc.nl"  # conan recipe author
     license = "MIT"
@@ -32,8 +29,6 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     settings = {"os": None, "build_type": None, "compiler": None, "arch": None}
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": True, "fPIC": True}
-	
-	
 
     scm = {
         "type": "git",
@@ -66,7 +61,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
-        self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
+		self.requires("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
 
     # Remove runtime and use always default (MD/MDd)
     def configure(self):
@@ -89,6 +84,8 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
 
         tc = CMakeToolchain(self, generator=generator)
 
+        tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
+
         # Use the Qt provided .cmake files
         qt_path = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
         qt_cfg = list(qt_path.glob("**/Qt6Config.cmake"))[0]
@@ -101,38 +98,11 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
         print("ManiVault_DIR: ", manivault_dir)
         tc.variables["ManiVault_DIR"] = manivault_dir
-
-        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+		
+		MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
         print(f"MV_CSCTD_INSTALL_DIR: {MV_CSCTD_PATH}")
         tc.variables["MV_INSTALL_DIR"] = self.install_dir
         tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
-
-        # Set some build options
-        tc.variables["MV_UNITY_BUILD"] = "ON"
-
-        # Use vcpkg-installed dependencies if there are any
-        if os.environ.get("VCPKG_ROOT", None):
-            vcpkg_dir = pathlib.Path(os.environ["VCPKG_ROOT"])
-            vcpkg_exe = vcpkg_dir / "vcpkg.exe" if self.settings.os == "Windows" else vcpkg_dir / "vcpkg" 
-            vcpkg_tc  = vcpkg_dir / "scripts" / "buildsystems" / "vcpkg.cmake"
-
-            vcpkg_triplet = "x64-windows"
-            if self.settings.os == "Macos":
-                vcpkg_triplet = "x64-osx"
-            if self.settings.os == "Linux":
-                vcpkg_triplet = "x64-linux"
-
-            print("vcpkg_dir: ", vcpkg_dir)
-            print("vcpkg_exe: ", vcpkg_exe)
-            print("vcpkg_tc: ", vcpkg_tc)
-            print("vcpkg_triplet: ", vcpkg_triplet)
-
-            tc.variables["VCPKG_LIBRARY_LINKAGE"]   = "dynamic"
-            tc.variables["VCPKG_TARGET_TRIPLET"]    = vcpkg_triplet
-            tc.variables["VCPKG_HOST_TRIPLET"]      = vcpkg_triplet
-            tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
-
-            tc.variables["CMAKE_PROJECT_INCLUDE"]   = vcpkg_tc.as_posix()
 
         tc.generate()
 
