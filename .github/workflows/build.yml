@@ -108,5 +108,5 @@ jobs:
           conan-build-os: ${{matrix.build-os}}
           build-arch: ${{matrix.build-arch}}
           conan-user: ${{secrets.LKEB_UPLOAD_USER}}
-          #conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
-          #conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
+          conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
+          conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
