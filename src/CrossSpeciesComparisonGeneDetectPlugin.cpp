@@ -471,7 +471,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             selectedCellStatisticsStatusBarRemove();
             selectedCellCountStatusBarAdd();
             _settingsAction.getSelectedGeneAction().setString("");
-            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions({});
+            _settingsAction.getSpeciesExplorerInMap().setSelectedOptions(QStringList{});
             _settingsAction.getClearRightClickedCluster().trigger();
             updatePhylogeneticTree();
         };

@@ -632,7 +632,7 @@ SettingsAction::SettingsAction(CrossSpeciesComparisonGeneDetectPlugin& CrossSpec
         {
             disableActions();
             _pauseStatusUpdates = true;
-            _speciesExplorerInMap.setSelectedOptions({});
+            _speciesExplorerInMap.setSelectedOptions(QStringList{});
             //_erroredOutFlag = false;
             QApplication::processEvents();
             updateButtonTriggered();
