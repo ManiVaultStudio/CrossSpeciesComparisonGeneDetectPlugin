@@ -100,16 +100,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::WebEngineWidgets)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Concurrent )
 
-# Link to ManiVault and data plugins
-# The link path in this repo assumes that the ManiVault core was built locally
-# in contrast to having been installed with an installer. In the latter case you'll have
-# to adapt the MV_LINK_PATH and PLUGIN_LINK_PATH to your install folder
-set(MV_LINK_PATH "${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/lib")
-set(PLUGIN_LINK_PATH "${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
-set(CSCTDPLUGIN_LINK_PATH "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
-set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
 
-set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}")
+# Allow override of plugin library path from the build system
+set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY}" CACHE STRING "Path to CrossSpeciesComparisonTreeData library")
+if(NOT CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY)
+    set(CSCTDPLUGIN_LINK_PATH "${MV_CSCTD_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
+    set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
+    set(CROSSSPECIESCOMPARISONTREEDATA_LINK_LIBRARY "${CSCTDPLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}CrossSpeciesComparisonTreeData${MV_LINK_SUFFIX}")
+endif()
 
 # Link to ManiVault and data plugins
 target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::Core)
