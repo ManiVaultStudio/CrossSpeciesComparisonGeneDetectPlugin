@@ -32,7 +32,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     default_options = {"shared": True, "fPIC": True}
 
     # Data plugin dependencies
-    requires = ("CrossSpeciesComparisonTreeData/cytosploreviewer@lkeb/stable")
+    requires = ("CrossSpeciesComparisonTreeData/latest@lkeb/stable")
 
     # Qt requirement is inherited from hdps-core
 
