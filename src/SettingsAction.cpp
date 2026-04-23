@@ -1589,10 +1589,10 @@ void SettingsAction::updateButtonTriggered()
             //_startComputationTriggerAction.setDisabled(false);
             return;
         }
-        if (_selectedPointsTSNEDataset.isValid())
+        /*if (_selectedPointsTSNEDataset.isValid())
         {
             _selectedPointsTSNEDataset->setSelectionIndices({});
-        }
+        }*/
         //stopCodeTimer("Part2");
         //startCodeTimer("Part3");
         _clusterNameToGeneNameToExpressionValue.clear();
@@ -1655,7 +1655,11 @@ void SettingsAction::updateButtonTriggered()
 
                     }*/
 
-
+                    _selectedPointsDataset = Dataset<Points>();
+                    _tsneDatasetExpressionColors = Dataset<Points>();
+                    _selectedPointsEmbeddingDataset = Dataset<Points>();
+                    _tsneDatasetSpeciesColors = Dataset<Clusters>();
+                    _tsneDatasetClusterColors = Dataset<Clusters>();
                     pointsDatasetRaw->setSelectionIndices(_selectedIndicesFromStorage);
                     _selectedPointsDataset = pointsDatasetRaw->createSubsetFromSelection("SelectedPointsDataset");
                     _selectedPointsDataset->setGroupIndex(groupIDDeletion);
@@ -3652,28 +3656,73 @@ void SettingsAction::removeDatasets(int groupId)
 {
     auto allDatasets = mv::data().getAllDatasets();
 
-    Datasets datasetsFilteredAndSorted;
+    // id -> dataset pointer (NO COPYING)
+    QHash<QString, Dataset<DatasetImpl>> idToDataset;
+    idToDataset.reserve(allDatasets.size());
 
-    std::copy_if(allDatasets.begin(), allDatasets.end(), std::back_inserter(datasetsFilteredAndSorted), [groupId](Dataset<DatasetImpl> dataset) {
-        return dataset->getGroupIndex() == groupId;
-        });
-
-    std::sort(datasetsFilteredAndSorted.begin(), datasetsFilteredAndSorted.end(), [](Dataset<DatasetImpl> lhs, Dataset<DatasetImpl> rhs) -> bool {
-        return rhs->getDataHierarchyItem().getDepth() < lhs->getDataHierarchyItem().getDepth();
-        });
-
-    //std::reverse(datasetsFilteredAndSorted.begin(), datasetsFilteredAndSorted.end());
-
-    for (auto dataset : datasetsFilteredAndSorted)
-    {
-        //qDebug() << dataset->getGuiName() << dataset->getId() << dataset->getDataHierarchyItem().getDepth();
-
-        if (dataset.isValid())
-            mv::data().removeDataset(dataset);
+    for (const auto& ds : allDatasets) {
+        if (ds->getGroupIndex() == groupId) {
+            idToDataset.insert(ds->getId(), ds);
+        }
     }
 
-    //mv::data().removeDataset(_selectedPointsDataset);
-    //mv::data().removeDataset(_selectedPointsEmbeddingDataset);
+    // Cache depth (memoization)
+    QHash<QString, int> depthCache;
+    depthCache.reserve(idToDataset.size());
+
+    std::function<int(const QString&)> depthOf =
+        [&](const QString& id) -> int
+        {
+            auto it = depthCache.find(id);
+            if (it != depthCache.end())
+                return it.value();
+
+            int depth = 0;
+
+            auto ds = idToDataset.value(id);
+            auto parent = ds->getParent();
+
+            if (parent.isValid()) {
+                QString parentId = parent->getId();
+
+                if (idToDataset.contains(parentId)) {
+                    depth = 1 + depthOf(parentId);
+                }
+            }
+
+            depthCache.insert(id, depth);
+            return depth;
+        };
+
+    // Build list of ids
+    QVector<QString> ids;
+    ids.reserve(idToDataset.size());
+
+    for (auto it = idToDataset.begin(); it != idToDataset.end(); ++it) {
+        ids.push_back(it.key());
+    }
+
+    // Compute all depths (O(N))
+    for (const auto& id : ids) {
+        depthOf(id);
+    }
+
+    // Sort deepest first (critical step)
+    std::sort(ids.begin(), ids.end(),
+        [&](const QString& a, const QString& b) {
+            return depthCache[a] > depthCache[b];
+        });
+
+    // Delete in correct order
+    for (const auto& id : ids) {
+        auto ds = idToDataset.value(id);
+        if (ds.isValid()) {
+            qDebug() << "Deleting:" << ds->getId() << "with name:" << ds->getGuiName()
+                << "depth:" << depthCache[id];
+
+            mv::data().removeDataset(ds);
+        }
+    }
 }
 QVariant SettingsAction::createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap, const int& n) {
 
