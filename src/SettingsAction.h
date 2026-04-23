@@ -347,6 +347,7 @@ public: // Action getters
     void removeSelectionTableRows(QStringList* selectedLeaves);
     void enableDisableButtonsAutomatically();
     void removeDatasets(int groupId);
+    void clearTemporaryDatasetHandles();
     void updateClusterInfoStatusBar();
     QVariant createModelFromData(const std::map<QString, std::map<QString, Stats>>& map, const std::map<QString, std::vector<QString>>& geneCounter, const std::map<QString, std::vector<std::pair<QString, int>>>& rankingMap,const int& n);
     void findTopNGenesPerCluster();
