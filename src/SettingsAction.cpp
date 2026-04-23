@@ -1564,6 +1564,7 @@ void SettingsAction::updateButtonTriggered()
         int groupIDDeletion = 10;
         int groupID1 = 10 * 2;
         int groupID2 = 10 * 3;
+        clearTemporaryDatasetHandles();
         removeDatasets(groupIDDeletion);
         auto pointsDataset = _mainPointsDataset.getCurrentDataset();
         auto embeddingDataset = _embeddingDataset.getCurrentDataset();
@@ -1655,11 +1656,6 @@ void SettingsAction::updateButtonTriggered()
 
                     }*/
 
-                    _selectedPointsDataset = Dataset<Points>();
-                    _tsneDatasetExpressionColors = Dataset<Points>();
-                    _selectedPointsEmbeddingDataset = Dataset<Points>();
-                    _tsneDatasetSpeciesColors = Dataset<Clusters>();
-                    _tsneDatasetClusterColors = Dataset<Clusters>();
                     pointsDatasetRaw->setSelectionIndices(_selectedIndicesFromStorage);
                     _selectedPointsDataset = pointsDatasetRaw->createSubsetFromSelection("SelectedPointsDataset");
                     _selectedPointsDataset->setGroupIndex(groupIDDeletion);
@@ -3652,6 +3648,23 @@ void SettingsAction::findTopNGenesPerCluster() {
     _selectedGene.setString("");
     //return returnedmodel;
 }
+
+void SettingsAction::clearTemporaryDatasetHandles()
+{
+    _selectedPointsTSNEDataset = Dataset<Points>();
+    _selectedPointsDataset = Dataset<Points>();
+    _selectedPointsEmbeddingDataset = Dataset<Points>();
+    _filteredUMAPDatasetPoints = Dataset<Points>();
+    _filteredUMAPDatasetColors = Dataset<Points>();
+    _filteredUMAPDatasetClusters = Dataset<Points>();
+    _tsneDatasetExpressionColors = Dataset<Points>();
+    _geneSimilarityPoints = Dataset<Points>();
+
+    _tsneDatasetSpeciesColors = Dataset<Clusters>();
+    _tsneDatasetClusterColors = Dataset<Clusters>();
+    _geneSimilarityClusterColoring = Dataset<Clusters>();
+}
+
 void SettingsAction::removeDatasets(int groupId)
 {
     auto allDatasets = mv::data().getAllDatasets();

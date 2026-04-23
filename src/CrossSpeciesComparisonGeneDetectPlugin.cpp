@@ -584,6 +584,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::init()
             int groupIDDeletion = 10;
             int groupId1 = 10 * 2;
             int groupId2 = 10 * 3;
+            _settingsAction.clearTemporaryDatasetHandles();
             _settingsAction.removeDatasets(groupIDDeletion);
             _settingsAction.removeDatasets(groupId1);
             _settingsAction.removeDatasets(groupId2);
