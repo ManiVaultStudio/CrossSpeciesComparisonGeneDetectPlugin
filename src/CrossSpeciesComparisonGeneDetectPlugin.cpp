@@ -1421,6 +1421,9 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
         proxyModel->setFilterKeyColumn(0);
         _settingsAction.getGeneTableView()->setModel(proxyModel);
+        // This method runs on every recomputation, so we clear earlier hooks
+        // before wiring search and selection behavior again.
+        disconnect(_settingsAction.getSearchBox(), nullptr, this, nullptr);
         connect(_settingsAction.getSearchBox(), &CustomLineEdit::textboxSelectedForTyping, this, [this, proxyModel, model]() {
             makeAllRowsVisible(_settingsAction.getGeneTableView(),proxyModel);
             });
@@ -1458,13 +1461,17 @@ void CrossSpeciesComparisonGeneDetectPlugin::modifyListData()
         }
 
         // Sort and update the table view
-        model->sort(1, Qt::DescendingOrder);
-        _settingsAction.getGeneTableView()->resizeColumnsToContents();
+        proxyModel->sort(1, Qt::DescendingOrder);
+        _settingsAction.getGeneTableView()->setColumnWidth(0, 85);
+        _settingsAction.getGeneTableView()->setColumnWidth(1, 80);
+        _settingsAction.getGeneTableView()->setColumnWidth(2, 220);
+        _settingsAction.getGeneTableView()->setColumnWidth(3, 420);
         _settingsAction.getGeneTableView()->update();
 
 
         //disconnect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, this, nullptr);
 
+    disconnect(_settingsAction.getGeneTableView()->selectionModel(), nullptr, this, nullptr);
     connect(_settingsAction.getGeneTableView()->selectionModel(), &QItemSelectionModel::currentChanged, [this](const QModelIndex& current, const QModelIndex& previous) {
         if (!current.isValid()) return;
 
@@ -2088,8 +2095,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellCountStatusBarAdd()
             _settingsAction.getSelectionDetailsTable()->hideColumn(2);
         }
 
-        // Resize columns
-        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        // Fixed widths are cheaper than recomputing content widths on every refresh.
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 70);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 90);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(3, 70);
@@ -2545,7 +2551,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         if (singleColumn) {
             _settingsAction.getSelectionDetailsTable()->hideColumn(4);
         }
-        _settingsAction.getSelectionDetailsTable()->resizeColumnsToContents();
+        // Keep widths stable to avoid an extra full-table measurement pass.
         //_settingsAction.getSelectionDetailsTable()->setColumnWidth(0, 100);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(1, 85);
         _settingsAction.getSelectionDetailsTable()->setColumnWidth(2, 85);
@@ -2562,6 +2568,7 @@ void CrossSpeciesComparisonGeneDetectPlugin::selectedCellStatisticsStatusBarAdd(
         emit model->layoutChanged();
 
         // Selection handling code
+        disconnect(_settingsAction.getSelectionDetailsTable()->selectionModel(), nullptr, this, nullptr);
         connect(_settingsAction.getSelectionDetailsTable()->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected) {
             static QModelIndex lastSelectedIndex;
 
