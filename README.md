@@ -105,7 +105,3 @@ If you extend the analysis logic, prefer:
 - explicit invalidation/caching boundaries,
 - stable table widths over repeated `resizeColumnsToContents()` calls in hot paths,
 - and avoiding repeated signal connections inside methods that run on every update.
-
-## License / Ownership
-
-This repository currently does not declare a license in the root. Add one if the project is intended for redistribution or external collaboration.
