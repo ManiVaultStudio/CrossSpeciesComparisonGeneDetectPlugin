@@ -79,8 +79,8 @@ void SettingsAction::removeDatasets(int groupId)
     for (const auto& id : ids) {
         auto ds = idToDataset.value(id);
         if (ds.isValid()) {
-            qDebug() << "Deleting:" << ds->getId() << "with name:" << ds->getGuiName()
-                << "depth:" << depthCache[id];
+            //qDebug() << "Deleting:" << ds->getId() << "with name:" << ds->getGuiName()
+                //<< "depth:" << depthCache[id];
 
             mv::data().removeDataset(ds);
         }
