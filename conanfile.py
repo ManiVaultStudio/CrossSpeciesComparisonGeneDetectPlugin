@@ -8,7 +8,7 @@ from rules_support import PluginBranchInfo
 from conans import tools
 import shutil
 
-class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
+class XSCGeneDetectPluginConan(ConanFile):
     """Class to package using conan
 
     Packages both RELEASE and RELWITHDEBINFO.
@@ -17,11 +17,11 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     as described in https://github.com/ManiVaultStudio/core/wiki/Branch-naming-rules
     """
 
-    name = "CrossSpeciesComparisonGeneDetectPlugin"
-    description = """Viewer of cell CrossSpeciesComparisonTreeData data as described in a .swc file."""
-    topics = ("manivault", "plugin", "view", "CrossSpeciesComparisonGeneDetectPlugin")
-    url = "https://github.com/ManiVaultStudio/CrossSpeciesComparisonGeneDetectPlugin"
-    author = "julianthijssen@gmail.com"  # conan recipe author
+    name = "XSCGeneDetectPlugin"
+    description = """Viewer of cell XSCTreeData data as described in a .swc file."""
+    topics = ("manivault", "plugin", "view", "XSCGeneDetectPlugin")
+    url = "https://github.com/ManiVaultStudio/XSCGeneDetectPlugin"
+    author = "sbasu"  # conan recipe author
     license = "LGPL 3.0"
 
     short_paths = True
@@ -33,13 +33,13 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
     default_options = {"shared": True, "fPIC": True}
 
     # Data plugin dependencies
-    requires = ("CrossSpeciesComparisonTreeData/bican_bg@lkeb/stable")
+    #requires = ("XSCTreeData/latest@lkeb/stable")
 
     # Qt requirement is inherited from hdps-core
 
     scm = {
         "type": "git",
-        "subfolder": "hdps/CrossSpeciesComparisonGeneDetectPlugin",
+        "subfolder": "hdps/XSCGeneDetectPlugin",
         "url": "auto",
         "revision": "auto",
     }
@@ -50,6 +50,32 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         )
         print(f"git info from {path}")
         return path
+
+    def _dependency_channel(self):
+        branch = (
+            os.getenv("GITHUB_HEAD_REF")
+            or os.getenv("GITHUB_REF_NAME")
+        )
+
+        if not branch:
+            branch = subprocess.check_output(
+                [
+                    "git",
+                    "-C",
+                    self.__get_git_path(),
+                    "rev-parse",
+                    "--abbrev-ref",
+                    "HEAD",
+                ],
+                text=True,
+            ).strip()
+
+        self.output.info(f"Detected branch: {branch}")
+
+        if branch in ("main", "master", "HEAD"):
+            return "latest"
+
+        return branch.rsplit("/", 1)[-1]
 
     def export(self):
         print("In export")
@@ -66,8 +92,14 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         # print(f"Got version: {self.version}")
 
     def requirements(self):
+        channel = self._dependency_channel()
+
+        self.output.info(f"Using XSCTreeData channel: {channel}")
+
+        self.requires(f"XSCTreeData/{channel}@lkeb/stable")
+
         branch_info = PluginBranchInfo(self.__get_git_path())
-        print(f"Core requirement {branch_info.core_requirement}")
+        self.output.info(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
 
     def configure(self):
@@ -106,7 +138,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
         tc.variables["ManiVault_DIR"] = manivault_dir
         
         # Give the installation directory to CMake
-        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["CrossSpeciesComparisonTreeData"].rootpath).as_posix()
+        MV_CSCTD_PATH = pathlib.Path(self.deps_cpp_info["XSCTreeData"].rootpath).as_posix()
         tc.variables["MV_CSCTD_INSTALL_DIR"] = MV_CSCTD_PATH
 
         # Set some build options
@@ -116,7 +148,7 @@ class CrossSpeciesComparisonGeneDetectPluginConan(ConanFile):
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="hdps/CrossSpeciesComparisonGeneDetectPlugin")
+        cmake.configure(build_script_folder="hdps/XSCGeneDetectPlugin")
         cmake.verbose = True
         return cmake
 
